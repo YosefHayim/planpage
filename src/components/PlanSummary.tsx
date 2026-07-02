@@ -17,11 +17,11 @@ export const PlanSummary = ({ stats }: PlanSummaryProps) => (
     {stats.map((s) => (
       <div
         key={s.label}
-        class="min-w-[7rem] flex-1 rounded-xl border border-slate-200 p-4 dark:border-slate-800"
+        class="min-w-0 grow basis-28 rounded-xl border border-slate-200 p-4 dark:border-slate-800"
       >
         <div class="font-bold text-2xl text-slate-900 dark:text-white">{s.value}</div>
         <div class="mt-1 font-medium text-slate-500 text-xs dark:text-slate-400">{s.label}</div>
-        {s.hint ? <div class="mt-0.5 text-[11px] text-slate-400">{s.hint}</div> : null}
+        {s.hint ? <div class="mt-0.5 text-slate-400 text-xs">{s.hint}</div> : null}
       </div>
     ))}
   </div>

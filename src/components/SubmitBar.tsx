@@ -39,7 +39,7 @@ export const SubmitBar = ({ approveLabel = "Approve", adjustLabel = "Adjust" }: 
     </div>
     <pre
       id="sui-token"
-      class="mx-auto mt-2 hidden max-w-5xl whitespace-pre-wrap break-all text-[11px] text-amber-500"
+      class="mx-auto mt-2 hidden max-w-5xl whitespace-pre-wrap break-all text-amber-500 text-xs"
     />
   </div>
 );

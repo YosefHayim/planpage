@@ -130,7 +130,7 @@ function EntryCard({ name }: { readonly name: GalleryName }) {
       <div class="p-4">
         <div class="mb-2 flex flex-wrap items-baseline gap-2">
           <h3 class="font-semibold text-slate-900 dark:text-white">{name}</h3>
-          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-500 uppercase tracking-wide dark:bg-slate-800 dark:text-slate-400">
+          <span class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500 text-xs uppercase tracking-wide dark:bg-slate-800 dark:text-slate-400">
             {entry.category}
           </span>
         </div>

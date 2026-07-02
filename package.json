@@ -1,8 +1,16 @@
 {
   "name": "planpage",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Render a skill's plan, gate, or report as a beautiful, self-contained local HTML page — Preact components rendered to static HTML, with an opt-in post-back server.",
-  "keywords": ["skill", "claude", "agent", "html", "report", "preact", "cli"],
+  "keywords": [
+    "skill",
+    "claude",
+    "agent",
+    "html",
+    "report",
+    "preact",
+    "cli"
+  ],
   "homepage": "https://github.com/YosefHayim/planpage#readme",
   "bugs": "https://github.com/YosefHayim/planpage/issues",
   "repository": {
@@ -20,7 +28,13 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "CODE-STYLE.md", "CONTEXT.md", "LANGUAGE.md", "PROJECT.md"],
+  "files": [
+    "dist",
+    "CODE-STYLE.md",
+    "CONTEXT.md",
+    "LANGUAGE.md",
+    "PROJECT.md"
+  ],
   "scripts": {
     "build": "tsup",
     "cli": "tsx src/cli/index.ts",
@@ -34,8 +48,13 @@
     "prepare": "npm run build"
   },
   "tsup": {
-    "entry": ["src/index.ts", "src/cli/index.ts"],
-    "format": ["esm"],
+    "entry": [
+      "src/index.ts",
+      "src/cli/index.ts"
+    ],
+    "format": [
+      "esm"
+    ],
     "target": "node18",
     "dts": true,
     "clean": true,

@@ -35,7 +35,7 @@ export const PickBlock = ({ id, rule, chosen, rejected, why, tag }: PickBlockPro
         <code>{rejected}</code>
       </pre>
     </div>
-    <div class="flex items-center gap-3 text-xs text-slate-400 md:col-span-2">
+    <div class="flex flex-wrap items-center gap-3 text-xs text-slate-400 md:col-span-2">
       <span>
         {why}
         {tag ? <span class="text-slate-500"> · {tag}</span> : null}

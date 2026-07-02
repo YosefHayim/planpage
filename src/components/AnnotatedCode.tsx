@@ -29,15 +29,12 @@ export const AnnotatedCode = ({ code, annotations, label }: AnnotatedCodeProps) 
 
 function renderLine(line: string, n: number, note: string | undefined) {
   return (
-    <div key={`${n}·${line}`} class="grid grid-cols-[2rem_1fr] gap-x-3">
-      <span class="select-none text-right text-slate-600">{n}</span>
-      <code class="text-slate-100">{line || " "}</code>
-      {note ? (
-        <>
-          <span />
-          <span class="text-amber-400">↳ {note}</span>
-        </>
-      ) : null}
+    <div key={`${n}·${line}`} class="flex gap-x-3">
+      <span class="w-8 shrink-0 select-none text-right text-slate-600">{n}</span>
+      <div class="min-w-0 flex-1">
+        <code class="text-slate-100">{line || " "}</code>
+        {note ? <div class="text-amber-400">↳ {note}</div> : null}
+      </div>
     </div>
   );
 }

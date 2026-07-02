@@ -44,9 +44,9 @@ export const OptionCompare = ({ options }: OptionCompareProps) => (
       return (
         <div
           key={o.name}
-          class={`min-w-[13rem] flex-1 rounded-xl border p-4 ${v ? v.card : "border-slate-200 dark:border-slate-800"}`}
+          class={`min-w-0 grow basis-52 rounded-xl border p-4 ${v ? v.card : "border-slate-200 dark:border-slate-800"}`}
         >
-          <div class="mb-2 flex items-center gap-2">
+          <div class="mb-2 flex flex-wrap items-center gap-2">
             <span class="font-semibold text-slate-900 text-sm dark:text-white">{o.name}</span>
             {v ? (
               <span class={`chip inline-flex items-center gap-1 ${v.chip}`}>
