@@ -1,7 +1,9 @@
 import type { ComponentChildren } from "preact";
-import { CLIENT_SCRIPT, THEME_TOGGLE } from "../render/clientScript";
-import type { Theme } from "../render/theme";
+import { CLIENT_SCRIPT, GALLERY_FILTER, THEME_TOGGLE } from "../render/clientScript";
 import { SubmitBar } from "./SubmitBar";
+
+/** Colour scheme for a rendered document. `auto` follows the OS `prefers-color-scheme`. */
+export type Theme = "auto" | "light" | "dark";
 
 export interface ShellProps {
   readonly title?: string;
@@ -9,6 +11,8 @@ export interface ShellProps {
   readonly theme?: Theme;
   /** When true, includes the sticky submit-bar + the post-back client script. */
   readonly interactive?: boolean;
+  /** When true, includes the gallery filter island (the Library's type-to-filter search). */
+  readonly filterable?: boolean;
   readonly children: ComponentChildren;
 }
 
@@ -22,7 +26,7 @@ const MERMAID =
   "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true,theme:document.documentElement.classList.contains('dark')?'dark':'neutral',securityLevel:'loose'});";
 
 const STYLE =
-  ".code{white-space:pre;overflow-x:auto;tab-size:2}.chip{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:600}.mermaid{display:flex;justify-content:center}.pick.flipped .chosen{opacity:.4;filter:grayscale(1)}.pick.flipped .rejected{opacity:1;filter:none;outline:2px solid #34d399}.pick.revisit{outline:2px dashed #fbbf24;outline-offset:4px;border-radius:12px}";
+  ".code{white-space:pre;overflow-x:auto;tab-size:2}.chip{font-size:11px;padding:2px 9px;border-radius:999px;font-weight:600}.mermaid{display:flex;justify-content:center}.pick.flipped .chosen{opacity:.4;filter:grayscale(1)}.pick.flipped .rejected{opacity:1;filter:none;outline:2px solid #34d399}.pick.revisit{outline:2px dashed #fbbf24;outline-offset:4px;border-radius:12px}.theme-ico .sun,.theme-ico .moon{transform-origin:center;transition:transform .5s cubic-bezier(.4,0,.2,1),opacity .35s ease}.theme-ico .moon{opacity:0;transform:rotate(-90deg) scale(.3)}.dark .theme-ico .sun{opacity:0;transform:rotate(90deg) scale(.3)}.dark .theme-ico .moon{opacity:1;transform:none}@media (prefers-reduced-motion:reduce){.theme-ico .sun,.theme-ico .moon{transition:none}}";
 
 /**
  * The fixed page skeleton every rendered document nests inside: Tailwind + Mermaid from
@@ -34,6 +38,7 @@ export const Shell = ({
   subtitle,
   theme = "auto",
   interactive = false,
+  filterable = false,
   children,
 }: ShellProps) => (
   <html lang="en" data-theme={theme}>
@@ -63,9 +68,25 @@ export const Shell = ({
             type="button"
             data-action="theme"
             title="toggle light / dark"
-            class="ml-auto rounded-lg border border-slate-300 px-3 py-1.5 text-xs hover:bg-slate-100 dark:border-slate-700 dark:hover:bg-slate-800"
+            aria-label="Toggle colour theme"
+            class="ml-auto grid h-8 w-8 place-items-center rounded-lg border border-slate-300 text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-800"
           >
-            ◐
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="theme-ico h-4 w-4"
+              aria-hidden="true"
+            >
+              <g class="sun">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+              </g>
+              <path class="moon" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+            </svg>
           </button>
         </div>
       </header>
@@ -77,6 +98,10 @@ export const Shell = ({
       <script type="module" dangerouslySetInnerHTML={{ __html: MERMAID }} />
       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data */}
       <script dangerouslySetInnerHTML={{ __html: THEME_TOGGLE }} />
+      {filterable ? (
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
+        <script dangerouslySetInnerHTML={{ __html: GALLERY_FILTER }} />
+      ) : null}
       {interactive ? (
         // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
         <script dangerouslySetInnerHTML={{ __html: CLIENT_SCRIPT }} />

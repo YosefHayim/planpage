@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Theme } from "../components/Shell";
 import { render } from "../render/render";
-import type { Theme } from "../render/theme";
 import { serve } from "../server/serve";
 import { SAMPLES, TEMPLATES, type TemplateName } from "../templates";
 import { openPath, writeTemp } from "./io";
@@ -27,7 +27,11 @@ export const renderCommand = async (
     throw new Error(`unknown template "${template}". known: ${Object.keys(TEMPLATES).join(", ")}`);
   }
   const data = options.sample ? SAMPLES[template as TemplateName] : await readData(options.data);
-  const html = render(factory(data), { theme: options.theme, interactive: Boolean(options.serve) });
+  const html = render(factory(data), {
+    theme: options.theme,
+    interactive: Boolean(options.serve),
+    filterable: template === "library",
+  });
 
   if (options.serve) {
     const outPath = options.decision ?? join(tmpdir(), "skill-ui-decision.json");

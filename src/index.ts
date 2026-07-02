@@ -20,7 +20,7 @@ export { PickBlock, type PickBlockProps } from "./components/PickBlock";
 export { PlanSummary, type PlanSummaryProps, type Stat } from "./components/PlanSummary";
 export { type Risk, RiskList, type RiskListProps, type Severity } from "./components/RiskList";
 export { SectionCard, type SectionCardProps } from "./components/SectionCard";
-export { Shell, type ShellProps } from "./components/Shell";
+export { Shell, type ShellProps, type Theme } from "./components/Shell";
 export { type StatusChipProps, StatusChip, type StepStatus } from "./components/StatusChip";
 export { type Step, Steps, type StepsProps } from "./components/Steps";
 export { SubmitBar, type SubmitBarProps } from "./components/SubmitBar";
@@ -37,7 +37,6 @@ export {
 } from "./gallery/registry";
 export { raw } from "./render/raw";
 export { render, type RenderOptions } from "./render/render";
-export type { Theme } from "./render/theme";
 export { serve, type ServeOptions } from "./server/serve";
 export { BeforeAfter, type BeforeAfterProps } from "./templates/BeforeAfter/BeforeAfter";
 export { CodeStylePlan, type CodeStylePlanProps } from "./templates/CodeStylePlan/CodeStylePlan";

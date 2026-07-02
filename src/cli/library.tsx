@@ -1,8 +1,8 @@
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import type { Theme } from "../components/Shell";
 import { render } from "../render/render";
-import type { Theme } from "../render/theme";
 import { Library } from "../templates/Library/Library";
 import { openPath } from "./io";
 
@@ -18,6 +18,7 @@ export const libraryCommand = (options: LibraryCommandOptions): void => {
     title: "skill-ui — component gallery",
     subtitle: "the living, auto-captured collection",
     theme: options.theme,
+    filterable: true,
   });
   const out = options.out ?? join(tmpdir(), "skill-ui-gallery.html");
   writeFileSync(out, html);

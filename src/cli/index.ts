@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { TEMPLATES } from "../templates";
 import { captureCommand } from "./capture";
+import { initCommand } from "./init";
 import { libraryCommand } from "./library";
 import { runMenu } from "./menu";
 import { newCommand } from "./new";
@@ -40,6 +41,14 @@ program
   .description("scaffold a new template folder")
   .argument("<name>", "kebab-case template name")
   .action(newCommand);
+
+program
+  .command("init")
+  .description("scaffold a ready-to-use Claude skill wired to skill-ui")
+  .option("--global", "install into ~/.claude/skills")
+  .option("--dir <path>", "install into a custom skills directory")
+  .option("--force", "overwrite an existing skill")
+  .action(initCommand);
 
 program
   .command("library")

@@ -1,10 +1,13 @@
 {
-  "name": "skill-ui",
+  "name": "@yosefsabag/skill-ui",
   "version": "0.1.0",
   "description": "Render a skill's plan, gate, or report as a beautiful, self-contained local HTML page — Preact components rendered to static HTML, with an opt-in post-back server.",
   "keywords": ["skill", "claude", "agent", "html", "report", "preact", "cli"],
   "license": "MIT",
   "type": "module",
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "skill-ui": "dist/cli/index.js"
   },
@@ -28,6 +31,7 @@
     "prepare": "npm run build"
   },
   "dependencies": {
+    "@clack/prompts": "^1.6.0",
     "commander": "^12.1.0",
     "preact": "^10.24.3",
     "preact-render-to-string": "^6.5.11"

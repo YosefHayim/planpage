@@ -4,7 +4,7 @@ How code is written in **skill-ui**. Prescriptive. The rules digest is mirrored 
 
 ## Stack & framework practices
 
-skill-ui is a JSX→static HTML render library (Preact) + a dual-mode CLI (commander) + an opt-in post-back server. For practices this file does **not** restate:
+skill-ui is a JSX→static HTML render library (Preact) + a dual-mode CLI (commander + a `@clack/prompts` interactive menu) + an opt-in post-back server. For practices this file does **not** restate:
 
 - writing / consuming skills → `write-a-skill`
 
@@ -44,7 +44,7 @@ if (diffs.length === 0) throw new Error("BeforeAfter: diffs[] is required and no
 _Why:_ the caller is usually an agent assembling JSON — junk must fail loud, not render a broken page.
 
 ### Escaping is the default (JSX) · [lint: noDangerouslySetInnerHtml]
-Interpolated `{value}` is auto-escaped by JSX. Raw HTML only through the `raw()` helper — never `dangerouslySetInnerHTML` directly. The one sanctioned exception is `Shell`, which injects its own **constant** `<script>`/`<style>` infra (never skill data) with an explicit `biome-ignore`.
+Interpolated `{value}` is auto-escaped by JSX. Raw HTML only through the `raw()` helper — never `dangerouslySetInnerHTML` directly. The one sanctioned exception is `Shell`, which injects its own **constant** `<script>`/`<style>` infra (never skill data) with an explicit `biome-ignore`. Client-side islands follow the same rule: a constant string from `render/clientScript.ts`, injected by `Shell` and gated by a boolean prop (`interactive` → post-back · `filterable` → gallery filter) — never a `<script>` inside a template.
 ```tsx
 // ✓ <code>{snippet}</code>              // escaped
 // ✓ {raw(trustedFragment)}             // explicit, reviewed
@@ -118,6 +118,7 @@ export const BeforeAfter = ({ title, diffs }: BeforeAfterProps) => {
 ### How to add a CLI command
 1. Add the subcommand in `src/cli/` (commander), routed into the SAME functions the menu uses.
 2. Give it a real `--help`; a bare TTY still opens the menu; non-TTY defers to flags and never prompts.
+3. If it's a consumer-facing verb, add it as a branch in the `@clack/prompts` menu (`src/cli/menu.ts`) — calling the same function, no behaviour in the menu.
 
 ## Exemplars
 
@@ -125,7 +126,7 @@ Write new code like these:
 - `src/templates/BeforeAfter/BeforeAfter.tsx` — the composed template style.
 - `src/components/PickBlock.tsx` — a shared interactive component with a `data-id`.
 - `src/components/Timeline.tsx` — a plan-native primitive composing the shared `StatusChip`.
-- `src/templates/Library/Library.tsx` — reads the `GALLERY` registry, groups, renders live previews.
+- `src/templates/Library/Library.tsx` — reads the `GALLERY` registry, groups by category (sticky rail + opt-in filter island), renders live preview cards.
 - `src/server/serve.ts` — an effect edge: exit codes, never-hang, helpers below.
 
 ## Never
