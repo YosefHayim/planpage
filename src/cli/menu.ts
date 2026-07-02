@@ -76,7 +76,25 @@ export const runMenu = async (): Promise<void> => {
       cancel("No agent selected.");
       return;
     }
-    initCommand({ agent: agents.join(",") });
+    const scope = agents.includes("claude")
+      ? await select({
+          message: "Where should the Claude skill install?",
+          options: [
+            {
+              value: "project",
+              label: "This project only",
+              hint: "./.claude/skills — this repo only",
+            },
+            { value: "global", label: "Globally", hint: "~/.claude/skills — all your projects" },
+          ],
+          initialValue: "project",
+        })
+      : "project";
+    if (isCancel(scope)) {
+      cancel("Cancelled.");
+      return;
+    }
+    initCommand({ agent: agents.join(","), global: scope === "global" });
     outro("Scaffolded — your agents can now render plans through planpage.");
     return;
   }

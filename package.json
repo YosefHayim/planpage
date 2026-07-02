@@ -1,6 +1,6 @@
 {
   "name": "planpage",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Render a skill's plan, gate, or report as a beautiful, self-contained local HTML page — Preact components rendered to static HTML, with an opt-in post-back server.",
   "keywords": ["skill", "claude", "agent", "html", "report", "preact", "cli"],
   "homepage": "https://github.com/YosefHayim/planpage#readme",
