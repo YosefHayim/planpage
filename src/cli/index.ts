@@ -49,10 +49,11 @@ program
 
 program
   .command("init")
-  .description("scaffold a ready-to-use Claude skill wired to planpage")
-  .option("--global", "install into ~/.claude/skills")
-  .option("--dir <path>", "install into a custom skills directory")
-  .option("--force", "overwrite an existing skill")
+  .description("wire planpage into your agents (claude, cursor, codex)")
+  .option("--agent <list>", "agents to wire up: claude,cursor,codex or all", "all")
+  .option("--global", "install the Claude skill into ~/.claude/skills")
+  .option("--dir <path>", "install the Claude skill into a custom skills directory")
+  .option("--force", "overwrite existing on-ramp files")
   .action(initCommand);
 
 program

@@ -1,4 +1,4 @@
-import { cancel, intro, isCancel, outro, select, text } from "@clack/prompts";
+import { cancel, intro, isCancel, multiselect, outro, select, text } from "@clack/prompts";
 import { TEMPLATES } from "../templates";
 import { initCommand } from "./init";
 import { libraryCommand } from "./library";
@@ -15,7 +15,7 @@ export const runMenu = async (): Promise<void> => {
       { value: "preview", label: "Preview a template", hint: "render sample data → browser" },
       { value: "library", label: "Browse the component library" },
       { value: "serve", label: "Collect a decision", hint: "serve an HTML file, post back" },
-      { value: "init", label: "Scaffold into my agent", hint: "add a skill wired to planpage" },
+      { value: "init", label: "Scaffold into my agent", hint: "wire in claude / cursor / codex" },
       { value: "new", label: "Scaffold a new template" },
     ],
   });
@@ -63,8 +63,21 @@ export const runMenu = async (): Promise<void> => {
   }
 
   if (action === "init") {
-    initCommand({});
-    outro("Scaffolded — your agent can now render plans through planpage.");
+    const agents = await multiselect({
+      message: "Which agents should render plans through planpage?",
+      options: [
+        { value: "claude", label: "Claude Code", hint: ".claude/skills" },
+        { value: "cursor", label: "Cursor", hint: ".cursor/rules" },
+        { value: "codex", label: "Codex", hint: "AGENTS.md" },
+      ],
+      initialValues: ["claude", "cursor", "codex"],
+    });
+    if (isCancel(agents) || agents.length === 0) {
+      cancel("No agent selected.");
+      return;
+    }
+    initCommand({ agent: agents.join(",") });
+    outro("Scaffolded — your agents can now render plans through planpage.");
     return;
   }
 

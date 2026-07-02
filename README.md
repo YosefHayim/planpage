@@ -30,7 +30,7 @@ planpage serve page.html out.json                        # serve an existing HTM
 planpage library --open                                  # the living component gallery
 planpage new my-template                                 # scaffold a new template folder
 planpage capture                                         # check the gallery registry is in sync
-planpage init                                            # add a ready render-plan skill to .claude/skills
+planpage init                                            # wire planpage into your agents (claude, cursor, codex)
 planpage                                                 # (bare, in a TTY) interactive menu
 ```
 
@@ -52,13 +52,25 @@ const html = render(
 
 ### In your agent
 
-planpage is a package + CLI — **not itself a skill**. To make your agent render its plans through it:
+planpage is a package + CLI — **not itself a skill**. One command wires it into whatever agent you use, writing a small, idempotent on-ramp per agent that tells it to render the plan gate through `npx planpage` and read the decision back:
 
 ```bash
-npx planpage init          # drops a render-plan skill into .claude/skills (--global for ~/.claude)
+npx planpage init                  # scaffold on-ramps for Claude Code, Cursor, and Codex
+npx planpage init --agent cursor   # just one (claude | cursor | codex | all)
+npx planpage init --global         # put the Claude skill in ~/.claude/skills (user-wide)
 ```
 
-`init` scaffolds a small `render-plan` skill wired to `npx planpage`: it renders the plan, serves it, and reads the decision back. Ship that skill with your agent — end users install the *skill*, which depends on this package underneath. The layering is **install the package → `init` a skill that calls it → ship that skill**.
+| Agent | What it writes |
+|---|---|
+| **Claude Code** | a `render-plan` skill at `.claude/skills/render-plan/SKILL.md` |
+| **Cursor** | a project rule at `.cursor/rules/planpage.mdc` |
+| **Codex** | a delimited block appended to `AGENTS.md` (never clobbers what's there) |
+
+Prefer to wire it by hand? Drop this into your agent's rules file:
+
+> When you present a plan or review-gate for approval, render it through the `planpage` package instead of dumping text: shape it as JSON for `plan-brief`, run `npx planpage render plan-brief --data plan.json --serve --decision decision.json` (opens the browser, blocks until Approve/Adjust, never hangs a non-TTY caller), then read `decision.json` — `{ approved, flips, revisit, notes }` — and act on it.
+
+The layering is **install the package → `init` an on-ramp that calls it → ship it with your agent**.
 
 ## What's inside
 
@@ -84,7 +96,7 @@ A static render is the floor; the post-back server is opt-in and never hangs a n
 - **Static-beautiful first, interactive by opt-in.** A page reads well with zero JavaScript; islands (the post-back, the gallery filter) are added only when asked for.
 - **Local HTML, not a hosted app.** planpage renders a file you open — it is not a server framework or a client-side React app.
 - **Not mcp-ui / MCP Apps.** Those own the protocol and host lane; planpage renders local pages for terminal skills.
-- **Not itself a skill.** It is the engine; `planpage init` scaffolds the skill that drives it.
+- **Not itself a skill.** It is the engine; `planpage init` wires it into your agent (Claude Code, Cursor, Codex).
 
 ## Docs
 

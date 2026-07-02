@@ -27,7 +27,7 @@ Single source of truth for working in **planpage**. `CLAUDE.md` / `GEMINI.md` po
 - **Components + `render()`** — Preact, arrow-const, named exports, PascalCase files, exported `readonly XProps`.
 - **Escaping is default** — JSX auto-escapes; raw HTML only via `raw()`; `dangerouslySetInnerHTML` allowed only in `Shell` for constant infra.
 - **Client islands live in the Shell** — constant scripts from `render/clientScript.ts`, each gated by a Shell flag (`interactive` → post-back · `filterable` → gallery filter). Never inline a `<script>` in a template.
-- **Agent on-ramp** — `planpage init` scaffolds a consumer skill (`render-plan`) wired to `npx planpage`; the interactive menu is `@clack/prompts` and every branch calls the same command fn.
+- **Agent on-ramp** — `planpage init` scaffolds per-agent on-ramps (Claude Code skill · Cursor `.mdc` rule · Codex `AGENTS.md` block, all wired to `npx planpage`); `--agent` narrows the set, each writer is idempotent (skip unless `--force`). The interactive menu is `@clack/prompts` and every branch calls the same command fn.
 - **Validate at the boundary** — public templates assert required props → actionable throw.
 - **Errors by layer** — render throws · server exit codes (0/2/3, never-hang) · CLI top-catch.
 - **Naming** — Comp `PascalCase` · props `XProps` · fns `camelCase` · consts `SCREAMING_SNAKE` · ids/flags `kebab-case`.
