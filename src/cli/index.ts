@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import { createRequire } from "node:module";
 import { Command } from "commander";
 import { TEMPLATES } from "../templates";
 import { captureCommand } from "./capture";
@@ -9,11 +10,15 @@ import { newCommand } from "./new";
 import { renderCommand } from "./render";
 import { serveCommand } from "./serve";
 
+const { version } = createRequire(import.meta.url)("../../package.json") as {
+  version: string;
+};
+
 const program = new Command();
 program
   .name("planpage")
   .description("Render a skill's plan, gate, or report as beautiful, self-contained local HTML.")
-  .version("0.1.1");
+  .version(version);
 
 program
   .command("render")
