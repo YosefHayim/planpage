@@ -1,0 +1,86 @@
+name: Publish Package
+
+# Publishes planpage to npm via OIDC trusted publishing — no NPM_TOKEN, no OTP.
+# OIDC binds provenance to THIS repo (YosefHayim/planpage) AND this exact filename
+# (publish.yml); renaming this file invalidates the trusted-publisher match.
+# Adapted from dufflebag's templates/workflows/publish.yml (its ADR 0009), on npm.
+#
+# ONE-TIME SETUP (already done — recorded here):
+#   1. planpage@0.1.0 was published manually to create the package on npm.
+#   2. npmjs.com -> planpage -> Settings -> Trusted Publisher: repo
+#      YosefHayim/planpage + workflow file `publish.yml`.
+#
+# Release flow (no OTP after setup): bump the version, tag it, push the tag.
+#   npm version patch            # bumps package.json + creates a vX.Y.Z commit/tag
+#   git push && git push --tags  # the tag push triggers this workflow
+#   (or Actions tab -> Publish Package -> Run workflow, for a manual re-publish)
+#
+# Triggers:
+#   - push of a v*.*.* tag (e.g. `git tag v0.1.1 && git push origin v0.1.1`)
+#   - workflow_dispatch (manual recovery; optionally an existing tag to re-publish)
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Existing tag to publish (e.g. v0.1.1). Defaults to main HEAD.'
+        required: false
+        default: ''
+
+permissions:
+  id-token: write # OIDC token for npm trusted publishing
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      INPUT_TAG: ${{ inputs.tag }}
+    steps:
+      - name: Resolve checkout ref
+        id: ref
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            if [ -n "$INPUT_TAG" ]; then echo "ref=$INPUT_TAG" >> "$GITHUB_OUTPUT"; else echo "ref=main" >> "$GITHUB_OUTPUT"; fi
+          else
+            echo "ref=$GITHUB_REF" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ steps.ref.outputs.ref }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Upgrade npm for OIDC trusted publishing (>= 11.5.1)
+        run: |
+          npm install -g npm@latest
+          test "$(printf '%s\n' "11.5.1" "$(npm -v)" | sort -V | head -1)" = "11.5.1" || {
+            echo "::error::npm $(npm -v) is below 11.5.1; trusted publishing is not supported"
+            exit 1
+          }
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify (biome + typecheck + tests)
+        run: npm run verify
+
+      - name: Build
+        run: npm run build
+
+      - name: Publish to npm (trusted publishing)
+        run: npm publish --provenance --access public
