@@ -13,7 +13,7 @@ const program = new Command();
 program
   .name("planpage")
   .description("Render a skill's plan, gate, or report as beautiful, self-contained local HTML.")
-  .version("0.1.0");
+  .version("0.1.1");
 
 program
   .command("render")

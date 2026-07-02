@@ -46,7 +46,7 @@ npm run cli -- capture          # check the gallery registry is in sync
 npm run cli -- init             # scaffold a ready skill into .claude/skills (agent on-ramp)
 npm test           # vitest
 npm run lint:fix   # biome check --write
-npm run build      # tsc -p tsconfig.build.json → dist/
+npm run build      # tsup → bundled ESM in dist/ (runs under plain node — ADR 0014)
 # publish: npm publish  (unscoped, public by default — ADR 0013)
 ```
 

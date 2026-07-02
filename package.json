@@ -1,6 +1,6 @@
 {
   "name": "planpage",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Render a skill's plan, gate, or report as a beautiful, self-contained local HTML page — Preact components rendered to static HTML, with an opt-in post-back server.",
   "keywords": ["skill", "claude", "agent", "html", "report", "preact", "cli"],
   "license": "MIT",
@@ -16,7 +16,7 @@
   },
   "files": ["dist", "CODE-STYLE.md", "CONTEXT.md", "LANGUAGE.md", "PROJECT.md"],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsup",
     "cli": "tsx src/cli/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -27,6 +27,14 @@
     "verify": "biome ci . && tsc --noEmit && vitest run",
     "prepare": "npm run build"
   },
+  "tsup": {
+    "entry": ["src/index.ts", "src/cli/index.ts"],
+    "format": ["esm"],
+    "target": "node18",
+    "dts": true,
+    "clean": true,
+    "splitting": false
+  },
   "dependencies": {
     "@clack/prompts": "^1.6.0",
     "commander": "^12.1.0",
@@ -36,6 +44,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.7.5",
+    "tsup": "^8.5.1",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",
     "vitest": "^2.1.3"
