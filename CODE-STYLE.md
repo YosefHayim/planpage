@@ -129,6 +129,12 @@ Write new code like these:
 - `src/templates/Library/Library.tsx` — reads the `GALLERY` registry, groups by category (sticky rail + opt-in filter island), renders live preview cards.
 - `src/server/serve.ts` — an effect edge: exit codes, never-hang, helpers below.
 
+## Scripts layout — `scripts/dev/` is gitignored
+
+**Rule:** if you create scripts for local debugging, one-off experiments, or personal dev utilities, put them in `scripts/dev/`. This folder is **gitignored** — it never reaches the remote. Production/CI scripts stay at the `scripts/` root.
+
+When creating a new script, ask: _"Would CI or another contributor need this?"_ If **no** → `scripts/dev/`.
+
 ## Never
 
 The AI-slop fingerprint for planpage:
