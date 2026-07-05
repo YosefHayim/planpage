@@ -18,17 +18,31 @@ afterEach(() => {
 });
 
 describe("init", () => {
-  it("scaffolds all three agent on-ramps by default", () => {
+  it("scaffolds all agent on-ramps by default", () => {
     initCommand({});
     expect(existsSync(join(".claude", "skills", "render-plan", "SKILL.md"))).toBe(true);
     expect(existsSync(join(".cursor", "rules", "planpage.mdc"))).toBe(true);
     expect(existsSync("AGENTS.md")).toBe(true);
+    expect(existsSync(join(".windsurf", "rules", "planpage.md"))).toBe(true);
+    expect(existsSync(join(".kiro", "steering", "planpage.md"))).toBe(true);
+    expect(existsSync(join(".clinerules", "planpage.md"))).toBe(true);
+    expect(existsSync(join(".github", "copilot-instructions.md"))).toBe(true);
+    expect(existsSync(join(".amazonq", "rules", "planpage.md"))).toBe(true);
+    expect(existsSync(join(".roo", "rules", "planpage.md"))).toBe(true);
   });
 
   it("narrows to a single agent via --agent", () => {
     initCommand({ agent: "cursor" });
     expect(existsSync(join(".cursor", "rules", "planpage.mdc"))).toBe(true);
     expect(existsSync("AGENTS.md")).toBe(false);
+    expect(existsSync(join(".windsurf", "rules", "planpage.md"))).toBe(false);
+  });
+
+  it("supports comma-separated agents", () => {
+    initCommand({ agent: "windsurf,kiro" });
+    expect(existsSync(join(".windsurf", "rules", "planpage.md"))).toBe(true);
+    expect(existsSync(join(".kiro", "steering", "planpage.md"))).toBe(true);
+    expect(existsSync(join(".cursor", "rules", "planpage.mdc"))).toBe(false);
   });
 
   it("appends a delimited block into an existing AGENTS.md without clobbering it", () => {
@@ -51,5 +65,15 @@ describe("init", () => {
 
   it("rejects an unknown agent", () => {
     expect(() => initCommand({ agent: "vim" })).toThrow(/must be one of/);
+  });
+
+  it("includes question-poll instructions in all on-ramps", () => {
+    initCommand({});
+    const claude = readFileSync(join(".claude", "skills", "render-plan", "SKILL.md"), "utf8");
+    const windsurf = readFileSync(join(".windsurf", "rules", "planpage.md"), "utf8");
+    const kiro = readFileSync(join(".kiro", "steering", "planpage.md"), "utf8");
+    expect(claude).toContain("question-poll");
+    expect(windsurf).toContain("question-poll");
+    expect(kiro).toContain("question-poll");
   });
 });

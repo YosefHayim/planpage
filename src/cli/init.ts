@@ -8,8 +8,28 @@ const SKILL_DIR = "render-plan";
 const CODEX_START = "<!-- planpage:start -->";
 const CODEX_END = "<!-- planpage:end -->";
 
-type AgentKey = "claude" | "cursor" | "codex";
-const ALL_AGENTS: readonly AgentKey[] = ["claude", "cursor", "codex"];
+type AgentKey =
+  | "claude"
+  | "cursor"
+  | "codex"
+  | "windsurf"
+  | "kiro"
+  | "cline"
+  | "copilot"
+  | "amazonq"
+  | "roo";
+
+const ALL_AGENTS: readonly AgentKey[] = [
+  "claude",
+  "cursor",
+  "codex",
+  "windsurf",
+  "kiro",
+  "cline",
+  "copilot",
+  "amazonq",
+  "roo",
+];
 
 export interface InitCommandOptions {
   readonly agent?: string;
@@ -31,15 +51,21 @@ const STATUS_MARK: Record<ScaffoldResult["status"], string> = {
 
 /**
  * `planpage init` — wire planpage into your agents so they render every plan gate through the kit.
- * Writes one small, idempotent on-ramp per agent: a Claude Code skill (`.claude/skills/`), a Cursor
- * rule (`.cursor/rules/`), and a delimited block in `AGENTS.md` for Codex. Never clobbers — an
- * existing on-ramp is skipped unless `--force`. `--agent` narrows the set; default is all three.
+ * Writes one small, idempotent on-ramp per agent. Supports: Claude Code, Cursor, Codex (AGENTS.md),
+ * Windsurf, Kiro, Cline, GitHub Copilot, Amazon Q, and Roo Code. Never clobbers — an existing
+ * on-ramp is skipped unless `--force`. `--agent` narrows the set; default is all.
  */
 export const initCommand = (options: InitCommandOptions): void => {
   const writers: Record<AgentKey, (options: InitCommandOptions) => ScaffoldResult> = {
     claude: scaffoldClaude,
     cursor: scaffoldCursor,
     codex: scaffoldCodex,
+    windsurf: scaffoldWindsurf,
+    kiro: scaffoldKiro,
+    cline: scaffoldCline,
+    copilot: scaffoldCopilot,
+    amazonq: scaffoldAmazonQ,
+    roo: scaffoldRoo,
   };
   const results = resolveAgents(options.agent).map((agent) => writers[agent](options));
   const summary = results
@@ -72,6 +98,40 @@ const resolveAgents = (raw: string | undefined): AgentKey[] => {
   }
   return chosen;
 };
+
+/* ─── Shared content ─── */
+
+/** The core instruction block — what to do when presenting a plan. */
+const planSteps = (): string =>
+  [
+    "1. Shape the plan as JSON for the `plan-brief` template (title · summary · steps · options · risks · code).",
+    `2. Render + serve it: \`npx ${PKG} render plan-brief --data plan.json --serve --decision decision.json\` — it opens the browser and blocks until **Approve** / **Adjust**, and never hangs a non-TTY caller (it falls back to copy-paste).`,
+    "3. Read `decision.json` — `{ approved, flips, revisit, notes }` — and act: on `approved:false`, re-open the picks named in `flips` / `revisit` and fold in `notes`.",
+  ].join("\n");
+
+/** The question-poll instruction block — for interview/grill flows. */
+const pollSteps = (): string =>
+  [
+    "",
+    "### Interactive question flows (question-poll)",
+    "",
+    "When interviewing the user about preferences (code style, architecture, config):",
+    "",
+    "1. Shape questions as JSON: `{ title, layout?, questions: [{ id, text, group?, diagram?, options: [{ id, label, description?, code?, recommended? }] }] }`",
+    `2. Render: \`npx ${PKG} render question-poll --data questions.json --serve --decision decision.json\``,
+    "3. Read the decision — each answer includes `questionId`, `picked`, `questionText`, `chosenText`.",
+    "",
+    "Layout options: `stack` (default), `grid-2`, `grid-3`, `grid-4`, `grid-5`.",
+    "Add `diagram` (Mermaid source) to any question for visual context.",
+  ].join("\n");
+
+/** The full instruction body used in all on-ramps. */
+const fullInstructions = (): string =>
+  [planSteps(), pollSteps(), "", `Browse all components: \`npx ${PKG} library --open\`.`].join(
+    "\n",
+  );
+
+/* ─── Agent scaffolders ─── */
 
 /** Claude Code — a `render-plan` skill under `.claude/skills` (or `~/.claude` with --global). */
 const scaffoldClaude = (options: InitCommandOptions): ScaffoldResult => {
@@ -120,13 +180,84 @@ const scaffoldCodex = (options: InitCommandOptions): ScaffoldResult => {
   return { path: file, status: "updated" };
 };
 
-/** The shared render → serve → act instruction, reused across every agent's on-ramp. */
-const planSteps = (): string =>
-  [
-    "1. Shape the plan as JSON for the `plan-brief` template (title · summary · steps · options · risks · code).",
-    `2. Render + serve it: \`npx ${PKG} render plan-brief --data plan.json --serve --decision decision.json\` — it opens the browser and blocks until **Approve** / **Adjust**, and never hangs a non-TTY caller (it falls back to copy-paste).`,
-    "3. Read `decision.json` — `{ approved, flips, revisit, notes }` — and act: on `approved:false`, re-open the picks named in `flips` / `revisit` and fold in `notes`.",
-  ].join("\n");
+/** Windsurf — a rule under `.windsurf/rules`. */
+const scaffoldWindsurf = (options: InitCommandOptions): ScaffoldResult => {
+  const file = join(".", ".windsurf", "rules", "planpage.md");
+  if (existsSync(file) && !options.force) {
+    return { path: file, status: "skipped" };
+  }
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, windsurfRule());
+  return { path: file, status: "created" };
+};
+
+/** Kiro — a steering file under `.kiro/steering`. */
+const scaffoldKiro = (options: InitCommandOptions): ScaffoldResult => {
+  const file = join(".", ".kiro", "steering", "planpage.md");
+  if (existsSync(file) && !options.force) {
+    return { path: file, status: "skipped" };
+  }
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, kiroSteering());
+  return { path: file, status: "created" };
+};
+
+/** Cline — a rule under `.clinerules`. */
+const scaffoldCline = (options: InitCommandOptions): ScaffoldResult => {
+  const file = join(".", ".clinerules", "planpage.md");
+  if (existsSync(file) && !options.force) {
+    return { path: file, status: "skipped" };
+  }
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, clineRule());
+  return { path: file, status: "created" };
+};
+
+/** GitHub Copilot — instructions under `.github/copilot-instructions.md`. */
+const scaffoldCopilot = (options: InitCommandOptions): ScaffoldResult => {
+  const file = join(".", ".github", "copilot-instructions.md");
+  const block = copilotBlock();
+  if (!existsSync(file)) {
+    mkdirSync(dirname(file), { recursive: true });
+    writeFileSync(file, block);
+    return { path: file, status: "created" };
+  }
+  const current = readFileSync(file, "utf8");
+  if (current.includes("planpage")) {
+    if (!options.force) return { path: file, status: "skipped" };
+    // Replace existing block
+    const updated = current.replace(/## planpage[\s\S]*?(?=\n## |\n$|$)/, block.trim());
+    writeFileSync(file, updated);
+    return { path: file, status: "updated" };
+  }
+  const separator = current.endsWith("\n") ? "\n" : "\n\n";
+  appendFileSync(file, `${separator}${block}`);
+  return { path: file, status: "updated" };
+};
+
+/** Amazon Q — a rule under `.amazonq/rules`. */
+const scaffoldAmazonQ = (options: InitCommandOptions): ScaffoldResult => {
+  const file = join(".", ".amazonq", "rules", "planpage.md");
+  if (existsSync(file) && !options.force) {
+    return { path: file, status: "skipped" };
+  }
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, amazonQRule());
+  return { path: file, status: "created" };
+};
+
+/** Roo Code — a rule under `.roo/rules`. */
+const scaffoldRoo = (options: InitCommandOptions): ScaffoldResult => {
+  const file = join(".", ".roo", "rules", "planpage.md");
+  if (existsSync(file) && !options.force) {
+    return { path: file, status: "skipped" };
+  }
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, rooRule());
+  return { path: file, status: "created" };
+};
+
+/* ─── Content generators ─── */
 
 function claudeSkill(): string {
   return [
@@ -141,7 +272,7 @@ function claudeSkill(): string {
     "",
     "## Steps",
     "",
-    planSteps(),
+    fullInstructions(),
     "",
     "## Rules",
     "",
@@ -162,9 +293,7 @@ function cursorRule(): string {
     "",
     "When you present a plan, migration, or review-gate for approval, don't dump it as text. Render it through the `planpage` package and let me approve or adjust it in the browser.",
     "",
-    planSteps(),
-    "",
-    `Browse the available components any time: \`npx ${PKG} library --open\`.`,
+    fullInstructions(),
     "",
   ].join("\n");
 }
@@ -176,10 +305,74 @@ function codexBlock(): string {
     "",
     "When you present a plan or review-gate for approval, render it through the `planpage` package instead of dumping text:",
     "",
-    planSteps(),
-    "",
-    `Browse the available components any time: \`npx ${PKG} library --open\`.`,
+    fullInstructions(),
     CODEX_END,
+    "",
+  ].join("\n");
+}
+
+function windsurfRule(): string {
+  return [
+    "# Render plans through planpage",
+    "",
+    "When presenting a plan, migration, or review-gate for approval, render it through the `planpage` package as a beautiful HTML page instead of plain text.",
+    "",
+    fullInstructions(),
+    "",
+  ].join("\n");
+}
+
+function kiroSteering(): string {
+  return [
+    "# planpage — render plans as interactive HTML",
+    "",
+    "When presenting a plan, review-gate, or collecting user preferences, render through the `planpage` package instead of plain text output.",
+    "",
+    fullInstructions(),
+    "",
+  ].join("\n");
+}
+
+function clineRule(): string {
+  return [
+    "# planpage — interactive plan rendering",
+    "",
+    "At any plan or approval step, render through the `planpage` package to produce a beautiful, self-contained HTML page. Never dump long plans as raw text.",
+    "",
+    fullInstructions(),
+    "",
+  ].join("\n");
+}
+
+function copilotBlock(): string {
+  return [
+    "## planpage",
+    "",
+    "When presenting a plan or review-gate for approval, render it through the `planpage` package as a self-contained HTML page instead of text.",
+    "",
+    fullInstructions(),
+    "",
+  ].join("\n");
+}
+
+function amazonQRule(): string {
+  return [
+    "# planpage — render plans as HTML",
+    "",
+    "At plan or approval steps, render through the `planpage` package to produce a beautiful, interactive HTML page. The user approves or adjusts in the browser.",
+    "",
+    fullInstructions(),
+    "",
+  ].join("\n");
+}
+
+function rooRule(): string {
+  return [
+    "# planpage — interactive plan rendering",
+    "",
+    "At any plan or approval step, render through the `planpage` package to produce a beautiful, self-contained HTML page instead of dumping text.",
+    "",
+    fullInstructions(),
     "",
   ].join("\n");
 }

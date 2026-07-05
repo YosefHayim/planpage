@@ -49,8 +49,14 @@ program
 
 program
   .command("init")
-  .description("wire planpage into your agents (claude, cursor, codex)")
-  .option("--agent <list>", "agents to wire up: claude,cursor,codex or all", "all")
+  .description(
+    "wire planpage into your agents (claude, cursor, codex, windsurf, kiro, cline, copilot, amazonq, roo)",
+  )
+  .option(
+    "--agent <list>",
+    "agents to wire up: claude,cursor,codex,windsurf,kiro,cline,copilot,amazonq,roo or all",
+    "all",
+  )
   .option("--global", "install the Claude skill into ~/.claude/skills")
   .option("--dir <path>", "install the Claude skill into a custom skills directory")
   .option("--force", "overwrite existing on-ramp files")

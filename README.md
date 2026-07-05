@@ -59,8 +59,8 @@ const html = render(
 planpage is a package + CLI — **not itself a skill**. One command wires it into whatever agent you use, writing a small, idempotent on-ramp per agent that tells it to render the plan gate through `npx planpage` and read the decision back:
 
 ```bash
-npx planpage init                  # scaffold on-ramps for Claude Code, Cursor, and Codex
-npx planpage init --agent cursor   # just one (claude | cursor | codex | all)
+npx planpage init                  # scaffold on-ramps for all supported agents
+npx planpage init --agent cursor   # just one (claude | cursor | codex | windsurf | kiro | cline | copilot | amazonq | roo | all)
 npx planpage init --global         # put the Claude skill in ~/.claude/skills (user-wide)
 ```
 
@@ -69,6 +69,12 @@ npx planpage init --global         # put the Claude skill in ~/.claude/skills (u
 | **Claude Code** | a `render-plan` skill at `.claude/skills/render-plan/SKILL.md` |
 | **Cursor** | a project rule at `.cursor/rules/planpage.mdc` |
 | **Codex** | a delimited block appended to `AGENTS.md` (never clobbers what's there) |
+| **Windsurf** | a rule at `.windsurf/rules/planpage.md` |
+| **Kiro** | a steering file at `.kiro/steering/planpage.md` |
+| **Cline** | a rule at `.clinerules/planpage.md` |
+| **GitHub Copilot** | instructions in `.github/copilot-instructions.md` |
+| **Amazon Q** | a rule at `.amazonq/rules/planpage.md` |
+| **Roo Code** | a rule at `.roo/rules/planpage.md` |
 
 Prefer to wire it by hand? Drop this into your agent's rules file:
 
@@ -83,9 +89,10 @@ The layering is **install the package → `init` an on-ramp that calls it → sh
 - **plan-brief** — an entire agent plan on one page: summary · notes · steps · options · risks · annotated code (the flagship).
 - **before-after** — green/red before→after diffs (the workhorse report).
 - **code-style-plan** — a pick-the-code gallery + canonical example + CLI flow (an interactive gate).
+- **question-poll** — interactive multi-choice quiz: collect decisions in the browser with auto-advance, sparkles, Mermaid diagrams, and configurable grid layouts.
 - **library** — the living, auto-captured component gallery (`planpage library`).
 
-**Components** — reader-first pieces you compose into a page: `Callout` · `RiskList` · `Steps` · `Timeline` · `StatusChip` · `OptionCompare` · `PickBlock` · `PlanSummary` · `CodeBlock` · `DiffBlock` · `AnnotatedCode` · `SectionCard` · `Accordion` · `TreePanel` · `Flow` (Mermaid). Every one is showcased live — run `planpage library --open`.
+**Components** — reader-first pieces you compose into a page: `Callout` · `RiskList` · `Steps` · `Timeline` · `StatusChip` · `OptionCompare` · `PickBlock` · `QuestionCard` · `PlanSummary` · `CodeBlock` · `DiffBlock` · `AnnotatedCode` · `SectionCard` · `Accordion` · `TreePanel` · `Flow` (Mermaid). Every one is showcased live — run `planpage library --open`.
 
 ## How it works
 
