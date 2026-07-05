@@ -31,6 +31,8 @@ export const renderCommand = async (
     theme: options.theme,
     interactive: Boolean(options.serve),
     filterable: template === "library",
+    highlighted: template === "question-poll",
+    pollable: template === "question-poll",
   });
 
   if (options.serve) {

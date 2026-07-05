@@ -8,6 +8,7 @@ import { Flow } from "../components/Flow";
 import { OptionCompare } from "../components/OptionCompare";
 import { PickBlock } from "../components/PickBlock";
 import { PlanSummary } from "../components/PlanSummary";
+import { QuestionCard } from "../components/QuestionCard";
 import { RiskList } from "../components/RiskList";
 import { SectionCard } from "../components/SectionCard";
 import { StatusChip } from "../components/StatusChip";
@@ -193,6 +194,40 @@ export const GALLERY = {
       />
     ),
   },
+  QuestionCard: {
+    category: "brainstorm",
+    blurb:
+      "A quiz-style question with a responsive options grid, recommended badge, and ARIA radiogroup.",
+    usage: '<QuestionCard id="q-1" text="Which approach?" options={[…]} />',
+    props: [
+      { name: "id", type: "string", required: true },
+      { name: "text", type: "string", required: true },
+      { name: "group", type: "string" },
+      {
+        name: "options",
+        type: "{ id; label; description?; code?; codeLang?; recommended? }[]",
+        required: true,
+      },
+      { name: "expandOther", type: "boolean" },
+    ],
+    sample: () => (
+      <QuestionCard
+        id="demo.question"
+        text="Which state manager?"
+        options={[
+          {
+            id: "zustand",
+            label: "Zustand",
+            description: "Minimal, hook-based",
+            recommended: true,
+          },
+          { id: "redux", label: "Redux Toolkit", description: "Battle-tested, more ceremony" },
+          { id: "jotai", label: "Jotai", description: "Atomic, bottom-up" },
+        ]}
+        expandOther
+      />
+    ),
+  },
   PlanSummary: {
     category: "metrics",
     blurb: "A blast-radius header — the at-a-glance metrics of a plan.",
@@ -282,6 +317,11 @@ export const TEMPLATE_INDEX: ReadonlyArray<TemplateInfo> = [
   {
     name: "code-style-plan",
     blurb: "Pick-the-code gallery + canonical example, interactive.",
+    category: "gate",
+  },
+  {
+    name: "question-poll",
+    blurb: "Quiz-style question cards with progress, auto-advance, and decision post-back.",
     category: "gate",
   },
   {

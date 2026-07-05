@@ -42,4 +42,14 @@ export { BeforeAfter, type BeforeAfterProps } from "./templates/BeforeAfter/Befo
 export { CodeStylePlan, type CodeStylePlanProps } from "./templates/CodeStylePlan/CodeStylePlan";
 export { Library, type LibraryProps } from "./templates/Library/Library";
 export { PlanBrief, type PlanBriefProps, type PlanNote } from "./templates/PlanBrief/PlanBrief";
+export {
+  QuestionCard,
+  type QuestionCardProps,
+  type QuestionOption,
+} from "./components/QuestionCard";
+export {
+  QuestionPoll,
+  type QuestionLayout,
+  type QuestionPollProps,
+} from "./templates/QuestionPoll/QuestionPoll";
 export { SAMPLES, TEMPLATES, type TemplateName } from "./templates";

@@ -1,7 +1,7 @@
 {
   "$schema": "https://biomejs.dev/schemas/1.9.4/schema.json",
   "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
-  "files": { "ignore": ["dist", "node_modules"] },
+  "files": { "ignore": ["dist", "node_modules", "variations", "scripts"] },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
@@ -20,6 +20,9 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "a11y": {
+        "useSemanticElements": "off"
+      },
       "style": {
         "noDefaultExport": "error",
         "noNonNullAssertion": "error",
