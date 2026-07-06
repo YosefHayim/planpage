@@ -1,3 +1,5 @@
+import { codeMark } from "../render/codeMark";
+
 export interface QuestionOption {
   readonly id: string;
   readonly label: string;
@@ -138,8 +140,8 @@ export const QuestionCard = ({
                 <p class="mb-2 text-xs text-slate-500 dark:text-slate-400">{opt.description}</p>
               ) : null}
               {opt.code ? (
-                <pre class="code mt-2 max-w-full overflow-x-auto rounded-lg bg-slate-800 p-2 text-xs">
-                  <code class={opt.codeLang ? `language-${opt.codeLang}` : ""}>{opt.code}</code>
+                <pre class="code mt-2 max-w-full overflow-x-auto rounded-lg bg-slate-100 p-2 text-xs text-slate-800 dark:bg-[#1e1e1e] dark:text-slate-100">
+                  {codeMark(opt.code, opt.codeLang ?? "ts")}
                 </pre>
               ) : null}
             </div>

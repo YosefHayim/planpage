@@ -10,10 +10,11 @@ Single source of truth for working in **planpage**. `CLAUDE.md` / `GEMINI.md` po
 
 | Path | Purpose |
 |---|---|
-| `src/components/` | shared primitives (flat), grouped by role — layout (`Shell` · `SectionCard` · `TreePanel` · `Accordion`) · notes (`Callout` · `RiskList`) · sequence (`StatusChip` · `Steps` · `Timeline`) · brainstorm (`PickBlock` · `OptionCompare`) · metrics (`PlanSummary`) · code (`DiffBlock` · `CodeBlock` · `AnnotatedCode`) · diagram (`Flow`) · `SubmitBar` |
+| `src/components/` | shared primitives (flat), grouped by role — layout (`Shell` · `SectionCard` · `TreePanel` · `Accordion`) · notes (`Callout` · `RiskList`) · sequence (`StatusChip` · `Steps` · `Timeline`) · brainstorm (`PickBlock` · `OptionCompare`) · metrics (`PlanSummary`) · code (`DiffBlock` · `CodeBlock` · `AnnotatedCode` · `CodeExplorer`) · diagram (`Flow`) · `SubmitBar` |
 | `src/templates/<Name>/` | pages (folder-per-template: component + test + README) — `BeforeAfter`, `CodeStylePlan`, `PlanBrief` (flagship agent-plan page), `Library` (auto-captured gallery); registry in `templates/index.tsx` |
 | `src/gallery/` | the living collection — `registry` (SSOT) · `capture` (pure diff) · sync test; powers `Library` + `planpage capture` |
-| `src/render/` | pure engine — `render()`, `Shell` wiring, `raw()`, client scripts (theme toggle · post-back · gallery filter). `Shell` owns the `Theme` type + the animated sun/moon toggle |
+| `src/render/` | pure engine — `render()`, `Shell` wiring, `raw()`, `codeMark` (the `data-hl` marker every code component emits), client scripts (theme toggle · post-back · gallery filter · code explorer). `Shell` owns the `Theme` type + the animated sun/moon toggle |
+| `src/highlight/` | the highlight pass — an **async edge transform** (`highlight` · `renderHighlighted`) that swaps `data-hl` markers for Shiki's VSCode dual-theme spans. Not part of the pure render (ADR 0015) |
 | `src/server/` | opt-in post-back — `serve` (ephemeral port, never-hang), `Decision` |
 | `src/cli/` | dual-mode CLI (commander) — `render` / `serve` / `new` / `library` / `capture` / `init`; bare TTY → `menu` (clack); shared `io` (open/writeTemp) |
 | `src/contracts/` | shared types — `Decision` |
@@ -23,10 +24,10 @@ Single source of truth for working in **planpage**. `CLAUDE.md` / `GEMINI.md` po
 
 ## Conventions
 <!-- rules digest — full guide in CODE-STYLE.md; edit there -->
-- **Pure render, effects at the edges** — `components`/`templates`/`render` are pure (data → HTML string); all I/O in `server` + `cli`.
+- **Pure render, effects at the edges** — `components`/`templates`/`render` are pure (data → HTML string); all I/O in `server` + `cli`. **Syntax highlighting is an edge step**: code components emit a `data-hl` marker (`render/codeMark.tsx`) so render stays sync; the async `highlight()` pass (`src/highlight/`) bakes in Shiki's VSCode colours at the edge, and unhighlighted output degrades to a readable no-JS fallback (ADR 0015).
 - **Components + `render()`** — Preact, arrow-const, named exports, PascalCase files, exported `readonly XProps`.
 - **Escaping is default** — JSX auto-escapes; raw HTML only via `raw()`; `dangerouslySetInnerHTML` allowed only in `Shell` for constant infra.
-- **Client islands live in the Shell** — constant scripts from `render/clientScript.ts`, each gated by a Shell flag (`interactive` → post-back · `filterable` → gallery filter). Never inline a `<script>` in a template.
+- **Client islands live in the Shell** — constant scripts from `render/clientScript.ts`, each gated by a Shell flag (`interactive` → post-back · `filterable` → gallery filter · `explorable` → CodeExplorer file/variant switching · `pollable` → QuestionPoll). Never inline a `<script>` in a template.
 - **Agent on-ramp** — `planpage init` scaffolds per-agent on-ramps (Claude Code skill · Cursor `.mdc` rule · Codex `AGENTS.md` block, all wired to `npx planpage`); `--agent` narrows the set, each writer is idempotent (skip unless `--force`). The interactive menu is `@clack/prompts` and every branch calls the same command fn.
 - **Validate at the boundary** — public templates assert required props → actionable throw.
 - **Errors by layer** — render throws · server exit codes (0/2/3, never-hang) · CLI top-catch.

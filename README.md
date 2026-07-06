@@ -33,8 +33,9 @@ npx planpage
 - **Post-back server** — opt-in: the page collects an Approve/Adjust decision and returns it as JSON to your agent
 - **9 agent integrations** — one `init` command wires planpage into Claude Code, Cursor, Codex, Windsurf, Kiro, Cline, GitHub Copilot, Amazon Q, and Roo Code
 - **4 templates** — plan-brief (flagship) · before-after diffs · code-style-plan · question-poll (interactive quiz with Mermaid diagrams)
-- **16 components** — reader-first UI pieces: Callout · RiskList · Steps · Timeline · CodeBlock · DiffBlock · AnnotatedCode · Flow (Mermaid) · QuestionCard · and more
-- **Programmable** — use the CLI, or import `render()` and compose Preact components directly in TypeScript
+- **17 components** — reader-first UI pieces: Callout · RiskList · Steps · Timeline · CodeBlock · DiffBlock · AnnotatedCode · CodeExplorer (IDE-style file tree) · Flow (Mermaid) · QuestionCard · and more
+- **Real VSCode syntax colour** — Shiki highlights TS/JS (and more) at render time using VSCode's own themes; colour is baked into the HTML, so it works offline with no client JS
+- **Programmable** — use the CLI, or import `render()` (or `renderHighlighted()`) and compose Preact components directly in TypeScript
 - **Never hangs** — the post-back server gracefully falls back when there's no TTY
 
 ## Usage
@@ -57,15 +58,16 @@ Data flows in as JSON via `--data <file>` or piped stdin. Use `--sample` for bui
 ### Library
 
 ```tsx
-import { render, BeforeAfter } from "planpage";
+import { renderHighlighted, BeforeAfter } from "planpage";
 
-const html = render(
+const html = await renderHighlighted(
   <BeforeAfter
     title="Deslop pass"
     diffs={[{ file: "src/x.ts", before: "let x = 1", after: "const x = 1" }]}
   />,
 );
-// html is a complete document string — write it, open it, or serve it.
+// html is a complete document string with VSCode colour baked in — write it, open it, or serve it.
+// Prefer the sync `render()` if you don't need syntax colour (it leaves a readable monochrome fallback).
 ```
 
 ### Agent integration
@@ -95,7 +97,7 @@ Each on-ramp tells the agent: shape your plan as JSON → render it through `npx
 ## How it works
 
 ```
-data → render() → HTML string → write/open  OR  serve → one decision back
+data → render() → marked HTML → highlight() → coloured HTML → write/open  OR  serve → one decision back
 ```
 
 Static render is the default. The post-back server is opt-in and blocks until one decision arrives — then exits cleanly.

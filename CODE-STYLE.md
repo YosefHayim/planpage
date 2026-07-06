@@ -44,7 +44,7 @@ if (diffs.length === 0) throw new Error("BeforeAfter: diffs[] is required and no
 _Why:_ the caller is usually an agent assembling JSON — junk must fail loud, not render a broken page.
 
 ### Escaping is the default (JSX) · [lint: noDangerouslySetInnerHtml]
-Interpolated `{value}` is auto-escaped by JSX. Raw HTML only through the `raw()` helper — never `dangerouslySetInnerHTML` directly. The one sanctioned exception is `Shell`, which injects its own **constant** `<script>`/`<style>` infra (never skill data) with an explicit `biome-ignore`. Client-side islands follow the same rule: a constant string from `render/clientScript.ts`, injected by `Shell` and gated by a boolean prop (`interactive` → post-back · `filterable` → gallery filter) — never a `<script>` inside a template.
+Interpolated `{value}` is auto-escaped by JSX. Raw HTML only through the `raw()` helper — never `dangerouslySetInnerHTML` directly. The one sanctioned exception is `Shell`, which injects its own **constant** `<script>`/`<style>` infra (never skill data) with an explicit `biome-ignore`. Client-side islands follow the same rule: a constant string from `render/clientScript.ts`, injected by `Shell` and gated by a boolean prop (`interactive` → post-back · `filterable` → gallery filter · `explorable` → CodeExplorer file/variant switching · `pollable` → QuestionPoll) — never a `<script>` inside a template. Syntax colour is **not** an island: code components emit a `data-hl` marker (`render/codeMark.tsx`) that the async `highlight()` edge pass bakes into the HTML with Shiki (ADR 0015) — no client JS needed to read colour.
 ```tsx
 // ✓ <code>{snippet}</code>              // escaped
 // ✓ {raw(trustedFragment)}             // explicit, reviewed

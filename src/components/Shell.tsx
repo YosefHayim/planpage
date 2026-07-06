@@ -1,6 +1,7 @@
 import type { ComponentChildren } from "preact";
 import {
   CLIENT_SCRIPT,
+  CODE_EXPLORER_SCRIPT,
   GALLERY_FILTER,
   QUESTION_POLL_SCRIPT,
   THEME_TOGGLE,
@@ -18,8 +19,8 @@ export interface ShellProps {
   readonly interactive?: boolean;
   /** When true, includes the gallery filter island (the Library's type-to-filter search). */
   readonly filterable?: boolean;
-  /** When true, includes Prism.js CDN links for syntax highlighting. */
-  readonly highlighted?: boolean;
+  /** When true, includes the CodeExplorer client island (file switching + before/after toggle). */
+  readonly explorable?: boolean;
   /** When true, includes the QuestionPoll client script (selection, progress, submit). */
   readonly pollable?: boolean;
   readonly children: ComponentChildren;
@@ -35,7 +36,10 @@ const MERMAID =
   "import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';mermaid.initialize({startOnLoad:true,theme:document.documentElement.classList.contains('dark')?'dark':'neutral',securityLevel:'loose'});";
 
 const STYLE =
-  ".code{white-space:pre;overflow-x:auto;tab-size:2}.chip{font-size:.75rem;padding:.15em .7em;border-radius:999px;font-weight:600;white-space:nowrap}.mermaid{display:flex;justify-content:center}.pick.flipped .chosen{opacity:.4;filter:grayscale(1)}.pick.flipped .rejected{opacity:1;filter:none;outline:2px solid #34d399}.pick.revisit{outline:2px dashed #fbbf24;outline-offset:4px;border-radius:12px}.theme-ico .sun,.theme-ico .moon{transform-origin:center;transition:transform .5s cubic-bezier(.4,0,.2,1),opacity .35s ease}.theme-ico .moon{opacity:0;transform:rotate(-90deg) scale(.3)}.dark .theme-ico .sun{opacity:0;transform:rotate(90deg) scale(.3)}.dark .theme-ico .moon{opacity:1;transform:none}.spin{display:inline-block;animation:sui-spin 1s linear infinite}@keyframes sui-spin{to{transform:rotate(360deg)}}" +
+  ".code{white-space:pre;overflow-x:auto;tab-size:2}" +
+  /* Shiki dual-theme: light colours are inline; swap to the --shiki-dark var under .dark */
+  "html.dark [data-hl] span,html.dark [data-hl-line] span{color:var(--shiki-dark)!important}" +
+  ".chip{font-size:.75rem;padding:.15em .7em;border-radius:999px;font-weight:600;white-space:nowrap}.mermaid{display:flex;justify-content:center}.pick.flipped .chosen{opacity:.4;filter:grayscale(1)}.pick.flipped .rejected{opacity:1;filter:none;outline:2px solid #34d399}.pick.revisit{outline:2px dashed #fbbf24;outline-offset:4px;border-radius:12px}.theme-ico .sun,.theme-ico .moon{transform-origin:center;transition:transform .5s cubic-bezier(.4,0,.2,1),opacity .35s ease}.theme-ico .moon{opacity:0;transform:rotate(-90deg) scale(.3)}.dark .theme-ico .sun{opacity:0;transform:rotate(90deg) scale(.3)}.dark .theme-ico .moon{opacity:1;transform:none}.spin{display:inline-block;animation:sui-spin 1s linear infinite}@keyframes sui-spin{to{transform:rotate(360deg)}}" +
   /* Sparkle animations */
   ".sparkle-1,.sparkle-2,.sparkle-3{animation:sparkle-pulse 2s ease-in-out infinite}.sparkle-2{animation-delay:.4s}.sparkle-3{animation-delay:.8s}@keyframes sparkle-pulse{0%,100%{transform:scale(1);opacity:.7}50%{transform:scale(1.5);opacity:1}}" +
   /* Question card states */
@@ -62,7 +66,7 @@ export const Shell = ({
   theme = "auto",
   interactive = false,
   filterable = false,
-  highlighted = false,
+  explorable = false,
   pollable = false,
   children,
 }: ShellProps) => (
@@ -78,16 +82,6 @@ export const Shell = ({
       <script dangerouslySetInnerHTML={{ __html: THEME_PREPAINT }} />
       {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra style, not skill data */}
       <style dangerouslySetInnerHTML={{ __html: STYLE }} />
-      {highlighted ? (
-        <>
-          <link
-            href="https://cdn.jsdelivr.net/npm/prismjs@1/themes/prism-tomorrow.min.css"
-            rel="stylesheet"
-          />
-          <script src="https://cdn.jsdelivr.net/npm/prismjs@1/components/prism-core.min.js" />
-          <script src="https://cdn.jsdelivr.net/npm/prismjs@1/plugins/autoloader/prism-autoloader.min.js" />
-        </>
-      ) : null}
     </head>
     <body class="bg-white font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200">
       <header class="sticky top-0 z-20 border-b border-slate-200 bg-white/80 px-6 py-4 backdrop-blur dark:border-slate-800 dark:bg-slate-950/80">
@@ -144,6 +138,10 @@ export const Shell = ({
       {pollable ? (
         // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
         <script dangerouslySetInnerHTML={{ __html: QUESTION_POLL_SCRIPT }} />
+      ) : null}
+      {explorable ? (
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
+        <script dangerouslySetInnerHTML={{ __html: CODE_EXPLORER_SCRIPT }} />
       ) : null}
     </body>
   </html>

@@ -8,6 +8,11 @@ export {
 } from "./components/AnnotatedCode";
 export { Callout, type CalloutProps, type CalloutTone } from "./components/Callout";
 export { CodeBlock, type CodeBlockProps } from "./components/CodeBlock";
+export {
+  CodeExplorer,
+  type CodeExplorerProps,
+  type ExplorerFile,
+} from "./components/CodeExplorer";
 export { DiffBlock, type DiffBlockProps } from "./components/DiffBlock";
 export { Flow, type FlowProps } from "./components/Flow";
 export {
@@ -35,6 +40,7 @@ export {
   TEMPLATE_INDEX,
   type TemplateInfo,
 } from "./gallery/registry";
+export { highlight, renderHighlighted } from "./highlight/highlight";
 export { raw } from "./render/raw";
 export { render, type RenderOptions } from "./render/render";
 export { serve, type ServeOptions } from "./server/serve";

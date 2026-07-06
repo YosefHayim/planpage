@@ -1,6 +1,6 @@
 {
   "name": "planpage",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Render a skill's plan, gate, or report as a beautiful, self-contained local HTML page — Preact components rendered to static HTML, with an opt-in post-back server.",
   "keywords": ["skill", "claude", "agent", "html", "report", "preact", "cli"],
   "homepage": "https://github.com/YosefHayim/planpage#readme",
@@ -46,7 +46,8 @@
     "@clack/prompts": "^1.6.0",
     "commander": "^12.1.0",
     "preact": "^10.24.3",
-    "preact-render-to-string": "^6.5.11"
+    "preact-render-to-string": "^6.5.11",
+    "shiki": "4.3.0"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",

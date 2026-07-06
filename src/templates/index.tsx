@@ -41,8 +41,23 @@ export const SAMPLES: Record<TemplateName, unknown> = {
       },
     ],
     canonical: {
-      label: "src/templates/BeforeAfter/BeforeAfter.tsx",
-      code: "export const BeforeAfter = ({ title, diffs }: BeforeAfterProps) => …",
+      label: "Canonical example — adding a component",
+      files: [
+        {
+          path: "src/components/Callout.tsx",
+          code: "export interface CalloutProps {\n  readonly tone: CalloutTone;\n  readonly children: ComponentChildren;\n}\n\nexport const Callout = ({ tone, children }: CalloutProps) => (\n  <div class={toneClass(tone)}>{children}</div>\n);",
+          before:
+            "export function Callout(props) {\n  return <div className={getToneClass(props.tone)}>{props.children}</div>;\n}",
+        },
+        {
+          path: "src/index.ts",
+          code: 'export { Callout, type CalloutProps } from "./components/Callout";',
+        },
+        {
+          path: "src/gallery/registry.tsx",
+          code: 'Callout: {\n  category: "notes",\n  blurb: "A tone-coloured admonition.",\n  sample: () => <Callout tone="risk">Touches 12 files.</Callout>,\n},',
+        },
+      ],
     },
     cliFlow: "flowchart LR\n  A[planpage] -->|TTY| M[menu]\n  A -->|flags| F[render / serve / new]",
   },

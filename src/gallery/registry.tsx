@@ -3,6 +3,7 @@ import { Accordion } from "../components/Accordion";
 import { AnnotatedCode } from "../components/AnnotatedCode";
 import { Callout } from "../components/Callout";
 import { CodeBlock } from "../components/CodeBlock";
+import { CodeExplorer } from "../components/CodeExplorer";
 import { DiffBlock } from "../components/DiffBlock";
 import { Flow } from "../components/Flow";
 import { OptionCompare } from "../components/OptionCompare";
@@ -264,6 +265,30 @@ export const GALLERY = {
       { name: "code", type: "string", required: true },
     ],
     sample: () => <CodeBlock label="hello.ts" code={'const hi = "hello"'} />,
+  },
+  CodeExplorer: {
+    category: "code",
+    blurb:
+      "An IDE-style multi-file browser — sidebar file tree + editor pane, per-file before/after.",
+    usage: "<CodeExplorer files={[{ path, code, before? }]} label='…' />",
+    props: [
+      { name: "files", type: "{ path; code; before?; lang? }[]", required: true },
+      { name: "label", type: "string" },
+    ],
+    sample: () => (
+      <CodeExplorer
+        label="Canonical example — adding an endpoint"
+        files={[
+          {
+            path: "src/orders/createOrder.ts",
+            code: "export const createOrder = (input: NewOrder) => db.orders.insert(input)",
+            before: "export function createOrder(input){ return db.insert(input) }",
+          },
+          { path: "src/orders/index.ts", code: 'export { createOrder } from "./createOrder"' },
+          { path: "src/routes/orders.ts", code: 'router.post("/orders", createOrder)' },
+        ]}
+      />
+    ),
   },
   AnnotatedCode: {
     category: "code",

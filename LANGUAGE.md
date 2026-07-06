@@ -9,8 +9,12 @@ A named, gallery-listed page you can render (e.g. `BeforeAfter`, `CodeStylePlan`
 _Avoid_: layout, view, page-type.
 
 **component**:
-A shared building piece templates compose from (`Shell`, `SectionCard`, `PickBlock`, `DiffBlock`, `TreePanel`, `Flow`, `CodeBlock`, `SubmitBar`).
+A shared building piece templates compose from (`Shell`, `SectionCard`, `PickBlock`, `DiffBlock`, `TreePanel`, `Flow`, `CodeBlock`, `CodeExplorer`, `SubmitBar`).
 _Avoid_: widget, block, part.
+
+**CodeExplorer**:
+The IDE-style multi-file view — a sidebar file tree + editor pane, with a per-file before/after toggle. The paved way to show a multi-file canonical example.
+_Avoid_: file browser, editor, IDE.
 
 **shell**:
 The fixed page skeleton (`Shell`) every render nests inside — CDN tags, theme, header, submit-bar. Skills never restyle it.
@@ -40,6 +44,14 @@ An opt-in interactive region on an otherwise static page.
 
 **render**:
 The pure step — a template tree → a self-contained HTML document string. No I/O.
+
+**marker**:
+The `data-hl` `<code>` element a code component emits (via `codeMark`) carrying the escaped source — the target the highlight pass rewrites.
+_Avoid_: placeholder, token, tag.
+
+**highlight**:
+The async edge step — swap every marker for Shiki's VSCode dual-theme spans, colour baked into the HTML (no CDN, no client JS). `renderHighlighted` = render + highlight in one call.
+_Avoid_: colourize, syntax, prism.
 
 **serve**:
 The effectful step — serve a rendered page and block for one decision (`serve-plan`).

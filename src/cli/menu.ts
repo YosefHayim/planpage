@@ -39,7 +39,7 @@ export const runMenu = async (): Promise<void> => {
   }
 
   if (action === "library") {
-    libraryCommand({ open: true });
+    await libraryCommand({ open: true });
     outro("Opening the component gallery …");
     return;
   }

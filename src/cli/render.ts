@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Theme } from "../components/Shell";
+import { highlight } from "../highlight/highlight";
 import { render } from "../render/render";
 import { serve } from "../server/serve";
 import { SAMPLES, TEMPLATES, type TemplateName } from "../templates";
@@ -27,13 +28,15 @@ export const renderCommand = async (
     throw new Error(`unknown template "${template}". known: ${Object.keys(TEMPLATES).join(", ")}`);
   }
   const data = options.sample ? SAMPLES[template as TemplateName] : await readData(options.data);
-  const html = render(factory(data), {
-    theme: options.theme,
-    interactive: Boolean(options.serve),
-    filterable: template === "library",
-    highlighted: template === "question-poll",
-    pollable: template === "question-poll",
-  });
+  const html = await highlight(
+    render(factory(data), {
+      theme: options.theme,
+      interactive: Boolean(options.serve),
+      filterable: template === "library",
+      explorable: template === "code-style-plan",
+      pollable: template === "question-poll",
+    }),
+  );
 
   if (options.serve) {
     const outPath = options.decision ?? join(tmpdir(), "planpage-decision.json");
