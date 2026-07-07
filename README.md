@@ -9,9 +9,9 @@
 
 ## Why
 
-AI coding agents propose multi-step plans, review-gates, and reports — but they dump them as walls of terminal text. Hard to scan, impossible to share, and no way to approve or adjust inline.
+AI coding agents propose multi-step plans, review-gates, and reports, then often dump them as walls of terminal text. The work may be careful, but the reading experience is not: dense scrollback makes risks, choices, and next steps hard to absorb.
 
-**planpage** turns that plan into a self-contained HTML page you open in the browser. One command. The developer reads a clean, structured page — and optionally clicks Approve or Adjust, sending the decision straight back to the agent.
+**planpage** turns that plan into a self-contained HTML page you open in the browser. One command gives the developer a calm, structured page for reading the plan properly — and, when needed, Approve or Adjust sends a decision straight back to the agent.
 
 ## Quick start
 
@@ -19,7 +19,7 @@ AI coding agents propose multi-step plans, review-gates, and reports — but the
 npx planpage render plan-brief --sample --open
 ```
 
-That's it. One command renders a sample plan page and opens it in your browser. No install needed — `npx` handles it. Requires Node 18+.
+That's it. One command renders a sample plan page and opens it in your browser. No install needed — [`npx`](https://docs.npmjs.com/cli/v10/commands/npx/) handles it. Requires [Node.js](https://nodejs.org/en) 18+.
 
 Want the interactive menu instead?
 
@@ -31,11 +31,11 @@ npx planpage
 
 - **Self-contained HTML** — one file, works offline, nothing written to your repo
 - **Post-back server** — opt-in: the page collects an Approve/Adjust decision and returns it as JSON to your agent
-- **9 agent integrations** — one `init` command wires planpage into Claude Code, Cursor, Codex, Windsurf, Kiro, Cline, GitHub Copilot, Amazon Q, and Roo Code
-- **4 templates** — plan-brief (flagship) · before-after diffs · code-style-plan · question-poll (interactive quiz with Mermaid diagrams)
-- **17 components** — reader-first UI pieces: Callout · RiskList · Steps · Timeline · CodeBlock · DiffBlock · AnnotatedCode · CodeExplorer (IDE-style file tree) · Flow (Mermaid) · QuestionCard · and more
-- **Real VSCode syntax colour** — Shiki highlights TS/JS (and more) at render time using VSCode's own themes; colour is baked into the HTML, so it works offline with no client JS
-- **Programmable** — use the CLI, or import `render()` (or `renderHighlighted()`) and compose Preact components directly in TypeScript
+- **9 agent integrations** — one `init` command wires planpage into [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview), [Cursor](https://cursor.com/docs/rules), [Codex](https://developers.openai.com/codex/guides/agents-md), [Windsurf](https://docs.windsurf.com/windsurf/cascade/agents-md), [Kiro](https://kiro.dev/docs/), [Cline](https://docs.cline.bot/customization/cline-rules), [GitHub Copilot](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions), [Amazon Q](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html), and [Roo Code](https://roocodeinc.github.io/Roo-Code/)
+- **5 templates** — plan-brief (flagship) · before-after diffs · code-style-plan · question-poll (interactive quiz with [Mermaid](https://mermaid.js.org/) diagrams) · library
+- **17 components** — reader-first UI pieces: Callout · RiskList · Steps · Timeline · CodeBlock · DiffBlock · AnnotatedCode · CodeExplorer (IDE-style file tree) · Flow · QuestionCard · and more
+- **Real VS Code syntax colour** — [Shiki](https://shiki.style/) highlights TS/JS (and more) at render time using [VS Code](https://code.visualstudio.com/)'s own themes; colour is baked into the HTML, so it works offline with no client JS
+- **Programmable** — use the CLI, or import `render()` (or `renderHighlighted()`) and compose [Preact](https://preactjs.com/) components directly in [TypeScript](https://www.typescriptlang.org/)
 - **Never hangs** — the post-back server gracefully falls back when there's no TTY
 
 ## Usage
@@ -51,7 +51,7 @@ planpage new my-template                                 # scaffold a new templa
 planpage init                                            # wire planpage into your agents
 ```
 
-Templates: `plan-brief` · `before-after` · `code-style-plan` · `question-poll`
+Templates: `plan-brief` · `before-after` · `code-style-plan` · `question-poll` · `library`
 
 Data flows in as JSON via `--data <file>` or piped stdin. Use `--sample` for built-in sample data.
 
@@ -66,7 +66,7 @@ const html = await renderHighlighted(
     diffs={[{ file: "src/x.ts", before: "let x = 1", after: "const x = 1" }]}
   />,
 );
-// html is a complete document string with VSCode colour baked in — write it, open it, or serve it.
+// html is a complete document string with VS Code colour baked in — write it, open it, or serve it.
 // Prefer the sync `render()` if you don't need syntax colour (it leaves a readable monochrome fallback).
 ```
 
@@ -101,6 +101,18 @@ data → render() → marked HTML → highlight() → coloured HTML → write/op
 ```
 
 Static render is the default. The post-back server is opt-in and blocks until one decision arrives — then exits cleanly.
+
+## Build locally
+
+planpage is a Node.js package published on [npm](https://www.npmjs.com/package/planpage). Local development uses [pnpm](https://pnpm.io/):
+
+```bash
+pnpm install
+pnpm run verify
+pnpm run cli -- render plan-brief --sample --open
+```
+
+Use `pnpm run cli -- library --open` to inspect the captured component gallery. For code conventions and extension points, read [CODE-STYLE.md](CODE-STYLE.md) before adding templates, components, or CLI commands.
 
 ## Scope
 
