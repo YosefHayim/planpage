@@ -1,9 +1,12 @@
 import type { VNode } from "preact";
+import { AuditReport, type AuditReportProps } from "./AuditReport/AuditReport";
 import { BeforeAfter, type BeforeAfterProps } from "./BeforeAfter/BeforeAfter";
 import { CodeStylePlan, type CodeStylePlanProps } from "./CodeStylePlan/CodeStylePlan";
+import { Flashcards, type FlashcardsProps } from "./Flashcards/Flashcards";
 import { Library } from "./Library/Library";
 import { PlanBrief, type PlanBriefProps } from "./PlanBrief/PlanBrief";
 import { QuestionPoll, type QuestionPollProps } from "./QuestionPoll/QuestionPoll";
+import { Quiz, type QuizProps } from "./Quiz/Quiz";
 
 /**
  * Registry mapping a kebab-case template name → a factory that builds its VNode from raw data.
@@ -15,6 +18,9 @@ export const TEMPLATES = {
   "code-style-plan": (data: unknown): VNode => <CodeStylePlan {...(data as CodeStylePlanProps)} />,
   "plan-brief": (data: unknown): VNode => <PlanBrief {...(data as PlanBriefProps)} />,
   "question-poll": (data: unknown): VNode => <QuestionPoll {...(data as QuestionPollProps)} />,
+  quiz: (data: unknown): VNode => <Quiz {...(data as QuizProps)} />,
+  flashcards: (data: unknown): VNode => <Flashcards {...(data as FlashcardsProps)} />,
+  "audit-report": (data: unknown): VNode => <AuditReport {...(data as AuditReportProps)} />,
   library: (): VNode => <Library />,
 } satisfies Record<string, (data: unknown) => VNode>;
 
@@ -191,6 +197,129 @@ export const SAMPLES: Record<TemplateName, unknown> = {
           },
         ],
         expandOther: true,
+      },
+    ],
+  },
+  quiz: {
+    title: "Coach check — planpage architecture",
+    intro: "Answer to reveal the why. One option is correct; the rest are common traps.",
+    questions: [
+      {
+        id: "q-island",
+        group: "Rendering",
+        question: "How does a template add interactivity?",
+        explanation:
+          "Interactivity is a constant script from clientScript.ts, injected by the Shell and gated by a boolean flag — never a <script> inside a template.",
+        options: [
+          { id: "shell-flag", label: "A constant island gated by a Shell flag", correct: true },
+          { id: "inline", label: "An inline <script> in the template" },
+          { id: "hydrate", label: "Hydrate the Preact tree on the client" },
+          { id: "cdn", label: "Pull a framework from a CDN" },
+        ],
+      },
+      {
+        id: "q-highlight",
+        group: "Rendering",
+        question: "Why do code components emit a data-hl marker instead of colouring inline?",
+        explanation:
+          "render() must stay pure and synchronous; Shiki highlighting is async, so it runs as an edge pass that swaps the marker — and unhighlighted output still degrades to readable code.",
+        options: [
+          { id: "pure", label: "To keep render() pure and synchronous", correct: true },
+          { id: "smaller", label: "To make the HTML smaller" },
+          { id: "seo", label: "For SEO" },
+        ],
+      },
+      {
+        id: "q-gallery",
+        group: "Conventions",
+        question: "What guarantees the gallery is never missing a component?",
+        explanation:
+          "Every src/components/*.tsx must have a GALLERY entry; registry.test.ts fails on drift, and `planpage capture` prints a stub for anything missing.",
+        options: [
+          { id: "drift", label: "A gallery-sync drift test over src/components", correct: true },
+          { id: "manual", label: "Manual review in PRs" },
+          { id: "codegen", label: "A codegen step at build time" },
+          { id: "none", label: "Nothing — it can drift" },
+        ],
+      },
+    ],
+  },
+  flashcards: {
+    title: "planpage — core vocabulary",
+    intro: "Tap a card to flip. The learn-side companion to the quiz.",
+    cards: [
+      {
+        label: "render",
+        front: "Island",
+        back: "A constant client script the Shell injects, gated by a boolean flag — the only interactivity in a page.",
+        code: "pollable ? <script … /> : null",
+      },
+      {
+        label: "render",
+        front: "data-hl marker",
+        back: "The placeholder a code component emits so render() stays sync; the async highlight() pass swaps it for Shiki spans.",
+        code: 'codeMark(code, "ts")',
+      },
+      {
+        label: "gallery",
+        front: "Capture drift test",
+        back: "registry.test.ts compares src/components to the GALLERY registry and fails if any component is unregistered.",
+      },
+      {
+        label: "cli",
+        front: "Post-back",
+        back: "The opt-in loop where a served page returns one Decision to the agent (POST /decision, clipboard fallback).",
+      },
+      {
+        label: "arch",
+        front: "Pure render, effects at the edges",
+        back: "components / templates / render are pure data→string; all I/O lives in server/ and cli/.",
+      },
+      {
+        label: "arch",
+        front: "Static floor",
+        back: "A no-JS render is the baseline; interactivity is opt-in islands layered on top.",
+      },
+    ],
+  },
+  "audit-report": {
+    title: "web-best-practices — example.com",
+    overall: 74,
+    dimensions: [
+      { label: "Semantic HTML", score: 88 },
+      { label: "Accessibility", score: 92, note: "1 minor contrast issue" },
+      { label: "Performance", score: 71, note: "LCP 2.4s" },
+      { label: "Security headers", score: 35, note: "no CSP / HSTS" },
+      { label: "SEO", score: 90 },
+      { label: "AI-readability", score: 20, note: "no llms.txt" },
+    ],
+    command: [
+      { comment: "run the zero-dep audit scanner" },
+      { command: "node scripts/auditSite.mjs https://example.com" },
+      { output: "7 dimensions scored · 2 gaps found" },
+    ],
+    notes: [
+      {
+        tone: "risk",
+        title: "Security headers",
+        body: "No Content-Security-Policy or HSTS — add a _headers file.",
+      },
+      {
+        tone: "note",
+        title: "AI-readability",
+        body: "Add /llms.txt and schema.org JSON-LD so agents can parse the site.",
+      },
+    ],
+    risks: [
+      {
+        risk: "Missing CSP allows injected script execution",
+        severity: "high",
+        mitigation: "ship a strict Content-Security-Policy",
+      },
+      {
+        risk: "No llms.txt — agents can't discover key pages",
+        severity: "low",
+        mitigation: "publish /llms.txt",
       },
     ],
   },

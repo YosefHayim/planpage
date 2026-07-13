@@ -31,10 +31,14 @@ export const renderCommand = async (
   const html = await highlight(
     render(factory(data), {
       theme: options.theme,
-      interactive: Boolean(options.serve),
+      // Quiz carries its own SubmitBar + owns submit via the quizzable island — never add the
+      // interactive post-back too, or both would handle [data-action] and double-submit.
+      interactive: Boolean(options.serve) && template !== "quiz",
       filterable: template === "library",
       explorable: template === "code-style-plan",
       pollable: template === "question-poll",
+      quizzable: template === "quiz" || template === "library",
+      carousel: template === "library",
     }),
   );
 

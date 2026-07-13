@@ -2,18 +2,23 @@ import type { VNode } from "preact";
 import { Accordion } from "../components/Accordion";
 import { AnnotatedCode } from "../components/AnnotatedCode";
 import { Callout } from "../components/Callout";
+import { Carousel } from "../components/Carousel";
 import { CodeBlock } from "../components/CodeBlock";
 import { CodeExplorer } from "../components/CodeExplorer";
 import { DiffBlock } from "../components/DiffBlock";
+import { Flashcard } from "../components/Flashcard";
 import { Flow } from "../components/Flow";
 import { OptionCompare } from "../components/OptionCompare";
 import { PickBlock } from "../components/PickBlock";
 import { PlanSummary } from "../components/PlanSummary";
 import { QuestionCard } from "../components/QuestionCard";
+import { QuizCard } from "../components/QuizCard";
 import { RiskList } from "../components/RiskList";
+import { Scorecard } from "../components/Scorecard";
 import { SectionCard } from "../components/SectionCard";
 import { StatusChip } from "../components/StatusChip";
 import { Steps } from "../components/Steps";
+import { Terminal } from "../components/Terminal";
 import { Timeline } from "../components/Timeline";
 import { TreePanel } from "../components/TreePanel";
 
@@ -317,6 +322,128 @@ export const GALLERY = {
     props: [{ name: "source", type: "string (Mermaid)", required: true }],
     sample: () => <Flow source={"flowchart LR\n  A[plan] --> B[ship]"} />,
   },
+  QuizCard: {
+    category: "teach",
+    blurb:
+      "A graded multiple-choice question — one correct option, reveals ✓/✗ + explanation, scores it.",
+    usage: '<QuizCard id="q1" question="…" options={[{ id, label, correct }]} explanation="…" />',
+    props: [
+      { name: "id", type: "string", required: true },
+      { name: "question", type: "string", required: true },
+      { name: "options", type: "{ id; label; correct?; code?; codeLang? }[]", required: true },
+      { name: "explanation", type: "string" },
+      { name: "group", type: "string" },
+    ],
+    sample: () => (
+      <QuizCard
+        id="demo.quiz"
+        question="What keeps planpage's render() pure?"
+        explanation="Code emits a data-hl marker; the async highlight() pass adds colour at the edge, so render stays sync."
+        options={[
+          { id: "marker", label: "Emit a data-hl marker", correct: true },
+          { id: "await", label: "await highlight() in the component" },
+          { id: "dom", label: "Read document during render" },
+        ]}
+      />
+    ),
+  },
+  Flashcard: {
+    category: "teach",
+    blurb:
+      "A flip card — front is a term/question, back reveals the definition + code. Pure-CSS flip.",
+    usage: '<Flashcard front="…" back="…" code="…" label="…" />',
+    props: [
+      { name: "front", type: "string", required: true },
+      { name: "back", type: "string", required: true },
+      { name: "code", type: "string" },
+      { name: "codeLang", type: "string" },
+      { name: "label", type: "string" },
+    ],
+    sample: () => (
+      <Flashcard
+        label="render"
+        front="What is an island?"
+        back="A constant client script the Shell injects, gated by a boolean flag — the only interactivity."
+        code={"pollable ? <script … /> : null"}
+      />
+    ),
+  },
+  Carousel: {
+    category: "layout",
+    blurb:
+      "An infinite auto-scrolling carousel — discrete slideshow (arrows/dots) or a pure-CSS marquee.",
+    usage: '<Carousel mode="slideshow" slides={[{ title, body, code }]} />',
+    props: [
+      { name: "slides", type: "{ title?; body?; image?; code?; codeLang? }[]", required: true },
+      { name: "mode", type: "slideshow|marquee" },
+      { name: "direction", type: "left|right" },
+      { name: "interval", type: "number (ms)" },
+      { name: "label", type: "string" },
+    ],
+    sample: () => (
+      <Carousel
+        label="Golden exemplars"
+        mode="slideshow"
+        slides={[
+          {
+            title: "Arrow-const component",
+            body: "Named export, readonly props interface.",
+            code: "export const C = () => <div/>",
+          },
+          {
+            title: "Early return over nested ternary",
+            body: "Flatten branching in JSX.",
+            code: "if (!items.length) return null",
+          },
+          {
+            title: "Lookup map over switch",
+            body: "Record<Union, string> for enum→style.",
+            code: 'const TONE = { risk: "…" }',
+          },
+        ]}
+      />
+    ),
+  },
+  Scorecard: {
+    category: "metrics",
+    blurb: "A score-per-dimension panel — graded A–F bars + an optional overall. An audit verdict.",
+    usage: "<Scorecard overall={82} dimensions={[{ label, score, note }]} />",
+    props: [
+      { name: "dimensions", type: "{ label; score; note? }[]", required: true },
+      { name: "overall", type: "number (0–100)" },
+      { name: "title", type: "string" },
+    ],
+    sample: () => (
+      <Scorecard
+        title="web-best-practices"
+        overall={82}
+        dimensions={[
+          { label: "Accessibility", score: 94 },
+          { label: "Performance", score: 78, note: "LCP 2.1s" },
+          { label: "Security headers", score: 40, note: "no CSP" },
+          { label: "SEO", score: 88 },
+        ]}
+      />
+    ),
+  },
+  Terminal: {
+    category: "code",
+    blurb: "A faux terminal window — a green $ prompt, # comments, and muted output. Pure, no JS.",
+    usage: '<Terminal title="bash" lines={[{ command }, { output }]} />',
+    props: [
+      { name: "title", type: "string" },
+      { name: "lines", type: "{ command?; output?; comment? }[]", required: true },
+    ],
+    sample: () => (
+      <Terminal
+        lines={[
+          { comment: "render the component gallery" },
+          { command: "npx planpage library --open" },
+          { output: "planpage: wrote /tmp/planpage-a1b2.html" },
+        ]}
+      />
+    ),
+  },
 } satisfies Record<string, GalleryEntry>;
 
 export type GalleryName = keyof typeof GALLERY;
@@ -346,8 +473,23 @@ export const TEMPLATE_INDEX: ReadonlyArray<TemplateInfo> = [
   },
   {
     name: "question-poll",
-    blurb: "Quiz-style question cards with progress, auto-advance, and decision post-back.",
+    blurb: "Preference-poll question cards with progress, auto-advance, and decision post-back.",
     category: "gate",
+  },
+  {
+    name: "quiz",
+    blurb: "Graded multiple-choice deck — reveal ✓/✗ + explanation, running score, post-back.",
+    category: "teach",
+  },
+  {
+    name: "flashcards",
+    blurb: "Flip-card study deck — term → definition + code. The learn side of teach.",
+    category: "teach",
+  },
+  {
+    name: "audit-report",
+    blurb: "Scored audit — dimension meters + the command that ran + gaps as risks.",
+    category: "report",
   },
   {
     name: "library",

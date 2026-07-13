@@ -1,9 +1,11 @@
 import type { ComponentChildren } from "preact";
 import {
+  CAROUSEL_SCRIPT,
   CLIENT_SCRIPT,
   CODE_EXPLORER_SCRIPT,
   GALLERY_FILTER,
   QUESTION_POLL_SCRIPT,
+  QUIZ_SCRIPT,
   THEME_TOGGLE,
 } from "../render/clientScript";
 import { SubmitBar } from "./SubmitBar";
@@ -23,6 +25,10 @@ export interface ShellProps {
   readonly explorable?: boolean;
   /** When true, includes the QuestionPoll client script (selection, progress, submit). */
   readonly pollable?: boolean;
+  /** When true, includes the Quiz grade island (grade · reveal · score · submit). */
+  readonly quizzable?: boolean;
+  /** When true, includes the Carousel island (slideshow autoplay + arrows/dots/swipe sync). */
+  readonly carousel?: boolean;
   readonly children: ComponentChildren;
 }
 
@@ -52,8 +58,14 @@ const STYLE =
   ".nav-rail{position:fixed;top:50%;left:.75rem;transform:translateY(-50%);z-index:20}.nav-dot{width:8px;height:8px;border-radius:50%;background:#94a3b8;transition:transform .2s,background .2s}.nav-dot.active{background:#f59e0b;transform:scale(1.4);animation:dot-pulse 1.5s ease-in-out infinite}@keyframes dot-pulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4)}50%{box-shadow:0 0 0 5px rgba(245,158,11,0)}}" +
   /* Smooth hover lift */
   "[data-option]{transition:transform .15s ease,box-shadow .15s ease}[data-option]:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}" +
+  /* Flashcard flip (pure CSS, no JS) */
+  ".flip-card{perspective:1000px}.flip-inner{position:relative;transition:transform .5s cubic-bezier(.4,0,.2,1);transform-style:preserve-3d}.flip-face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}.flip-back{transform:rotateY(180deg)}.flip-card:has(input:checked) .flip-inner{transform:rotateY(180deg)}" +
+  /* Carousel — marquee ticker + slideshow scrollbar hide + score bar */
+  "@keyframes pp-marquee{from{transform:translateX(0)}to{transform:translateX(-50%)}}.marquee-track{display:flex;width:max-content;animation:pp-marquee 30s linear infinite}.marquee-rev{animation-direction:reverse}.marquee:hover .marquee-track{animation-play-state:paused}.no-scrollbar{scrollbar-width:none}.no-scrollbar::-webkit-scrollbar{display:none}.score-bar{transition:width .6s cubic-bezier(.4,0,.2,1)}" +
+  /* Quiz option states */
+  "[data-quiz-option].quiz-correct{border-color:#10b981;background:#ecfdf5;color:#064e3b}[data-quiz-option].quiz-correct .mark-correct{color:#059669}[data-quiz-option].quiz-wrong{border-color:#f43f5e;background:#fff1f2;color:#881337}[data-quiz-option].quiz-wrong .mark-wrong{color:#e11d48}html.dark [data-quiz-option].quiz-correct{background:rgba(16,185,129,.15);color:#a7f3d0}html.dark [data-quiz-option].quiz-wrong{background:rgba(244,63,94,.15);color:#fecdd3}.quiz-card.answered [data-quiz-option]{cursor:default}.quiz-card.answered{border-color:#34d399}" +
   /* Reduced motion */
-  "@media (prefers-reduced-motion:reduce){.sparkle-1,.sparkle-2,.sparkle-3{animation:none}.question-card.collapsed{transition:none}.nav-dot.active{animation:none}[data-option]{transition:none}[data-option]:hover{transform:none}[data-progress-fill]{transition:none}.theme-ico .sun,.theme-ico .moon{transition:none}.spin{animation:none}}";
+  "@media (prefers-reduced-motion:reduce){.sparkle-1,.sparkle-2,.sparkle-3{animation:none}.question-card.collapsed{transition:none}.nav-dot.active{animation:none}[data-option]{transition:none}[data-option]:hover{transform:none}[data-progress-fill]{transition:none}.theme-ico .sun,.theme-ico .moon{transition:none}.spin{animation:none}.flip-inner{transition:none}.marquee-track{animation:none}.score-bar{transition:none}}";
 
 /**
  * The fixed page skeleton every rendered document nests inside: Tailwind + Mermaid from
@@ -68,6 +80,8 @@ export const Shell = ({
   filterable = false,
   explorable = false,
   pollable = false,
+  quizzable = false,
+  carousel = false,
   children,
 }: ShellProps) => (
   <html lang="en" data-theme={theme}>
@@ -138,6 +152,14 @@ export const Shell = ({
       {pollable ? (
         // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
         <script dangerouslySetInnerHTML={{ __html: QUESTION_POLL_SCRIPT }} />
+      ) : null}
+      {quizzable ? (
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
+        <script dangerouslySetInnerHTML={{ __html: QUIZ_SCRIPT }} />
+      ) : null}
+      {carousel ? (
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
+        <script dangerouslySetInnerHTML={{ __html: CAROUSEL_SCRIPT }} />
       ) : null}
       {explorable ? (
         // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data

@@ -7,6 +7,7 @@ const CATEGORY_ORDER: ReadonlyArray<string> = [
   "notes",
   "sequence",
   "brainstorm",
+  "teach",
   "metrics",
   "code",
   "diagram",
