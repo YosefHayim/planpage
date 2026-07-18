@@ -17,6 +17,7 @@ Single source of truth for working in **planpage**. `CLAUDE.md` / `GEMINI.md` po
 | `src/highlight/` | the highlight pass — an **async edge transform** (`highlight` · `renderHighlighted`) that swaps `data-hl` markers for Shiki's VSCode dual-theme spans. Not part of the pure render (ADR 0015) |
 | `src/server/` | opt-in post-back — `serve` (ephemeral port, never-hang), `Decision` |
 | `src/cli/` | dual-mode CLI (commander) — `render` / `serve` / `new` / `library` / `capture` / `init`; bare TTY → `menu` (clack); shared `io` (open/writeTemp) |
+| `skills/planpage/` | agent skill SSOT (`SKILL.md` + `COMPONENTS.md`) — how other agents use the kit; `init` scaffolds thinner per-agent on-ramps |
 | `src/contracts/` | shared types — `Decision` |
 | `src/index.ts` | public API barrel |
 | `docs/adr/current/` | decisions (why) |

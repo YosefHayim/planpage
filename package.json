@@ -20,7 +20,14 @@
       "import": "./dist/index.js"
     }
   },
-  "files": ["dist", "CODE-STYLE.md", "CONTEXT.md", "LANGUAGE.md", "PROJECT.md"],
+  "files": [
+    "dist",
+    "skills",
+    "CODE-STYLE.md",
+    "CONTEXT.md",
+    "LANGUAGE.md",
+    "PROJECT.md"
+  ],
   "scripts": {
     "build": "tsup",
     "cli": "tsx src/cli/index.ts",

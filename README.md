@@ -72,7 +72,7 @@ const html = await renderHighlighted(
 
 ### Agent integration
 
-planpage is a package — not itself a skill. One command wires it into whatever agent you use:
+The full agent skill ships in-repo at [`skills/planpage/`](./skills/planpage/) (`SKILL.md` + component catalog). Copy that folder into your agent's skills dir, or use the thin on-ramps:
 
 ```bash
 npx planpage init                  # all supported agents
@@ -92,7 +92,7 @@ npx planpage init --global         # user-wide (Claude)
 | **Amazon Q** | `.amazonq/rules/planpage.md` |
 | **Roo Code** | `.roo/rules/planpage.md` |
 
-Each on-ramp tells the agent: shape your plan as JSON → render it through `npx planpage` → read the decision back. Idempotent — existing files are never clobbered unless you pass `--force`.
+Each on-ramp tells the agent: shape your plan as JSON → render it through `npx planpage` → read the decision back. Idempotent — existing files are never clobbered unless you pass `--force`. For the full skill (templates, Storyboard, quiz/flashcards, decision contract), install `skills/planpage/` into Claude / Grok / Codex skill roots.
 
 ## How it works
 
