@@ -18,6 +18,7 @@ import { Scorecard } from "../components/Scorecard";
 import { SectionCard } from "../components/SectionCard";
 import { StatusChip } from "../components/StatusChip";
 import { Steps } from "../components/Steps";
+import { Storyboard } from "../components/Storyboard";
 import { Terminal } from "../components/Terminal";
 import { Timeline } from "../components/Timeline";
 import { TreePanel } from "../components/TreePanel";
@@ -404,6 +405,46 @@ export const GALLERY = {
       />
     ),
   },
+  Storyboard: {
+    category: "layout",
+    blurb:
+      "A responsive image grid — keyframes, screenshot sets, design variations. columns reflows down.",
+    usage: '<Storyboard dataId="storyboard.x" columns={3} frames={[{ src, caption, index }]} />',
+    props: [
+      { name: "dataId", type: "string", required: true },
+      { name: "columns", type: "number (1–6)" },
+      { name: "frames", type: "{ src; caption?; index? }[]", required: true },
+    ],
+    sample: () => (
+      <Storyboard
+        dataId="storyboard.trailer-keyframes"
+        columns={3}
+        frames={[
+          {
+            src: "https://placehold.co/640x360/1e293b/94a3b8?text=01",
+            caption: "Cold open",
+            index: 1,
+          },
+          {
+            src: "https://placehold.co/640x360/1e293b/94a3b8?text=02",
+            caption: "Reveal",
+            index: 2,
+          },
+          {
+            src: "https://placehold.co/640x360/1e293b/94a3b8?text=03",
+            caption: "Climax",
+            index: 3,
+          },
+          {
+            src: "https://placehold.co/640x360/1e293b/94a3b8?text=04",
+            caption: "Resolution",
+            index: 4,
+          },
+        ]}
+      />
+    ),
+  },
+
   Scorecard: {
     category: "metrics",
     blurb: "A score-per-dimension panel — graded A–F bars + an optional overall. An audit verdict.",

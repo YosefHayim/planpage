@@ -36,6 +36,11 @@ export { SectionCard, type SectionCardProps } from "./components/SectionCard";
 export { Shell, type ShellProps, type Theme } from "./components/Shell";
 export { type StatusChipProps, StatusChip, type StepStatus } from "./components/StatusChip";
 export { type Step, Steps, type StepsProps } from "./components/Steps";
+export {
+  Storyboard,
+  type StoryboardFrame,
+  type StoryboardProps,
+} from "./components/Storyboard";
 export { SubmitBar, type SubmitBarProps } from "./components/SubmitBar";
 export { Terminal, type TerminalLine, type TerminalProps } from "./components/Terminal";
 export { Timeline, type TimelineItem, type TimelineProps } from "./components/Timeline";
