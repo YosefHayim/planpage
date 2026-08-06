@@ -100,6 +100,52 @@ export const serve = ({
   });
 };
 
+/** Loose POST body shape used only for the stdout count summary (write stays verbatim). */
+export type FeedbackSummaryBody = {
+  readonly notes?: string;
+  readonly edits?: unknown;
+  readonly annotations?: unknown;
+  readonly flips?: unknown;
+  readonly revisit?: unknown;
+  readonly screenshots?: unknown;
+  readonly diagrams?: unknown;
+  readonly whiteboards?: unknown;
+};
+
+const countArray = (value: unknown): number => (Array.isArray(value) ? value.length : 0);
+
+/**
+ * Best-effort lines for the post-back stdout summary after a successful write.
+ * Covers the full feedback queue contract: edits · annotations · screenshots · diagrams · whiteboards · flips · revisit.
+ */
+export const feedbackSummaryLines = (parsed: FeedbackSummaryBody): readonly string[] => {
+  const edits = countArray(parsed.edits);
+  const annos = countArray(parsed.annotations);
+  const flips = countArray(parsed.flips);
+  const revisit = countArray(parsed.revisit);
+  const shots = countArray(parsed.screenshots);
+  const diags = countArray(parsed.diagrams);
+  const wbs = countArray(parsed.whiteboards);
+  const lines: string[] = [
+    `planpage: ${edits} edit(s), ${annos} annotation(s), ${shots} screenshot(s), ${diags} diagram(s), ${wbs} whiteboard(s), ${flips} flip(s), ${revisit} revisit(s)`,
+  ];
+  const notes = typeof parsed.notes === "string" ? parsed.notes.trim() : "";
+  if (notes) {
+    lines.push(`planpage: notes — ${notes}`);
+  }
+  if (shots > 0) {
+    lines.push(
+      "planpage: screenshots are data URLs in the JSON — write each dataUrl to a file if you need to inspect them",
+    );
+  }
+  if (wbs > 0) {
+    lines.push(
+      "planpage: whiteboards include pngDataUrl fields — write each to a PNG file if you need to inspect them",
+    );
+  }
+  return lines;
+};
+
 function collectDecision(req: IncomingMessage, onDone: () => void, outPath: string): void {
   let body = "";
   req.on("data", (chunk) => {
@@ -109,29 +155,9 @@ function collectDecision(req: IncomingMessage, onDone: () => void, outPath: stri
     writeFileSync(outPath, body || "{}");
     process.stdout.write(`planpage: feedback written to ${outPath}\n`);
     try {
-      const parsed = JSON.parse(body || "{}") as {
-        notes?: string;
-        edits?: unknown[];
-        annotations?: unknown[];
-        flips?: unknown[];
-        revisit?: unknown[];
-        screenshots?: ReadonlyArray<{ name?: string; dataUrl?: string }>;
-      };
-      const edits = Array.isArray(parsed.edits) ? parsed.edits.length : 0;
-      const annos = Array.isArray(parsed.annotations) ? parsed.annotations.length : 0;
-      const flips = Array.isArray(parsed.flips) ? parsed.flips.length : 0;
-      const revisit = Array.isArray(parsed.revisit) ? parsed.revisit.length : 0;
-      const shots = Array.isArray(parsed.screenshots) ? parsed.screenshots.length : 0;
-      process.stdout.write(
-        `planpage: ${edits} edit(s), ${annos} annotation(s), ${shots} screenshot(s), ${flips} flip(s), ${revisit} revisit(s)\n`,
-      );
-      if (parsed.notes?.trim()) {
-        process.stdout.write(`planpage: notes — ${parsed.notes.trim()}\n`);
-      }
-      if (shots > 0) {
-        process.stdout.write(
-          "planpage: screenshots are data URLs in the JSON — write each dataUrl to a file if you need to inspect them\n",
-        );
+      const parsed = JSON.parse(body || "{}") as FeedbackSummaryBody;
+      for (const line of feedbackSummaryLines(parsed)) {
+        process.stdout.write(`${line}\n`);
       }
     } catch {
       /* body already on disk; summary is best-effort */

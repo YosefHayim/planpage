@@ -73,9 +73,12 @@ export interface FeedbackWhiteboard {
  * `data-id` when they participate in flips/revisit; in-place edits and annotations use
  * client-assigned ids.
  *
- * There is no Approve / Adjust button — the user stages edits, annotations, and
- * screenshots in the fixed sidebar, then sends one batch. `approved` stays for older
- * consumers and is `true` only when the queue is empty and notes are empty.
+ * There is no Approve / Adjust button — the user stages edits, annotations, screenshots,
+ * diagrams, and whiteboards in the fixed sidebar, then sends one batch. `approved` stays
+ * for older consumers and is `true` only when the queue is empty and notes are empty.
+ *
+ * Queue contract (all arrays always present on a client-built payload):
+ * `edits` · `annotations` · `screenshots` · `diagrams` · `whiteboards` · `flips` · `revisit`.
  */
 export interface Decision {
   /** `true` only when there is no staged feedback (empty queue + empty notes). */
@@ -97,3 +100,16 @@ export interface Decision {
   /** Freehand whiteboard sketches (PNG data URLs + notes). */
   readonly whiteboards: readonly FeedbackWhiteboard[];
 }
+
+/** Empty Decision shell — useful for tests and defensive defaults. Not written by serve. */
+export const EMPTY_DECISION: Decision = {
+  approved: true,
+  flips: [],
+  revisit: [],
+  notes: "",
+  edits: [],
+  annotations: [],
+  screenshots: [],
+  diagrams: [],
+  whiteboards: [],
+};

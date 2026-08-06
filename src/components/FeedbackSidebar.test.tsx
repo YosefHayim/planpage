@@ -20,6 +20,8 @@ describe("FeedbackSidebar", () => {
     expect(html).toContain('data-mode="edit"');
     expect(html).toContain("Send to Agent");
     expect(html).toContain("Screenshot");
+    // Queue-then-send only — no Approve/Adjust regression.
     expect(html).not.toContain('data-action="approve"');
+    expect(html).not.toContain('data-action="adjust"');
   });
 });

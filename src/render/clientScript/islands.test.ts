@@ -19,6 +19,20 @@ describe("client islands (string contracts)", () => {
     expect(CLIENT_SCRIPT).toContain("screenshots");
   });
 
+  it("postback blocks empty send and hardens clipboard fallback messaging", () => {
+    // Empty queue → approved:true → refuse send (no silent empty POST).
+    expect(CLIENT_SCRIPT).toContain("approved:empty");
+    expect(CLIENT_SCRIPT).toContain("Nothing to send");
+    // No-server path copies; clipboard failure surfaces the token.
+    expect(CLIENT_SCRIPT).toContain("No server — copied, paste it back in your terminal.");
+    expect(CLIENT_SCRIPT).toContain("Clipboard blocked — copy the token below.");
+    expect(CLIENT_SCRIPT).toContain("No server — copy the token below into your terminal.");
+    // Queue-then-send only — never Approve/Adjust on the plan feedback path.
+    expect(CLIENT_SCRIPT).not.toMatch(/data-action=['"]approve['"]/);
+    expect(CLIENT_SCRIPT).not.toMatch(/a===['"]approve['"]/);
+    expect(CLIENT_SCRIPT).not.toMatch(/a===['"]adjust['"]/);
+  });
+
   it("diagram board exposes queue + collect for agent feedback", () => {
     expect(DIAGRAM_SCRIPT).toContain("data-diagram-board");
     expect(DIAGRAM_SCRIPT).toContain("__ppCollectDiagrams");
