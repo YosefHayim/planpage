@@ -233,14 +233,22 @@ export const CLIENT_SCRIPT = `(function(){
 
   async function copy(msg){
     var token=btoa(unescape(encodeURIComponent(JSON.stringify(collect()))));
-    try{await navigator.clipboard.writeText(token);done(msg||'Copied — paste back in your terminal.');}
-    catch(_){var p=$('pp-token');if(p){p.textContent=token;p.classList.remove('hidden');}}
+    try{
+      await navigator.clipboard.writeText(token);
+      done(msg||'Copied — paste back in your terminal.');
+    }catch(_){
+      var p=$('pp-token');
+      if(p){p.textContent=token;p.classList.remove('hidden');}
+      // After a no-server submit, surface the token and lock the button; manual Copy only flashes.
+      if(msg)done('No server — copy the token below into your terminal.');
+      else flashStatus('Clipboard blocked — copy the token below.',false);
+    }
   }
 
   async function submit(){
     var payload=collect();
     if(payload.approved){
-      flashStatus('Nothing to send — edit, annotate, attach a shot, or write a note first.',false);
+      flashStatus('Nothing to send — edit, annotate, attach a shot, sketch, or write a note first.',false);
       return;
     }
     try{

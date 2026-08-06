@@ -3,7 +3,42 @@ import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { serve } from "./serve";
+import { EMPTY_DECISION } from "../contracts/decision";
+import { feedbackSummaryLines, serve } from "./serve";
+
+describe("feedbackSummaryLines", () => {
+  it("counts diagrams and whiteboards alongside the rest of the queue contract", () => {
+    const lines = feedbackSummaryLines({
+      notes: "  fix the header  ",
+      edits: [{}],
+      annotations: [],
+      screenshots: [{}, {}],
+      diagrams: [{}],
+      whiteboards: [{}, {}],
+      flips: ["a"],
+      revisit: ["b", "c"],
+    });
+    expect(lines[0]).toBe(
+      "planpage: 1 edit(s), 0 annotation(s), 2 screenshot(s), 1 diagram(s), 2 whiteboard(s), 1 flip(s), 2 revisit(s)",
+    );
+    expect(lines).toContain("planpage: notes — fix the header");
+    expect(lines.some((l) => l.includes("screenshots are data URLs"))).toBe(true);
+    expect(lines.some((l) => l.includes("whiteboards include pngDataUrl"))).toBe(true);
+  });
+
+  it("treats missing queue arrays as zero (partial / empty body)", () => {
+    const lines = feedbackSummaryLines({});
+    expect(lines).toEqual([
+      "planpage: 0 edit(s), 0 annotation(s), 0 screenshot(s), 0 diagram(s), 0 whiteboard(s), 0 flip(s), 0 revisit(s)",
+    ]);
+  });
+
+  it("EMPTY_DECISION summarizes as an empty queue", () => {
+    const lines = feedbackSummaryLines(EMPTY_DECISION);
+    expect(lines[0]).toContain("0 diagram(s), 0 whiteboard(s)");
+    expect(lines).toHaveLength(1);
+  });
+});
 
 describe("serve — dynamic port", () => {
   const blockers: ReturnType<typeof createServer>[] = [];
