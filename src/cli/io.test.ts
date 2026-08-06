@@ -9,11 +9,11 @@ vi.mock("node:child_process", () => ({
 describe("openPath", () => {
   beforeEach(() => {
     spawnMock.mockClear();
-    delete process.env.PLANPAGE_NO_OPEN;
+    process.env.PLANPAGE_NO_OPEN = undefined;
   });
 
   afterEach(() => {
-    delete process.env.PLANPAGE_NO_OPEN;
+    process.env.PLANPAGE_NO_OPEN = undefined;
   });
 
   it("opens a path only once per process (dedupe)", async () => {

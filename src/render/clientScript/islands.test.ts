@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CAROUSEL_SCRIPT } from "./carousel";
-import { CLIENT_SCRIPT } from "./postback";
 import { DIAGRAM_SCRIPT } from "./diagram";
+import { CLIENT_SCRIPT } from "./postback";
 import { WHITEBOARD_SCRIPT } from "./whiteboard";
 
 describe("client islands (string contracts)", () => {

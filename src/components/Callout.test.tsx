@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { Callout, type CalloutTone } from "./Callout";
 import { render } from "../render/render";
+import { Callout, type CalloutTone } from "./Callout";
 
 const ALL: ReadonlyArray<CalloutTone> = [
   "note",

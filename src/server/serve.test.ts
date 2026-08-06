@@ -91,7 +91,9 @@ describe("serve — dynamic port", () => {
       notes: "fix the header",
       edits: [{ id: "e1", label: "title", original: "A", edited: "B" }],
       annotations: [],
-      screenshots: [{ id: "s1", name: "x.png", mime: "image/png", dataUrl: "data:image/png;base64,aa" }],
+      screenshots: [
+        { id: "s1", name: "x.png", mime: "image/png", dataUrl: "data:image/png;base64,aa" },
+      ],
       diagrams: [
         {
           id: "d1",
@@ -127,7 +129,6 @@ describe("serve — dynamic port", () => {
     expect(written.screenshots).toHaveLength(1);
     expect(written.diagrams[0].questions).toEqual(["why C?"]);
     expect(written.whiteboards[0].strokeCount).toBe(2);
-    delete process.env.PLANPAGE_NO_OPEN;
+    process.env.PLANPAGE_NO_OPEN = undefined;
   }, 15_000);
 });
-
