@@ -9,3 +9,5 @@ export { QUESTION_POLL_SCRIPT } from "./questionPoll";
 export { CODE_EXPLORER_SCRIPT } from "./codeExplorer";
 export { QUIZ_SCRIPT } from "./quiz";
 export { CAROUSEL_SCRIPT } from "./carousel";
+export { DIAGRAM_SCRIPT } from "./diagram";
+export { WHITEBOARD_SCRIPT } from "./whiteboard";

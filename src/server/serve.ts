@@ -1,7 +1,7 @@
-import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { type IncomingMessage, createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { openPath } from "../cli/io";
 
 export interface ServeOptions {
   readonly htmlPath: string;
@@ -14,8 +14,8 @@ export interface ServeOptions {
 
 /**
  * Serve an HTML plan on loopback, open the browser, and block until the page POSTs one
- * decision (or the idle timeout fires). Writes the decision JSON verbatim and resolves an
- * exit code: 0 = decision written · 2 = server/IO error · 3 = timeout. Never hangs a caller.
+ * feedback batch (or the idle timeout fires). Writes the JSON verbatim and resolves an
+ * exit code: 0 = feedback written · 2 = server/IO error · 3 = timeout. Never hangs a caller.
  *
  * Port handling: if a preferred port is given but busy, falls back to an OS-assigned
  * available port automatically — no manual retries, no collision.
@@ -53,7 +53,7 @@ export const serve = ({
           () => {
             res.writeHead(200, { "Content-Type": "text/html" });
             res.end(
-              "<body style='font:16px system-ui;padding:3rem'>Decision received — return to your terminal.</body>",
+              "<body style='font:16px system-ui;padding:3rem'>Feedback received — return to your terminal.</body>",
             );
             finish(0);
           },
@@ -85,12 +85,15 @@ export const serve = ({
         process.stdout.write(`planpage: port ${port} busy, using ${address.port} instead\n`);
       }
       process.stdout.write(`planpage: serving ${url}\n`);
-      process.stdout.write("planpage: waiting for your decision (Approve / Adjust)…\n");
-      openBrowser(url);
+      process.stdout.write(
+        "planpage: waiting for feedback — edit/annotate in the browser, then Send to Agent…\n",
+      );
+      // openPath dedupes per process so re-bind / retries do not spawn extra tabs
+      openPath(url);
     });
 
     const idle = setTimeout(() => {
-      process.stderr.write("planpage: timed out waiting for a decision\n");
+      process.stderr.write("planpage: timed out waiting for feedback\n");
       finish(3);
     }, timeoutSec * 1000);
     idle.unref();
@@ -104,21 +107,35 @@ function collectDecision(req: IncomingMessage, onDone: () => void, outPath: stri
   });
   req.on("end", () => {
     writeFileSync(outPath, body || "{}");
-    process.stdout.write(`planpage: decision written to ${outPath}\n`);
+    process.stdout.write(`planpage: feedback written to ${outPath}\n`);
+    try {
+      const parsed = JSON.parse(body || "{}") as {
+        notes?: string;
+        edits?: unknown[];
+        annotations?: unknown[];
+        flips?: unknown[];
+        revisit?: unknown[];
+        screenshots?: ReadonlyArray<{ name?: string; dataUrl?: string }>;
+      };
+      const edits = Array.isArray(parsed.edits) ? parsed.edits.length : 0;
+      const annos = Array.isArray(parsed.annotations) ? parsed.annotations.length : 0;
+      const flips = Array.isArray(parsed.flips) ? parsed.flips.length : 0;
+      const revisit = Array.isArray(parsed.revisit) ? parsed.revisit.length : 0;
+      const shots = Array.isArray(parsed.screenshots) ? parsed.screenshots.length : 0;
+      process.stdout.write(
+        `planpage: ${edits} edit(s), ${annos} annotation(s), ${shots} screenshot(s), ${flips} flip(s), ${revisit} revisit(s)\n`,
+      );
+      if (parsed.notes?.trim()) {
+        process.stdout.write(`planpage: notes — ${parsed.notes.trim()}\n`);
+      }
+      if (shots > 0) {
+        process.stdout.write(
+          "planpage: screenshots are data URLs in the JSON — write each dataUrl to a file if you need to inspect them\n",
+        );
+      }
+    } catch {
+      /* body already on disk; summary is best-effort */
+    }
     onDone();
   });
-}
-
-function openBrowser(url: string): void {
-  const cmd =
-    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
-  try {
-    spawn(cmd, [url], {
-      stdio: "ignore",
-      detached: true,
-      shell: process.platform === "win32",
-    }).unref();
-  } catch {
-    process.stdout.write(`planpage: open manually → ${url}\n`);
-  }
 }

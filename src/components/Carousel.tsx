@@ -25,7 +25,7 @@ export interface CarouselProps {
 
 /** The inner content of one slide — shared by both modes; the wrapper sizing differs per mode. */
 const SlideBody = ({ slide }: { readonly slide: CarouselSlide }) => (
-  <div class="flex h-full flex-col gap-3 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+  <div class="flex h-full min-w-0 flex-col gap-3 rounded-xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900">
     {slide.image ? (
       <img
         src={slide.image}
@@ -35,11 +35,17 @@ const SlideBody = ({ slide }: { readonly slide: CarouselSlide }) => (
       />
     ) : null}
     {slide.title ? (
-      <div class="font-semibold text-slate-900 text-sm dark:text-white">{slide.title}</div>
+      <div class="max-w-full whitespace-normal break-words font-semibold text-slate-900 text-sm dark:text-white">
+        {slide.title}
+      </div>
     ) : null}
-    {slide.body ? <p class="text-slate-500 text-sm dark:text-slate-400">{slide.body}</p> : null}
+    {slide.body ? (
+      <p class="max-w-full whitespace-normal break-words text-slate-500 text-sm dark:text-slate-400">
+        {slide.body}
+      </p>
+    ) : null}
     {slide.code ? (
-      <pre class="code mt-auto max-w-full overflow-x-auto rounded-lg bg-slate-100 p-3 text-xs text-slate-800 dark:bg-[#1e1e1e] dark:text-slate-100">
+      <pre class="code code-wrap mt-auto max-w-full rounded-lg bg-slate-100 p-3 text-xs text-slate-800 dark:bg-[#1e1e1e] dark:text-slate-100">
         {codeMark(slide.code, slide.codeLang ?? "ts")}
       </pre>
     ) : null}
@@ -47,7 +53,7 @@ const SlideBody = ({ slide }: { readonly slide: CarouselSlide }) => (
 );
 
 const ARROW =
-  "absolute top-[38%] z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-slate-200 bg-white/90 text-lg text-slate-600 shadow-sm backdrop-blur transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/90 dark:text-slate-300 dark:hover:bg-slate-800";
+  "absolute top-1/2 z-10 grid h-8 w-8 -translate-y-1/2 place-items-center rounded-full border border-slate-200 bg-white/95 text-lg text-slate-600 shadow-sm backdrop-blur transition-colors hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900/95 dark:text-slate-300 dark:hover:bg-slate-800";
 
 const Caption = ({ text }: { readonly text: string }) => (
   <figcaption class="mb-2 font-medium text-slate-500 text-xs uppercase tracking-wide dark:text-slate-400">
@@ -73,7 +79,7 @@ export const Carousel = ({
   if (mode === "marquee") {
     const seconds = Math.max(12, slides.length * 5);
     return (
-      <figure class="marquee not-prose overflow-hidden" data-carousel data-mode="marquee">
+      <figure class="marquee not-prose min-w-0 overflow-hidden" data-carousel data-mode="marquee">
         {label ? <Caption text={label} /> : null}
         <div
           class={`marquee-track gap-4 py-1 ${direction === "right" ? "marquee-rev" : ""}`}
@@ -82,7 +88,7 @@ export const Carousel = ({
           {[...slides, ...slides].map((slide, i) => (
             <div
               key={`${slide.title ?? "slide"}-${i}`}
-              class="w-64 shrink-0"
+              class="w-72 max-w-[min(18rem,80vw)] shrink-0"
               aria-hidden={i >= slides.length ? "true" : undefined}
             >
               <SlideBody slide={slide} />
@@ -95,7 +101,7 @@ export const Carousel = ({
 
   return (
     <figure
-      class="relative"
+      class="relative min-w-0"
       data-carousel
       data-mode="slideshow"
       data-interval={interval}
@@ -103,43 +109,45 @@ export const Carousel = ({
       aria-label={label ?? "Carousel"}
     >
       {label ? <Caption text={label} /> : null}
-      <div
-        class="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
-        data-carousel-viewport
-      >
-        {slides.map((slide, i) => (
-          <div
-            key={`${slide.title ?? "slide"}-${i}`}
-            class="w-full shrink-0 snap-center px-1"
-            data-slide
-            data-index={i}
-            role="group"
-            aria-roledescription="slide"
-            aria-label={`${i + 1} of ${slides.length}`}
-          >
-            <SlideBody slide={slide} />
-          </div>
-        ))}
-      </div>
+      <div class="relative px-9">
+        <div
+          class="no-scrollbar flex snap-x snap-mandatory overflow-x-auto scroll-smooth"
+          data-carousel-viewport
+        >
+          {slides.map((slide, i) => (
+            <div
+              key={`${slide.title ?? "slide"}-${i}`}
+              class="w-full min-w-full shrink-0 snap-center"
+              data-slide
+              data-index={i}
+              role="group"
+              aria-roledescription="slide"
+              aria-label={`${i + 1} of ${slides.length}`}
+            >
+              <SlideBody slide={slide} />
+            </div>
+          ))}
+        </div>
 
-      <button
-        type="button"
-        class={ARROW}
-        data-carousel-prev
-        aria-label="Previous slide"
-        style="left:.25rem"
-      >
-        ‹
-      </button>
-      <button
-        type="button"
-        class={ARROW}
-        data-carousel-next
-        aria-label="Next slide"
-        style="right:.25rem"
-      >
-        ›
-      </button>
+        <button
+          type="button"
+          class={ARROW}
+          data-carousel-prev
+          aria-label="Previous slide"
+          style="left:0"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class={ARROW}
+          data-carousel-next
+          aria-label="Next slide"
+          style="right:0"
+        >
+          ›
+        </button>
+      </div>
 
       <div class="mt-3 flex justify-center gap-1.5" data-carousel-dots aria-hidden="true">
         {slides.map((slide, i) => (

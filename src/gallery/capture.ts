@@ -2,7 +2,7 @@
 // (src/cli/capture.ts); the drift guard is src/gallery/registry.test.ts. No I/O here.
 
 /** Infra components that are page scaffolding, not showcase items. */
-export const DENY: ReadonlyArray<string> = ["Shell", "SubmitBar"];
+export const DENY: ReadonlyArray<string> = ["Shell", "SubmitBar", "FeedbackSidebar"];
 
 /** Component file names → the component names that belong in the gallery (drops tests + infra). */
 export const componentNames = (files: ReadonlyArray<string>): ReadonlyArray<string> =>

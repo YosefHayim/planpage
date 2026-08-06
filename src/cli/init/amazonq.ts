@@ -17,7 +17,7 @@ function amazonQRule(): string {
   return [
     "# planpage — render plans as HTML",
     "",
-    "At plan or approval steps, render through the `planpage` package to produce a beautiful, interactive HTML page. The user approves or adjusts in the browser.",
+    "At plan or review steps, render through the `planpage` package to produce interactive HTML. The user edits/annotates, attaches screenshots, then hits Send to Agent.",
     "",
     fullInstructions(),
     "",

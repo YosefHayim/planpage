@@ -11,7 +11,7 @@
 
 AI coding agents propose multi-step plans, review-gates, and reports, then often dump them as walls of terminal text. The work may be careful, but the reading experience is not: dense scrollback makes risks, choices, and next steps hard to absorb.
 
-**planpage** turns that plan into a self-contained HTML page you open in the browser. One command gives the developer a calm, structured page for reading the plan properly — and, when needed, Approve or Adjust sends a decision straight back to the agent.
+**planpage** turns that plan into a self-contained HTML page you open in the browser. One command gives the developer a calm, structured page for reading the plan properly — and, when needed, edit or annotate what is wrong, stage feedback in a fixed sidebar, then **Send to Agent** so the batch returns to the terminal.
 
 ## Quick start
 
@@ -30,7 +30,7 @@ npx planpage
 ## Features
 
 - **Self-contained HTML** — one file, works offline, nothing written to your repo
-- **Post-back server** — opt-in: the page collects an Approve/Adjust decision and returns it as JSON to your agent
+- **Post-back server** — opt-in: edit/annotate the plan, stage feedback in a sidebar, **Send to Agent** returns one JSON batch to your terminal
 - **9 agent integrations** — one `init` command wires planpage into [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview), [Cursor](https://cursor.com/docs/rules), [Codex](https://developers.openai.com/codex/guides/agents-md), [Windsurf](https://docs.windsurf.com/windsurf/cascade/agents-md), [Kiro](https://kiro.dev/docs/), [Cline](https://docs.cline.bot/customization/cline-rules), [GitHub Copilot](https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/add-custom-instructions/add-repository-instructions), [Amazon Q](https://docs.aws.amazon.com/amazonq/latest/qdeveloper-ug/context-project-rules.html), and [Roo Code](https://roocodeinc.github.io/Roo-Code/)
 - **8 templates** — plan-brief (flagship) · before-after · code-style-plan · question-poll · quiz · flashcards · audit-report · library
 - **25 components** — reader-first UI pieces: Callout · RiskList · Steps · Timeline · CodeBlock · DiffBlock · AnnotatedCode · CodeExplorer (IDE-style file tree) · Flow · QuestionCard · QuizCard · Flashcard · Scorecard · Storyboard · Carousel · Terminal · and more
@@ -97,10 +97,10 @@ Each on-ramp tells the agent: shape your plan as JSON → render it through `npx
 ## How it works
 
 ```
-data → render() → marked HTML → highlight() → coloured HTML → write/open  OR  serve → one decision back
+data → render() → marked HTML → highlight() → coloured HTML → write/open  OR  serve → one feedback batch back
 ```
 
-Static render is the default. The post-back server is opt-in and blocks until one decision arrives — then exits cleanly.
+Static render is the default. The post-back server is opt-in and blocks until the user sends a feedback batch — then exits cleanly.
 
 ## Build locally
 

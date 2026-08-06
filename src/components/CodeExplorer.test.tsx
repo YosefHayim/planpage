@@ -19,6 +19,8 @@ describe("CodeExplorer", () => {
     expect(html).toContain('data-file-open="src/orders/createOrder.ts"');
     expect(html).toContain('data-file="src/routes/orders.ts"');
     expect(html).toContain("Adding an endpoint");
+    expect(html).toContain("data-explorer-split");
+    expect(html).toContain("data-explorer-tree");
   });
 
   it("groups files under their folders in the sidebar", () => {

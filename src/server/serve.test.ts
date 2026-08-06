@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -39,4 +39,60 @@ describe("serve — dynamic port", () => {
     const exitCode = await result;
     expect(exitCode).toBe(3);
   }, 10_000);
+
+  it("writes a feedback batch on POST /decision and exits 0", async () => {
+    process.env.PLANPAGE_NO_OPEN = "1";
+    const tmp = mkdtempSync(join(tmpdir(), "planpage-serve-fb-"));
+    const htmlPath = join(tmp, "test.html");
+    const outPath = join(tmp, "decision.json");
+    writeFileSync(htmlPath, "<html><body>plan</body></html>");
+    const port = 18777;
+    const pending = serve({ htmlPath, outPath, port, timeoutSec: 8 });
+    await new Promise((r) => setTimeout(r, 200));
+    const body = {
+      approved: false,
+      flips: [],
+      revisit: [],
+      notes: "fix the header",
+      edits: [{ id: "e1", label: "title", original: "A", edited: "B" }],
+      annotations: [],
+      screenshots: [{ id: "s1", name: "x.png", mime: "image/png", dataUrl: "data:image/png;base64,aa" }],
+      diagrams: [
+        {
+          id: "d1",
+          title: "arch",
+          look: "handDrawn",
+          original: "flowchart LR\n A-->B",
+          edited: "flowchart LR\n A-->C",
+          nodesMoved: true,
+          questions: ["why C?"],
+        },
+      ],
+      whiteboards: [
+        {
+          id: "w1",
+          title: "sketch",
+          pngDataUrl: "data:image/png;base64,bb",
+          strokeCount: 2,
+          note: "brainstorm",
+        },
+      ],
+    };
+    const res = await fetch(`http://127.0.0.1:${port}/decision`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    expect(res.status).toBe(200);
+    const code = await pending;
+    expect(code).toBe(0);
+    const written = JSON.parse(readFileSync(outPath, "utf8"));
+    expect(written.notes).toBe("fix the header");
+    expect(written.edits).toHaveLength(1);
+    expect(written.screenshots).toHaveLength(1);
+    expect(written.diagrams[0].questions).toEqual(["why C?"]);
+    expect(written.whiteboards[0].strokeCount).toBe(2);
+    delete process.env.PLANPAGE_NO_OPEN;
+  }, 15_000);
 });
+

@@ -22,6 +22,12 @@ export const libraryCommand = async (options: LibraryCommandOptions): Promise<vo
       theme: options.theme,
       filterable: true,
       explorable: true,
+      // Slideshow arrows/dots need the carousel island (marquee is pure CSS).
+      carousel: true,
+      // Diagram board (edit source · look · re-render · drag nodes).
+      diagramable: true,
+      // Freehand whiteboard (rough.js pen · queue PNG for agent).
+      sketchable: true,
     }),
   );
   const out = options.out ?? join(tmpdir(), "planpage-gallery.html");

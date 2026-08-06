@@ -2,10 +2,8 @@
 // Constant infra (never skill data), injected by the Shell. Tiny, dependency-free.
 
 /**
- * Opt-in (any page with a CodeExplorer): switches the open file and flips a file's before/after
- * pane. Scoped to the nearest [data-explorer] so multiple explorers coexist; early-returns when
- * none are present, so it is inert everywhere else. Code is already highlighted at render time —
- * this only toggles visibility.
+ * Opt-in (any page with a CodeExplorer): switches the open file, flips a file's before/after
+ * pane, and drag-resizes the tree/editor split. Scoped to the nearest [data-explorer].
  */
 export const CODE_EXPLORER_SCRIPT = `(function(){
   if(!document.querySelector('[data-explorer]'))return;
@@ -30,5 +28,46 @@ export const CODE_EXPLORER_SCRIPT = `(function(){
     if(open){var root=open.closest('[data-explorer]');if(root)setFile(root,open.getAttribute('data-file-open'));return;}
     var vb=e.target.closest&&e.target.closest('[data-variant-btn]');
     if(vb){var pane=vb.closest('[data-file]');if(pane)setVariant(pane,vb.getAttribute('data-variant-btn'));}
+  });
+
+  /* Drag-resize tree / editor split */
+  var drag=null;
+  document.addEventListener('pointerdown',function(e){
+    var split=e.target.closest&&e.target.closest('[data-explorer-split]');
+    if(!split)return;
+    var root=split.closest('[data-explorer]');
+    var tree=root&&root.querySelector('[data-explorer-tree]');
+    if(!root||!tree)return;
+    e.preventDefault();
+    drag={root:root,tree:tree,startX:e.clientX,startW:tree.getBoundingClientRect().width};
+    split.setPointerCapture&&split.setPointerCapture(e.pointerId);
+    document.body.classList.add('pp-resizing');
+  });
+  document.addEventListener('pointermove',function(e){
+    if(!drag)return;
+    var dx=e.clientX-drag.startX;
+    var next=Math.min(Math.max(drag.startW+dx,8*16),28*16);
+    drag.root.style.setProperty('--pp-tree',next+'px');
+    drag.tree.style.width=next+'px';
+  });
+  function endDrag(){
+    if(!drag)return;
+    drag=null;
+    document.body.classList.remove('pp-resizing');
+  }
+  document.addEventListener('pointerup',endDrag);
+  document.addEventListener('pointercancel',endDrag);
+  document.addEventListener('keydown',function(e){
+    var split=document.activeElement&&document.activeElement.closest&&document.activeElement.closest('[data-explorer-split]');
+    if(!split)return;
+    if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+    var root=split.closest('[data-explorer]');
+    var tree=root&&root.querySelector('[data-explorer-tree]');
+    if(!root||!tree)return;
+    e.preventDefault();
+    var cur=tree.getBoundingClientRect().width;
+    var next=Math.min(Math.max(cur+(e.key==='ArrowRight'?16:-16),8*16),28*16);
+    root.style.setProperty('--pp-tree',next+'px');
+    tree.style.width=next+'px';
   });
 })();`;

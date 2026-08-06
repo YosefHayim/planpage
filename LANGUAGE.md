@@ -9,7 +9,7 @@ A named, gallery-listed page you can render (e.g. `BeforeAfter`, `CodeStylePlan`
 _Avoid_: layout, view, page-type.
 
 **component**:
-A shared building piece templates compose from (`Shell`, `SectionCard`, `PickBlock`, `DiffBlock`, `TreePanel`, `Flow`, `CodeBlock`, `CodeExplorer`, `SubmitBar`).
+A shared building piece templates compose from (`Shell`, `SectionCard`, `PickBlock`, `DiffBlock`, `TreePanel`, `Flow`, `CodeBlock`, `CodeExplorer`, `FeedbackSidebar`, `SubmitBar`).
 _Avoid_: widget, block, part.
 
 **CodeExplorer**:
@@ -26,7 +26,7 @@ Kinds of rendered instance. A **report** is read-only (e.g. a before/after); a *
 ## Interaction
 
 **decision**:
-The single object a post-back returns: `{ approved, flips, revisit, notes }`.
+The single object a post-back returns: `{ approved, flips, revisit, notes, edits, annotations }`. Staged in the feedback sidebar; posted only on **Send to Agent**.
 
 **flip**:
 Reversing a pick at review time (chosen ↔ rejected).

@@ -1,13 +1,13 @@
 import type { VNode } from "preact";
 import { Accordion } from "../components/Accordion";
 import { AnnotatedCode } from "../components/AnnotatedCode";
-import { Callout } from "../components/Callout";
+import { Callout, type CalloutTone } from "../components/Callout";
 import { Carousel } from "../components/Carousel";
 import { CodeBlock } from "../components/CodeBlock";
 import { CodeExplorer } from "../components/CodeExplorer";
 import { DiffBlock } from "../components/DiffBlock";
 import { Flashcard } from "../components/Flashcard";
-import { Flow } from "../components/Flow";
+import { FLOW_KINDS, FLOW_PRESETS, Flow } from "../components/Flow";
 import { OptionCompare } from "../components/OptionCompare";
 import { PickBlock } from "../components/PickBlock";
 import { PlanSummary } from "../components/PlanSummary";
@@ -16,12 +16,24 @@ import { QuizCard } from "../components/QuizCard";
 import { RiskList } from "../components/RiskList";
 import { Scorecard } from "../components/Scorecard";
 import { SectionCard } from "../components/SectionCard";
-import { StatusChip } from "../components/StatusChip";
+import { StatusChip, type StepStatus } from "../components/StatusChip";
 import { Steps } from "../components/Steps";
 import { Storyboard } from "../components/Storyboard";
 import { Terminal } from "../components/Terminal";
 import { Timeline } from "../components/Timeline";
 import { TreePanel } from "../components/TreePanel";
+import { Whiteboard } from "../components/Whiteboard";
+
+const ALL_STATUSES: ReadonlyArray<StepStatus> = ["todo", "doing", "done", "blocked"];
+const ALL_TONES: ReadonlyArray<CalloutTone> = [
+  "note",
+  "warn",
+  "success",
+  "danger",
+  "risk",
+  "decision",
+  "assumption",
+];
 
 export interface PropDoc {
   readonly name: string;
@@ -86,7 +98,8 @@ export const GALLERY = {
   },
   Callout: {
     category: "notes",
-    blurb: "A tone-coloured admonition — the agent's margin note.",
+    blurb:
+      "A tone-coloured admonition — full matrix: note · warn · success · danger · risk · decision · assumption.",
     usage: '<Callout tone="risk" title="…">…</Callout>',
     props: [
       { name: "tone", type: "note|warn|success|danger|risk|decision|assumption", required: true },
@@ -94,14 +107,18 @@ export const GALLERY = {
       { name: "children", type: "ComponentChildren", required: true },
     ],
     sample: () => (
-      <Callout tone="risk" title="Blast radius">
-        Touches 12 files across 3 modules.
-      </Callout>
+      <div class="flex w-full min-w-0 flex-col gap-2">
+        {ALL_TONES.map((tone) => (
+          <Callout key={tone} tone={tone} title={tone}>
+            Sample body for the <strong>{tone}</strong> tone.
+          </Callout>
+        ))}
+      </div>
     ),
   },
   RiskList: {
     category: "notes",
-    blurb: "Severity-tagged risks / tradeoffs, each with an optional mitigation.",
+    blurb: "Severity-tagged risks — full matrix: low · med · high (+ mitigation).",
     usage: "<RiskList items={[{ risk, severity, mitigation }]} />",
     props: [
       { name: "items", type: "{ risk; severity: low|med|high; mitigation? }[]", required: true },
@@ -110,51 +127,68 @@ export const GALLERY = {
       <RiskList
         items={[
           {
-            risk: "CDN offline breaks styling",
+            risk: "Low — gallery drift is caught by CI",
+            severity: "low",
+            mitigation: "gallery-sync test",
+          },
+          {
+            risk: "Med — CDN offline breaks styling",
             severity: "med",
             mitigation: "inline critical CSS",
           },
-          { risk: "Unregistered component", severity: "low", mitigation: "gallery-sync test" },
+          {
+            risk: "High — feedback lost if serve times out with no copy",
+            severity: "high",
+            mitigation: "clipboard fallback + never-hang timeout",
+          },
         ]}
       />
     ),
   },
   StatusChip: {
     category: "sequence",
-    blurb: "A tiny status pill — todo · doing · done · blocked.",
+    blurb: "Status pills — full matrix: todo · doing · done · blocked.",
     usage: '<StatusChip status="doing" />',
     props: [
       { name: "status", type: "todo|doing|done|blocked", required: true },
       { name: "label", type: "string" },
     ],
-    sample: () => <StatusChip status="doing" />,
+    sample: () => (
+      <div class="flex flex-wrap items-center gap-2">
+        {ALL_STATUSES.map((status) => (
+          <StatusChip key={status} status={status} />
+        ))}
+      </div>
+    ),
   },
   Steps: {
     category: "sequence",
-    blurb: "A numbered checklist — the plan's ordered work, each with a status.",
+    blurb: "Numbered checklist — every status: done · doing · todo · blocked.",
     usage: "<Steps items={[{ label, status, detail }]} />",
     props: [{ name: "items", type: "{ label; status; detail? }[]", required: true }],
     sample: () => (
       <Steps
         items={[
-          { label: "Read the scan", status: "done" },
-          { label: "Grill the picks", status: "doing", detail: "pick-the-code gallery" },
-          { label: "Write the files", status: "todo" },
+          { label: "Read the scan", status: "done", detail: "complete" },
+          { label: "Grill the picks", status: "doing", detail: "in progress" },
+          { label: "Write the files", status: "todo", detail: "not started" },
+          { label: "Ship to npm", status: "blocked", detail: "waiting on review" },
         ]}
       />
     ),
   },
   Timeline: {
     category: "sequence",
-    blurb: "A vertical progress rail — phases/milestones with status.",
+    blurb: "Vertical progress rail — every status: done · doing · todo · blocked.",
     usage: "<Timeline items={[{ label, status, detail }]} />",
     props: [{ name: "items", type: "{ label; status; detail? }[]", required: true }],
     sample: () => (
       <Timeline
         items={[
-          { label: "Scaffold", status: "done" },
+          { label: "Scaffold", status: "done", detail: "shipped" },
           { label: "Wire CLI", status: "doing", detail: "library + capture" },
-          { label: "Publish", status: "todo" },
+          { label: "Publish", status: "todo", detail: "next" },
+          { label: "Docs site", status: "blocked", detail: "blocked on brand" },
         ]}
       />
     ),
@@ -184,7 +218,7 @@ export const GALLERY = {
   },
   OptionCompare: {
     category: "brainstorm",
-    blurb: "N-way approach comparison — pros/cons side by side with a verdict.",
+    blurb: "N-way approach comparison — full verdict matrix: chosen · maybe · rejected.",
     usage: "<OptionCompare options={[{ name, pros, cons, verdict }]} />",
     props: [{ name: "options", type: "{ name; pros[]; cons[]; verdict? }[]", required: true }],
     sample: () => (
@@ -197,6 +231,12 @@ export const GALLERY = {
             verdict: "chosen",
           },
           { name: "Codegen only", pros: ["hands-off"], cons: ["effectful step"], verdict: "maybe" },
+          {
+            name: "Hand-roll HTML",
+            pros: ["zero deps"],
+            cons: ["duplicates forever"],
+            verdict: "rejected",
+          },
         ]}
       />
     ),
@@ -318,10 +358,59 @@ export const GALLERY = {
   },
   Flow: {
     category: "diagram",
-    blurb: "A Mermaid diagram wrapper — CLI routing, module graphs, decision trees.",
-    usage: '<Flow source="flowchart LR; A-->B" />',
-    props: [{ name: "source", type: "string (Mermaid)", required: true }],
-    sample: () => <Flow source={"flowchart LR\n  A[plan] --> B[ship]"} />,
+    blurb:
+      "Mermaid board — all kinds (flowchart/sequence/class/state/ER/mindmap/pie/timeline). Edit source, sketch look, drag nodes, queue questions.",
+    usage: '<Flow editable id="arch" title="Arch" look="handDrawn" source="…" />',
+    props: [
+      { name: "source", type: "string (Mermaid)", required: true },
+      { name: "look", type: "classic|handDrawn" },
+      { name: "theme", type: "default|neutral|dark|forest|base" },
+      { name: "editable", type: "boolean" },
+      { name: "id", type: "string" },
+      { name: "title", type: "string" },
+    ],
+    sample: () => (
+      <div class="flex w-full min-w-0 flex-col gap-4">
+        <Flow
+          editable
+          id="gallery.diagram"
+          title="Interactive board — switch type · sketch · edit · drag · queue"
+          look="handDrawn"
+          theme="neutral"
+          source={FLOW_PRESETS.flowchart.source}
+        />
+        <div class="grid gap-3 sm:grid-cols-2">
+          {FLOW_KINDS.filter((k) => k !== "flowchart").map((kind) => (
+            <div key={kind} class="min-w-0">
+              <p class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                {FLOW_PRESETS[kind].label}
+              </p>
+              <Flow
+                id={`gallery.${kind}`}
+                title={FLOW_PRESETS[kind].label}
+                look={kind === "mindmap" || kind === "timeline" ? "classic" : "handDrawn"}
+                source={FLOW_PRESETS[kind].source}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  Whiteboard: {
+    category: "diagram",
+    blurb:
+      "Freehand brainstorm canvas (Excalidraw vibe) — rough pen, highlighter, shapes, stickies. Queue PNG + note for the agent.",
+    usage: '<Whiteboard id="brainstorm" title="Sketch" height={320} />',
+    props: [
+      { name: "id", type: "string" },
+      { name: "title", type: "string" },
+      { name: "height", type: "number" },
+      { name: "editable", type: "boolean" },
+    ],
+    sample: () => (
+      <Whiteboard id="gallery.sketch" title="Brainstorm with the agent" height={280} editable />
+    ),
   },
   QuizCard: {
     category: "teach",

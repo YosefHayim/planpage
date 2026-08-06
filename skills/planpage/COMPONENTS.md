@@ -20,7 +20,7 @@ import {
   // code
   CodeBlock, DiffBlock, AnnotatedCode, CodeExplorer, Terminal,
   // diagram / action
-  Flow, SubmitBar,
+  Flow, FeedbackSidebar, SubmitBar,
 } from "planpage";
 ```
 
@@ -48,8 +48,8 @@ import {
 | **teach** | `QuizCard` · `Flashcard` |
 | **metrics** | `PlanSummary` · `Scorecard` |
 | **code** | `DiffBlock` · `CodeBlock` · `AnnotatedCode` · `CodeExplorer` · `Terminal` |
-| **diagram** | `Flow` (Mermaid) |
-| **action** | `SubmitBar` |
+| **diagram** | `Flow` (Mermaid — all kinds + editable board) · `Whiteboard` (freehand Excalidraw-like pen → agent PNG) |
+| **action** | `FeedbackSidebar` (interactive queue-then-send) · `SubmitBar` (quiz) |
 
 ### Storyboard (image grids)
 
@@ -80,7 +80,7 @@ post-back collector (stable `dataId` is for targeting only).
 />
 ```
 
-`id` is what lands in `Decision.flips` / `revisit` after Approve/Adjust.
+`id` is what lands in `Decision.flips` / `revisit` after the user flips/revisits and hits **Send to Agent**.
 
 ### CodeExplorer (multi-file IDE pane)
 

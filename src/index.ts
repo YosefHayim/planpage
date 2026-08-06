@@ -21,7 +21,16 @@ export {
 } from "./components/CodeExplorer";
 export { DiffBlock, type DiffBlockProps } from "./components/DiffBlock";
 export { Flashcard, type FlashcardProps } from "./components/Flashcard";
-export { Flow, type FlowProps } from "./components/Flow";
+export {
+  FLOW_KINDS,
+  FLOW_PRESETS,
+  Flow,
+  type FlowKind,
+  type FlowLook,
+  type FlowProps,
+  type FlowTheme,
+} from "./components/Flow";
+export { Whiteboard, type WhiteboardProps } from "./components/Whiteboard";
 export {
   type CompareOption,
   OptionCompare,
@@ -41,11 +50,19 @@ export {
   type StoryboardFrame,
   type StoryboardProps,
 } from "./components/Storyboard";
+export { FeedbackSidebar } from "./components/FeedbackSidebar";
 export { SubmitBar, type SubmitBarProps } from "./components/SubmitBar";
 export { Terminal, type TerminalLine, type TerminalProps } from "./components/Terminal";
 export { Timeline, type TimelineItem, type TimelineProps } from "./components/Timeline";
 export { TreePanel, type TreePanelProps } from "./components/TreePanel";
-export type { Decision } from "./contracts/decision";
+export type {
+  Decision,
+  FeedbackAnnotation,
+  FeedbackDiagram,
+  FeedbackEdit,
+  FeedbackScreenshot,
+  FeedbackWhiteboard,
+} from "./contracts/decision";
 export {
   GALLERY,
   type GalleryEntry,

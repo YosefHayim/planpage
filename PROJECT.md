@@ -17,7 +17,7 @@ Agents now generate rich plans faster than a human can absorb them from monochro
 - A skill turns structured plan data into a polished local HTML page **in one call** — zero hand-rolled HTML.
 - A developer **absorbs** a plan (diffs, decisions, structure) in seconds from the browser.
 - Adding a template is **one component drop-in**; the gallery grows without touching the core.
-- Approval is **opt-in**: static by default; when wanted, the browser posts one decision JSON back and the agent continues — and it never hangs off-TTY.
+- Feedback is **opt-in**: static by default; when wanted, the user edits/annotates the plan, stages items in a sidebar, posts one feedback JSON batch, and the agent continues — and it never hangs off-TTY.
 - Anyone can **install it** and render the same templates in their own skill/CLI.
 
 **v1 success bar:** skills (dufflebag grill/deslop and peers) render their plans through planpage, retiring hand-rolled HTML.

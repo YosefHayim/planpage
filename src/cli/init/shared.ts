@@ -51,9 +51,19 @@ export const STATUS_MARK: Record<ScaffoldResult["status"], string> = {
 /** The core instruction block — what to do when presenting a plan. */
 export const planSteps = (): string =>
   [
+    "### Plan review (planpage — queue-then-send, not Approve/Adjust)",
+    "",
     "1. Shape the plan as JSON for the `plan-brief` template (title · summary · steps · options · risks · code).",
-    `2. Render + serve it: \`npx ${PKG} render plan-brief --data plan.json --serve --decision decision.json\` — it opens the browser and blocks until **Approve** / **Adjust**, and never hangs a non-TTY caller (it falls back to copy-paste).`,
-    "3. Read `decision.json` — `{ approved, flips, revisit, notes }` — and act: on `approved:false`, re-open the picks named in `flips` / `revisit` and fold in `notes`.",
+    `2. Render + serve: \`npx ${PKG} render plan-brief --data plan.json --serve --decision decision.json\` — browser opens; the user **annotates**, **edits in place**, and/or **attaches screenshots** in the fixed sidebar. Nothing is submitted until they click **Send to Agent**. Never hangs a non-TTY caller (clipboard fallback).`,
+    "3. Read `decision.json` — `{ approved, flips, revisit, notes, edits, annotations, screenshots }`.",
+    "4. Act on the batch:",
+    "   - `edits[]` — apply each original→edited change to the plan/code",
+    "   - `annotations[]` — fix what each note says is wrong (use `label` / `selectedText`)",
+    "   - `screenshots[]` — each has `name`, `mime`, `dataUrl` (data URL). Write to a temp file if you need to inspect, then fix the UI/code they show",
+    "   - `flips` / `revisit` — re-open those PickBlock ids",
+    "   - `notes` — free-text message from the sidebar composer",
+    "   - `approved:true` only means the queue was empty (rare)",
+    "5. If more review is needed, re-render the revised plan and serve again.",
   ].join("\n");
 
 /** The question-poll instruction block — for interview/grill flows. */
