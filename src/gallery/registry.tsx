@@ -24,8 +24,11 @@ import { Timeline } from "../components/Timeline";
 import { TreePanel } from "../components/TreePanel";
 import { Whiteboard } from "../components/Whiteboard";
 
-const ALL_STATUSES: ReadonlyArray<StepStatus> = ["todo", "doing", "done", "blocked"];
-const ALL_TONES: ReadonlyArray<CalloutTone> = [
+/** Full StepStatus matrix — gallery StatusChip / Steps / Timeline samples must cover every value. */
+export const GALLERY_STATUSES: ReadonlyArray<StepStatus> = ["todo", "doing", "done", "blocked"];
+
+/** Full CalloutTone matrix — gallery Callout sample must cover every value. */
+export const GALLERY_TONES: ReadonlyArray<CalloutTone> = [
   "note",
   "warn",
   "success",
@@ -34,6 +37,35 @@ const ALL_TONES: ReadonlyArray<CalloutTone> = [
   "decision",
   "assumption",
 ];
+
+/** Full Risk severity matrix — gallery RiskList sample must cover every value. */
+export const GALLERY_SEVERITIES = ["low", "med", "high"] as const;
+
+const RISK_SAMPLES: Record<
+  (typeof GALLERY_SEVERITIES)[number],
+  { readonly risk: string; readonly mitigation: string }
+> = {
+  low: { risk: "Low — gallery drift is caught by CI", mitigation: "gallery-sync test" },
+  med: { risk: "Med — CDN offline breaks styling", mitigation: "inline critical CSS" },
+  high: {
+    risk: "High — feedback lost if serve times out with no copy",
+    mitigation: "clipboard fallback + never-hang timeout",
+  },
+};
+
+const STEPS_SAMPLES: Record<StepStatus, { readonly label: string; readonly detail: string }> = {
+  done: { label: "Read the scan", detail: "complete" },
+  doing: { label: "Grill the picks", detail: "in progress" },
+  todo: { label: "Write the files", detail: "not started" },
+  blocked: { label: "Ship to npm", detail: "waiting on review" },
+};
+
+const TIMELINE_SAMPLES: Record<StepStatus, { readonly label: string; readonly detail: string }> = {
+  done: { label: "Scaffold", detail: "shipped" },
+  doing: { label: "Wire CLI", detail: "library + capture" },
+  todo: { label: "Publish", detail: "next" },
+  blocked: { label: "Docs site", detail: "blocked on brand" },
+};
 
 export interface PropDoc {
   readonly name: string;
@@ -108,7 +140,7 @@ export const GALLERY = {
     ],
     sample: () => (
       <div class="flex w-full min-w-0 flex-col gap-2">
-        {ALL_TONES.map((tone) => (
+        {GALLERY_TONES.map((tone) => (
           <Callout key={tone} tone={tone} title={tone}>
             Sample body for the <strong>{tone}</strong> tone.
           </Callout>
@@ -125,23 +157,10 @@ export const GALLERY = {
     ],
     sample: () => (
       <RiskList
-        items={[
-          {
-            risk: "Low — gallery drift is caught by CI",
-            severity: "low",
-            mitigation: "gallery-sync test",
-          },
-          {
-            risk: "Med — CDN offline breaks styling",
-            severity: "med",
-            mitigation: "inline critical CSS",
-          },
-          {
-            risk: "High — feedback lost if serve times out with no copy",
-            severity: "high",
-            mitigation: "clipboard fallback + never-hang timeout",
-          },
-        ]}
+        items={GALLERY_SEVERITIES.map((severity) => ({
+          severity,
+          ...RISK_SAMPLES[severity],
+        }))}
       />
     ),
   },
@@ -155,7 +174,7 @@ export const GALLERY = {
     ],
     sample: () => (
       <div class="flex flex-wrap items-center gap-2">
-        {ALL_STATUSES.map((status) => (
+        {GALLERY_STATUSES.map((status) => (
           <StatusChip key={status} status={status} />
         ))}
       </div>
@@ -168,12 +187,10 @@ export const GALLERY = {
     props: [{ name: "items", type: "{ label; status; detail? }[]", required: true }],
     sample: () => (
       <Steps
-        items={[
-          { label: "Read the scan", status: "done", detail: "complete" },
-          { label: "Grill the picks", status: "doing", detail: "in progress" },
-          { label: "Write the files", status: "todo", detail: "not started" },
-          { label: "Ship to npm", status: "blocked", detail: "waiting on review" },
-        ]}
+        items={GALLERY_STATUSES.map((status) => ({
+          status,
+          ...STEPS_SAMPLES[status],
+        }))}
       />
     ),
   },
@@ -184,12 +201,10 @@ export const GALLERY = {
     props: [{ name: "items", type: "{ label; status; detail? }[]", required: true }],
     sample: () => (
       <Timeline
-        items={[
-          { label: "Scaffold", status: "done", detail: "shipped" },
-          { label: "Wire CLI", status: "doing", detail: "library + capture" },
-          { label: "Publish", status: "todo", detail: "next" },
-          { label: "Docs site", status: "blocked", detail: "blocked on brand" },
-        ]}
+        items={GALLERY_STATUSES.map((status) => ({
+          status,
+          ...TIMELINE_SAMPLES[status],
+        }))}
       />
     ),
   },
@@ -461,7 +476,7 @@ export const GALLERY = {
   Carousel: {
     category: "layout",
     blurb:
-      "An infinite auto-scrolling carousel — discrete slideshow (arrows/dots) or a pure-CSS marquee.",
+      "An infinite auto-scrolling carousel — full mode matrix: slideshow (arrows/dots) · pure-CSS marquee.",
     usage: '<Carousel mode="slideshow" slides={[{ title, body, code }]} />',
     props: [
       { name: "slides", type: "{ title?; body?; image?; code?; codeLang? }[]", required: true },
@@ -470,29 +485,31 @@ export const GALLERY = {
       { name: "interval", type: "number (ms)" },
       { name: "label", type: "string" },
     ],
-    sample: () => (
-      <Carousel
-        label="Golden exemplars"
-        mode="slideshow"
-        slides={[
-          {
-            title: "Arrow-const component",
-            body: "Named export, readonly props interface.",
-            code: "export const C = () => <div/>",
-          },
-          {
-            title: "Early return over nested ternary",
-            body: "Flatten branching in JSX.",
-            code: "if (!items.length) return null",
-          },
-          {
-            title: "Lookup map over switch",
-            body: "Record<Union, string> for enum→style.",
-            code: 'const TONE = { risk: "…" }',
-          },
-        ]}
-      />
-    ),
+    sample: () => {
+      const slides = [
+        {
+          title: "Arrow-const component",
+          body: "Named export, readonly props interface.",
+          code: "export const C = () => <div/>",
+        },
+        {
+          title: "Early return over nested ternary",
+          body: "Flatten branching in JSX.",
+          code: "if (!items.length) return null",
+        },
+        {
+          title: "Lookup map over switch",
+          body: "Record<Union, string> for enum→style.",
+          code: 'const TONE = { risk: "…" }',
+        },
+      ];
+      return (
+        <div class="flex w-full min-w-0 flex-col gap-4">
+          <Carousel label="Slideshow" mode="slideshow" slides={slides} />
+          <Carousel label="Marquee" mode="marquee" slides={slides} />
+        </div>
+      );
+    },
   },
   Storyboard: {
     category: "layout",
