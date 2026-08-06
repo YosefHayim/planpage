@@ -1,0 +1,171 @@
+{
+  "version": 3,
+  "guide": "CODE-STYLE.md",
+  "rules": [
+    {
+      "id": "path.role-layout",
+      "statement": "Every module lives in the `src/` directory that owns its role.",
+      "verify": "judgment"
+    },
+    {
+      "id": "path.template-folder",
+      "statement": "A template is a folder under `src/templates/` holding its component, its co-located test, and its README.",
+      "verify": "judgment"
+    },
+    {
+      "id": "path.one-module-per-island",
+      "statement": "Each client island and each agent on-ramp writer is one module in the directory that owns its set.",
+      "verify": "judgment"
+    },
+    {
+      "id": "path.dev-scripts",
+      "statement": "A personal or one-off script lives in the gitignored `scripts/dev/` directory.",
+      "verify": "judgment"
+    },
+    {
+      "id": "render.pure-core",
+      "statement": "Code under `src/components/`, `src/templates/`, and `src/render/` is pure data-to-HTML with no I/O, clock, randomness, or DOM access.",
+      "verify": "judgment"
+    },
+    {
+      "id": "api.render-boundary",
+      "statement": "A component tree becomes an HTML string only through `render()`.",
+      "verify": "judgment"
+    },
+    {
+      "id": "api.barrel-export",
+      "statement": "Every public component, template, and helper is re-exported from `src/index.ts`.",
+      "verify": "judgment"
+    },
+    {
+      "id": "render.escape-default",
+      "statement": "Raw HTML reaches the page only through `raw()` or the `Shell`'s own constant infra.",
+      "verify": "npm run lint"
+    },
+    {
+      "id": "render.island-in-shell",
+      "statement": "Client-side behavior is a constant script from `src/render/clientScript/` that the `Shell` injects behind a boolean flag.",
+      "verify": "judgment"
+    },
+    {
+      "id": "render.pp-prefix",
+      "statement": "Every DOM id the render layer owns is prefixed `pp-`.",
+      "verify": "judgment"
+    },
+    {
+      "id": "render.highlight-marker",
+      "statement": "A code-bearing component emits a `codeMark()` marker and leaves colouring to the async `highlight()` edge pass.",
+      "verify": "judgment"
+    },
+    {
+      "id": "component.arrow-const",
+      "statement": "A component is one arrow const named after its PascalCase file.",
+      "verify": "judgment"
+    },
+    {
+      "id": "component.named-export",
+      "statement": "Every module exports by name and never by default.",
+      "verify": "npm run lint"
+    },
+    {
+      "id": "component.props-interface",
+      "statement": "A component's props are an exported `interface` named `<Component>Props` with every field `readonly`.",
+      "verify": "judgment"
+    },
+    {
+      "id": "component.helpers-below",
+      "statement": "A module-local helper is a `function` declaration placed below the component it serves.",
+      "verify": "judgment"
+    },
+    {
+      "id": "template.assert-props",
+      "statement": "A public template asserts its required props before it renders and throws an `Error` naming the template and the missing field.",
+      "verify": "npm test"
+    },
+    {
+      "id": "naming.case-by-kind",
+      "statement": "Each kind of name takes its fixed case: PascalCase components, camelCase functions and variables, SCREAMING_SNAKE constants, and kebab-case template ids and CLI flags.",
+      "verify": "judgment"
+    },
+    {
+      "id": "naming.no-generic",
+      "statement": "Every identifier names the domain thing it holds or does.",
+      "verify": "judgment"
+    },
+    {
+      "id": "type.interface-or-union",
+      "statement": "Object shapes are declared with `interface` and unions with `type`.",
+      "verify": "judgment"
+    },
+    {
+      "id": "type.explicit-return",
+      "statement": "An exported non-component function declares its return type.",
+      "verify": "judgment"
+    },
+    {
+      "id": "type.no-any",
+      "statement": "No authored type is `any`.",
+      "verify": "npm run lint"
+    },
+    {
+      "id": "type.no-forced-props",
+      "statement": "A cast forces a shape only at the sanctioned JSON→props boundary in `src/templates/index.tsx`.",
+      "verify": "judgment"
+    },
+    {
+      "id": "jsx.no-nested-ternary",
+      "statement": "JSX picks a branch with an early return, a lookup map, or a subcomponent, never a nested ternary.",
+      "verify": "judgment"
+    },
+    {
+      "id": "helper.no-micro-helper",
+      "statement": "A helper exists only when it holds real logic that more than one caller needs.",
+      "verify": "judgment"
+    },
+    {
+      "id": "variant.record-map",
+      "statement": "A fixed set of visual variants is a `Record` map keyed by a literal union.",
+      "verify": "npm run typecheck"
+    },
+    {
+      "id": "shell.fixed",
+      "statement": "A template supplies content and `data-id`s and never restyles the `Shell`.",
+      "verify": "judgment"
+    },
+    {
+      "id": "error.server-exit-code",
+      "statement": "The server resolves every path to an exit code — 0 for a written decision, 2 for a bad argument or IO failure, 3 for a timeout — and never hangs.",
+      "verify": "npm test"
+    },
+    {
+      "id": "error.cli-top-catch",
+      "statement": "CLI code throws and lets the one catch in `src/cli/index.ts` print the message and set a non-zero exit code.",
+      "verify": "judgment"
+    },
+    {
+      "id": "test.colocated-html",
+      "statement": "A vitest file sits beside the source it covers and asserts on the string `render()` returns.",
+      "verify": "judgment"
+    },
+    {
+      "id": "test.escape-and-throw",
+      "statement": "Every public template test covers both its escaping and its required-prop throw.",
+      "verify": "judgment"
+    },
+    {
+      "id": "gallery.registry-entry",
+      "statement": "Every component in `src/components/` except `Shell` and `SubmitBar` has a `GALLERY` entry in `src/gallery/registry.tsx`.",
+      "verify": "npm test"
+    },
+    {
+      "id": "cli.shared-command-fn",
+      "statement": "Every menu branch and every subcommand routes into the same exported command function.",
+      "verify": "judgment"
+    },
+    {
+      "id": "cli.tty-only-prompt",
+      "statement": "A bare TTY opens the clack menu and every non-TTY invocation runs on flags without prompting.",
+      "verify": "judgment"
+    }
+  ]
+}

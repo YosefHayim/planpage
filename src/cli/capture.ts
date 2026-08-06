@@ -1,4 +1,5 @@
-import { readdirSync } from "node:fs";
+import { existsSync, readdirSync } from "node:fs";
+import { join } from "node:path";
 import { componentNames, diffRegistry } from "../gallery/capture";
 import { GALLERY } from "../gallery/registry";
 
@@ -9,13 +10,18 @@ export interface CaptureCommandOptions {
 
 /**
  * `planpage capture` — report components in src/components that are missing from the gallery
- * registry (and stale entries that are registered but gone). A dev tool: run from source, where
- * the .tsx files exist. The gallery-sync test is the enforced guarantee; this is the fast local check.
+ * registry (and stale entries that are registered but gone). A dev tool: run from a checkout
+ * (needs `src/components/`). The gallery-sync test is the enforced guarantee; this is the fast
+ * local check. Resolve from `process.cwd()` so the bundled CLI under `dist/` still works.
  */
 export const captureCommand = (options: CaptureCommandOptions): void => {
-  const onDisk = componentNames(
-    readdirSync(new URL("../components/", import.meta.url)).map(String),
-  );
+  const componentsDir = join(process.cwd(), "src", "components");
+  if (!existsSync(componentsDir)) {
+    throw new Error(
+      "planpage capture: run from a planpage checkout (needs src/components/). The gallery-sync test covers CI.",
+    );
+  }
+  const onDisk = componentNames(readdirSync(componentsDir));
   const diff = diffRegistry(onDisk, Object.keys(GALLERY));
 
   if (diff.missing.length === 0 && diff.extra.length === 0) {

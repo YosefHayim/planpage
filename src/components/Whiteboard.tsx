@@ -51,7 +51,9 @@ export const Whiteboard = ({
       data-wb-height={h}
     >
       <div class="flex flex-wrap items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-2 py-2 dark:border-slate-800 dark:bg-slate-900/50">
-        <span class="mr-auto px-1 font-medium text-slate-700 text-xs dark:text-slate-200">{title}</span>
+        <span class="mr-auto px-1 font-medium text-slate-700 text-xs dark:text-slate-200">
+          {title}
+        </span>
         {editable ? (
           <>
             <div
@@ -112,7 +114,11 @@ export const Whiteboard = ({
         class="relative w-full overflow-hidden bg-[#faf9f6] dark:bg-[#1a1a1a]"
         style={`height:${h}px`}
       >
-        <canvas data-wb-canvas class="absolute inset-0 h-full w-full touch-none" aria-label={title} />
+        <canvas
+          data-wb-canvas
+          class="absolute inset-0 h-full w-full touch-none"
+          aria-label={title}
+        />
         <div data-wb-stickies class="pointer-events-none absolute inset-0" />
       </div>
 
@@ -132,7 +138,10 @@ export const Whiteboard = ({
           >
             Queue sketch for agent
           </button>
-          <p data-wb-status class="hidden w-full text-[11px] text-emerald-600 dark:text-emerald-400" />
+          <p
+            data-wb-status
+            class="hidden w-full text-[11px] text-emerald-600 dark:text-emerald-400"
+          />
         </div>
       ) : null}
     </div>

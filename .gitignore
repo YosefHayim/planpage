@@ -6,6 +6,18 @@ dist
 # Local one-off / personal dev scripts (see CODE-STYLE.md)
 scripts/dev/
 
+# Agent worktrees (messy-repo / coordinate-worktrees lanes)
+.worktrees/
+
+# Local planpage init scaffolds (this package is not a consumer)
+.amazonq/
+.claude/
+.clinerules/
+.cursor/
+.roo/
+.windsurf/
+.github/copilot-instructions.md
+
 # Kiro CLI agent config (local)
 .kiro
 

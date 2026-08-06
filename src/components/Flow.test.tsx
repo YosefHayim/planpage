@@ -1,14 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DIAGRAM_SCRIPT } from "../render/clientScript/diagram";
 import { render } from "../render/render";
-import {
-  detectKind,
-  FLOW_KINDS,
-  FLOW_PRESETS,
-  Flow,
-  stripInit,
-  withInit,
-} from "./Flow";
+import { FLOW_KINDS, FLOW_PRESETS, Flow, detectKind, stripInit, withInit } from "./Flow";
 
 describe("Flow", () => {
   it("renders mermaid source", () => {
@@ -70,15 +63,13 @@ describe("Flow", () => {
     const html = render(<Flow editable id="ml" source={src} />);
     // textarea body (not input value=") so newlines survive HTML parse
     expect(html).toMatch(
-      /data-diagram-original-field[^>]*>flowchart LR\n  A --> B\n  B --> C<\/textarea>/,
+      /data-diagram-original-field[^>]*>flowchart LR\n {2}A --> B\n {2}B --> C<\/textarea>/,
     );
     expect(html).toContain('data-diagram-id="ml"');
   });
 
   it("selects the matching kind option from source", () => {
-    const html = render(
-      <Flow editable source={FLOW_PRESETS.sequence.source} id="seq" />,
-    );
+    const html = render(<Flow editable source={FLOW_PRESETS.sequence.source} id="seq" />);
     // Preact serializes selected as selected="" or selected="true"
     expect(html).toMatch(/<option[^>]*value="sequence"[^>]*selected/);
   });

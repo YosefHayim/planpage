@@ -16,4 +16,3 @@ describe("CodeBlock", () => {
     expect(html).not.toMatch(/<pre class="code[^"]*code-wrap/);
   });
 });
-
