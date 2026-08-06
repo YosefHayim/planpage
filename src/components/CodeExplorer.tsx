@@ -17,6 +17,8 @@ export interface CodeExplorerProps {
   readonly files: ReadonlyArray<ExplorerFile>;
   /** Optional header, e.g. "Canonical example — adding an endpoint". */
   readonly label?: string;
+  /** Initial tree pane width in rem (drag-resizable). Default 14. Clamped 8–28. */
+  readonly treeWidthRem?: number;
 }
 
 /** Extension → Shiki language, so callers rarely need to set `lang` by hand. */
@@ -44,35 +46,44 @@ const LANG_BY_EXT: Record<string, string> = {
 
 /**
  * An IDE-style file explorer for a multi-file example: a folder tree on the left, one editor
- * pane per file on the right. Click a file to open it; a file with a `before` gets a before/after
- * toggle. Every pane is syntax-highlighted by the render-time pass; the client island only swaps
- * which pane is visible (opt-in via the Shell `explorable` flag), so the first file reads with no JS.
- *
- * @param files - the files to browse; the first opens by default
- * @param label - optional header shown above the explorer
- * @returns a bordered explorer with a `data-explorer` root the client island scopes to
+ * pane per file on the right. Drag the split to resize the tree. Click a file to open it; a file
+ * with a `before` gets a before/after toggle. Every pane is syntax-highlighted by the render-time
+ * pass; the client island only swaps which pane is visible (opt-in via Shell `explorable`).
  */
-export const CodeExplorer = ({ files, label }: CodeExplorerProps) => {
+export const CodeExplorer = ({ files, label, treeWidthRem = 14 }: CodeExplorerProps) => {
   if (files.length === 0) throw new Error("CodeExplorer: files[] is required and non-empty");
   const tree = buildTree(files);
+  const width = Math.min(28, Math.max(8, treeWidthRem));
   return (
     <div
       data-explorer
       class="overflow-hidden rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-[#1e1e1e]"
+      style={`--pp-tree:${width}rem`}
     >
       {label ? (
         <div class="border-b border-slate-100 px-3 py-2 font-mono text-xs text-slate-500 dark:border-slate-800">
           {label}
         </div>
       ) : null}
-      <div class="grid md:grid-cols-[minmax(9rem,14rem)_1fr]">
+      <div class="flex min-h-0 flex-col md:flex-row">
         <nav
           aria-label="Files"
-          class="max-h-96 overflow-auto border-b border-slate-100 bg-slate-50 py-2 text-sm md:border-b-0 md:border-r dark:border-slate-800 dark:bg-slate-900/50"
+          data-explorer-tree
+          class="max-h-96 w-full shrink-0 overflow-auto border-b border-slate-100 bg-slate-50 py-2 text-sm md:max-h-[28rem] md:border-b-0 md:border-r dark:border-slate-800 dark:bg-slate-900/50"
+          style="width:var(--pp-tree,14rem);max-width:100%"
         >
           {renderNodes(tree, 0, files[0]?.path)}
         </nav>
-        <div class="min-w-0">
+        <div
+          data-explorer-split
+          class="pp-split hidden w-1.5 shrink-0 cursor-col-resize bg-slate-100 hover:bg-indigo-400 md:block dark:bg-slate-800 dark:hover:bg-indigo-500"
+          role="separator"
+          tabIndex={0}
+          aria-orientation="vertical"
+          aria-label="Resize file tree"
+          title="Drag to resize · ← → keys"
+        />
+        <div class="min-w-0 flex-1 overflow-x-auto" data-explorer-main>
           {files.map((file, i) => (
             <FilePane key={file.path} file={file} lang={langOf(file)} open={i === 0} />
           ))}
@@ -171,9 +182,9 @@ const FilePane = ({
 }) => (
   <section data-file={file.path} class={open ? "" : "hidden"}>
     <div class="flex items-center gap-2 border-b border-slate-100 px-3 py-2 dark:border-slate-800">
-      <span class="truncate font-mono text-xs text-slate-500">{file.path}</span>
+      <span class="min-w-0 truncate font-mono text-xs text-slate-500">{file.path}</span>
       {file.before ? (
-        <div class="ml-auto flex overflow-hidden rounded-md border border-slate-200 text-xs dark:border-slate-700">
+        <div class="ml-auto flex shrink-0 overflow-hidden rounded-md border border-slate-200 text-xs dark:border-slate-700">
           <button
             type="button"
             data-variant-btn="before"
@@ -194,14 +205,14 @@ const FilePane = ({
     {file.before !== undefined ? (
       <pre
         data-variant="before"
-        class="code hidden bg-white p-4 text-xs leading-relaxed text-slate-800 dark:bg-[#1e1e1e] dark:text-slate-100"
+        class="code overflow-x-auto bg-white p-4 text-xs leading-relaxed text-slate-800 dark:bg-[#1e1e1e] dark:text-slate-100"
       >
         {codeMark(file.before, lang)}
       </pre>
     ) : null}
     <pre
       data-variant="after"
-      class="code bg-white p-4 text-xs leading-relaxed text-slate-800 dark:bg-[#1e1e1e] dark:text-slate-100"
+      class="code overflow-x-auto bg-white p-4 text-xs leading-relaxed text-slate-800 dark:bg-[#1e1e1e] dark:text-slate-100"
     >
       {codeMark(file.code, lang)}
     </pre>

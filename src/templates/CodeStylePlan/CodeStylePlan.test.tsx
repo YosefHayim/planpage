@@ -14,14 +14,16 @@ const PICKS = [
 ];
 
 describe("CodeStylePlan", () => {
-  it("renders picks with stable data-ids and the submit bar when interactive", () => {
+  it("renders picks with stable data-ids and the feedback sidebar when interactive", () => {
     const html = render(<CodeStylePlan title="Style" picks={PICKS} />, { interactive: true });
     expect(html).toContain('data-id="rule.component-form"');
     expect(html).toContain('id="pp-bar"');
-    expect(html).toContain('data-action="approve"');
+    expect(html).toContain('id="pp-queue"');
+    expect(html).toContain('data-action="send"');
+    expect(html).not.toContain('data-action="approve"');
   });
 
-  it("omits the submit bar when not interactive", () => {
+  it("omits the feedback sidebar when not interactive", () => {
     const html = render(<CodeStylePlan title="Style" picks={PICKS} />);
     expect(html).not.toContain('id="pp-bar"');
   });

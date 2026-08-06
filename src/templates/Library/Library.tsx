@@ -123,12 +123,12 @@ function EntryCard({ name }: { readonly name: GalleryName }) {
   return (
     <div
       data-card={`${name} ${entry.blurb}`.toLowerCase()}
-      class="overflow-hidden rounded-xl border border-slate-200 transition-shadow hover:shadow-md dark:border-slate-800"
+      class="flex min-w-0 flex-col overflow-hidden rounded-xl border border-slate-200 transition-shadow hover:shadow-md dark:border-slate-800"
     >
-      <div class="grid min-h-28 place-items-center overflow-x-auto border-slate-100 border-b bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-900/40">
-        {entry.sample()}
+      <div class="min-h-28 w-full min-w-0 overflow-x-auto border-slate-100 border-b bg-slate-50 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/40">
+        <div class="mx-auto w-full min-w-0 max-w-full">{entry.sample()}</div>
       </div>
-      <div class="p-4">
+      <div class="min-w-0 p-4">
         <div class="mb-2 flex flex-wrap items-baseline gap-2">
           <h3 class="font-semibold text-slate-900 dark:text-white">{name}</h3>
           <span class="rounded-full bg-slate-100 px-2 py-0.5 text-slate-500 text-xs uppercase tracking-wide dark:bg-slate-800 dark:text-slate-400">
@@ -136,7 +136,7 @@ function EntryCard({ name }: { readonly name: GalleryName }) {
           </span>
         </div>
         <p class="mb-3 text-slate-500 text-sm dark:text-slate-400">{entry.blurb}</p>
-        <CodeBlock code={entry.usage} />
+        <CodeBlock code={entry.usage} overflow="wrap" />
         <PropsTable props={entry.props} />
       </div>
     </div>

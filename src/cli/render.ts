@@ -35,10 +35,12 @@ export const renderCommand = async (
       // interactive post-back too, or both would handle [data-action] and double-submit.
       interactive: Boolean(options.serve) && template !== "quiz",
       filterable: template === "library",
-      explorable: template === "code-style-plan",
+      explorable: template === "code-style-plan" || template === "library",
       pollable: template === "question-poll",
       quizzable: template === "quiz" || template === "library",
       carousel: template === "library",
+      // interactive plans also get diagram boards via Shell (diagramable || interactive)
+      diagramable: template === "library",
     }),
   );
 

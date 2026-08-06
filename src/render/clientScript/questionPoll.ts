@@ -221,7 +221,8 @@ export const QUESTION_POLL_SCRIPT = `(function(){
   document.addEventListener('click',function(e){
     var b=e.target.closest&&e.target.closest('[data-action]');if(!b)return;
     var a=b.getAttribute('data-action');
-    if(a==='approve')submit(true);
+    // Feedback sidebar uses send (queue-then-send). Keep approve/adjust for older bars.
+    if(a==='send'||a==='approve')submit(true);
     else if(a==='adjust')submit(false);
     else if(a==='copy'){
       var token=btoa(unescape(encodeURIComponent(JSON.stringify(collect()))));

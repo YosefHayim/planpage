@@ -1,13 +1,13 @@
 import type { VNode } from "preact";
 import { Accordion } from "../components/Accordion";
 import { AnnotatedCode } from "../components/AnnotatedCode";
-import { Callout } from "../components/Callout";
+import { Callout, type CalloutTone } from "../components/Callout";
 import { Carousel } from "../components/Carousel";
 import { CodeBlock } from "../components/CodeBlock";
 import { CodeExplorer } from "../components/CodeExplorer";
 import { DiffBlock } from "../components/DiffBlock";
 import { Flashcard } from "../components/Flashcard";
-import { Flow } from "../components/Flow";
+import { FLOW_KINDS, FLOW_PRESETS, Flow } from "../components/Flow";
 import { OptionCompare } from "../components/OptionCompare";
 import { PickBlock } from "../components/PickBlock";
 import { PlanSummary } from "../components/PlanSummary";
@@ -16,12 +16,56 @@ import { QuizCard } from "../components/QuizCard";
 import { RiskList } from "../components/RiskList";
 import { Scorecard } from "../components/Scorecard";
 import { SectionCard } from "../components/SectionCard";
-import { StatusChip } from "../components/StatusChip";
+import { StatusChip, type StepStatus } from "../components/StatusChip";
 import { Steps } from "../components/Steps";
 import { Storyboard } from "../components/Storyboard";
 import { Terminal } from "../components/Terminal";
 import { Timeline } from "../components/Timeline";
 import { TreePanel } from "../components/TreePanel";
+import { Whiteboard } from "../components/Whiteboard";
+
+/** Full StepStatus matrix — gallery StatusChip / Steps / Timeline samples must cover every value. */
+export const GALLERY_STATUSES: ReadonlyArray<StepStatus> = ["todo", "doing", "done", "blocked"];
+
+/** Full CalloutTone matrix — gallery Callout sample must cover every value. */
+export const GALLERY_TONES: ReadonlyArray<CalloutTone> = [
+  "note",
+  "warn",
+  "success",
+  "danger",
+  "risk",
+  "decision",
+  "assumption",
+];
+
+/** Full Risk severity matrix — gallery RiskList sample must cover every value. */
+export const GALLERY_SEVERITIES = ["low", "med", "high"] as const;
+
+const RISK_SAMPLES: Record<
+  (typeof GALLERY_SEVERITIES)[number],
+  { readonly risk: string; readonly mitigation: string }
+> = {
+  low: { risk: "Low — gallery drift is caught by CI", mitigation: "gallery-sync test" },
+  med: { risk: "Med — CDN offline breaks styling", mitigation: "inline critical CSS" },
+  high: {
+    risk: "High — feedback lost if serve times out with no copy",
+    mitigation: "clipboard fallback + never-hang timeout",
+  },
+};
+
+const STEPS_SAMPLES: Record<StepStatus, { readonly label: string; readonly detail: string }> = {
+  done: { label: "Read the scan", detail: "complete" },
+  doing: { label: "Grill the picks", detail: "in progress" },
+  todo: { label: "Write the files", detail: "not started" },
+  blocked: { label: "Ship to npm", detail: "waiting on review" },
+};
+
+const TIMELINE_SAMPLES: Record<StepStatus, { readonly label: string; readonly detail: string }> = {
+  done: { label: "Scaffold", detail: "shipped" },
+  doing: { label: "Wire CLI", detail: "library + capture" },
+  todo: { label: "Publish", detail: "next" },
+  blocked: { label: "Docs site", detail: "blocked on brand" },
+};
 
 export interface PropDoc {
   readonly name: string;
@@ -86,7 +130,8 @@ export const GALLERY = {
   },
   Callout: {
     category: "notes",
-    blurb: "A tone-coloured admonition — the agent's margin note.",
+    blurb:
+      "A tone-coloured admonition — full matrix: note · warn · success · danger · risk · decision · assumption.",
     usage: '<Callout tone="risk" title="…">…</Callout>',
     props: [
       { name: "tone", type: "note|warn|success|danger|risk|decision|assumption", required: true },
@@ -94,68 +139,72 @@ export const GALLERY = {
       { name: "children", type: "ComponentChildren", required: true },
     ],
     sample: () => (
-      <Callout tone="risk" title="Blast radius">
-        Touches 12 files across 3 modules.
-      </Callout>
+      <div class="flex w-full min-w-0 flex-col gap-2">
+        {GALLERY_TONES.map((tone) => (
+          <Callout key={tone} tone={tone} title={tone}>
+            Sample body for the <strong>{tone}</strong> tone.
+          </Callout>
+        ))}
+      </div>
     ),
   },
   RiskList: {
     category: "notes",
-    blurb: "Severity-tagged risks / tradeoffs, each with an optional mitigation.",
+    blurb: "Severity-tagged risks — full matrix: low · med · high (+ mitigation).",
     usage: "<RiskList items={[{ risk, severity, mitigation }]} />",
     props: [
       { name: "items", type: "{ risk; severity: low|med|high; mitigation? }[]", required: true },
     ],
     sample: () => (
       <RiskList
-        items={[
-          {
-            risk: "CDN offline breaks styling",
-            severity: "med",
-            mitigation: "inline critical CSS",
-          },
-          { risk: "Unregistered component", severity: "low", mitigation: "gallery-sync test" },
-        ]}
+        items={GALLERY_SEVERITIES.map((severity) => ({
+          severity,
+          ...RISK_SAMPLES[severity],
+        }))}
       />
     ),
   },
   StatusChip: {
     category: "sequence",
-    blurb: "A tiny status pill — todo · doing · done · blocked.",
+    blurb: "Status pills — full matrix: todo · doing · done · blocked.",
     usage: '<StatusChip status="doing" />',
     props: [
       { name: "status", type: "todo|doing|done|blocked", required: true },
       { name: "label", type: "string" },
     ],
-    sample: () => <StatusChip status="doing" />,
+    sample: () => (
+      <div class="flex flex-wrap items-center gap-2">
+        {GALLERY_STATUSES.map((status) => (
+          <StatusChip key={status} status={status} />
+        ))}
+      </div>
+    ),
   },
   Steps: {
     category: "sequence",
-    blurb: "A numbered checklist — the plan's ordered work, each with a status.",
+    blurb: "Numbered checklist — every status: done · doing · todo · blocked.",
     usage: "<Steps items={[{ label, status, detail }]} />",
     props: [{ name: "items", type: "{ label; status; detail? }[]", required: true }],
     sample: () => (
       <Steps
-        items={[
-          { label: "Read the scan", status: "done" },
-          { label: "Grill the picks", status: "doing", detail: "pick-the-code gallery" },
-          { label: "Write the files", status: "todo" },
-        ]}
+        items={GALLERY_STATUSES.map((status) => ({
+          status,
+          ...STEPS_SAMPLES[status],
+        }))}
       />
     ),
   },
   Timeline: {
     category: "sequence",
-    blurb: "A vertical progress rail — phases/milestones with status.",
+    blurb: "Vertical progress rail — every status: done · doing · todo · blocked.",
     usage: "<Timeline items={[{ label, status, detail }]} />",
     props: [{ name: "items", type: "{ label; status; detail? }[]", required: true }],
     sample: () => (
       <Timeline
-        items={[
-          { label: "Scaffold", status: "done" },
-          { label: "Wire CLI", status: "doing", detail: "library + capture" },
-          { label: "Publish", status: "todo" },
-        ]}
+        items={GALLERY_STATUSES.map((status) => ({
+          status,
+          ...TIMELINE_SAMPLES[status],
+        }))}
       />
     ),
   },
@@ -184,7 +233,7 @@ export const GALLERY = {
   },
   OptionCompare: {
     category: "brainstorm",
-    blurb: "N-way approach comparison — pros/cons side by side with a verdict.",
+    blurb: "N-way approach comparison — full verdict matrix: chosen · maybe · rejected.",
     usage: "<OptionCompare options={[{ name, pros, cons, verdict }]} />",
     props: [{ name: "options", type: "{ name; pros[]; cons[]; verdict? }[]", required: true }],
     sample: () => (
@@ -197,6 +246,12 @@ export const GALLERY = {
             verdict: "chosen",
           },
           { name: "Codegen only", pros: ["hands-off"], cons: ["effectful step"], verdict: "maybe" },
+          {
+            name: "Hand-roll HTML",
+            pros: ["zero deps"],
+            cons: ["duplicates forever"],
+            verdict: "rejected",
+          },
         ]}
       />
     ),
@@ -318,10 +373,59 @@ export const GALLERY = {
   },
   Flow: {
     category: "diagram",
-    blurb: "A Mermaid diagram wrapper — CLI routing, module graphs, decision trees.",
-    usage: '<Flow source="flowchart LR; A-->B" />',
-    props: [{ name: "source", type: "string (Mermaid)", required: true }],
-    sample: () => <Flow source={"flowchart LR\n  A[plan] --> B[ship]"} />,
+    blurb:
+      "Mermaid board — all kinds (flowchart/sequence/class/state/ER/mindmap/pie/timeline). Edit source, sketch look, drag nodes, queue questions.",
+    usage: '<Flow editable id="arch" title="Arch" look="handDrawn" source="…" />',
+    props: [
+      { name: "source", type: "string (Mermaid)", required: true },
+      { name: "look", type: "classic|handDrawn" },
+      { name: "theme", type: "default|neutral|dark|forest|base" },
+      { name: "editable", type: "boolean" },
+      { name: "id", type: "string" },
+      { name: "title", type: "string" },
+    ],
+    sample: () => (
+      <div class="flex w-full min-w-0 flex-col gap-4">
+        <Flow
+          editable
+          id="gallery.diagram"
+          title="Interactive board — switch type · sketch · edit · drag · queue"
+          look="handDrawn"
+          theme="neutral"
+          source={FLOW_PRESETS.flowchart.source}
+        />
+        <div class="grid gap-3 sm:grid-cols-2">
+          {FLOW_KINDS.filter((k) => k !== "flowchart").map((kind) => (
+            <div key={kind} class="min-w-0">
+              <p class="mb-1 text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                {FLOW_PRESETS[kind].label}
+              </p>
+              <Flow
+                id={`gallery.${kind}`}
+                title={FLOW_PRESETS[kind].label}
+                look={kind === "mindmap" || kind === "timeline" ? "classic" : "handDrawn"}
+                source={FLOW_PRESETS[kind].source}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    ),
+  },
+  Whiteboard: {
+    category: "diagram",
+    blurb:
+      "Freehand brainstorm canvas (Excalidraw vibe) — rough pen, highlighter, shapes, stickies. Queue PNG + note for the agent.",
+    usage: '<Whiteboard id="brainstorm" title="Sketch" height={320} />',
+    props: [
+      { name: "id", type: "string" },
+      { name: "title", type: "string" },
+      { name: "height", type: "number" },
+      { name: "editable", type: "boolean" },
+    ],
+    sample: () => (
+      <Whiteboard id="gallery.sketch" title="Brainstorm with the agent" height={280} editable />
+    ),
   },
   QuizCard: {
     category: "teach",
@@ -372,7 +476,7 @@ export const GALLERY = {
   Carousel: {
     category: "layout",
     blurb:
-      "An infinite auto-scrolling carousel — discrete slideshow (arrows/dots) or a pure-CSS marquee.",
+      "An infinite auto-scrolling carousel — full mode matrix: slideshow (arrows/dots) · pure-CSS marquee.",
     usage: '<Carousel mode="slideshow" slides={[{ title, body, code }]} />',
     props: [
       { name: "slides", type: "{ title?; body?; image?; code?; codeLang? }[]", required: true },
@@ -381,29 +485,31 @@ export const GALLERY = {
       { name: "interval", type: "number (ms)" },
       { name: "label", type: "string" },
     ],
-    sample: () => (
-      <Carousel
-        label="Golden exemplars"
-        mode="slideshow"
-        slides={[
-          {
-            title: "Arrow-const component",
-            body: "Named export, readonly props interface.",
-            code: "export const C = () => <div/>",
-          },
-          {
-            title: "Early return over nested ternary",
-            body: "Flatten branching in JSX.",
-            code: "if (!items.length) return null",
-          },
-          {
-            title: "Lookup map over switch",
-            body: "Record<Union, string> for enum→style.",
-            code: 'const TONE = { risk: "…" }',
-          },
-        ]}
-      />
-    ),
+    sample: () => {
+      const slides = [
+        {
+          title: "Arrow-const component",
+          body: "Named export, readonly props interface.",
+          code: "export const C = () => <div/>",
+        },
+        {
+          title: "Early return over nested ternary",
+          body: "Flatten branching in JSX.",
+          code: "if (!items.length) return null",
+        },
+        {
+          title: "Lookup map over switch",
+          body: "Record<Union, string> for enum→style.",
+          code: 'const TONE = { risk: "…" }',
+        },
+      ];
+      return (
+        <div class="flex w-full min-w-0 flex-col gap-4">
+          <Carousel label="Slideshow" mode="slideshow" slides={slides} />
+          <Carousel label="Marquee" mode="marquee" slides={slides} />
+        </div>
+      );
+    },
   },
   Storyboard: {
     category: "layout",

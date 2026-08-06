@@ -10,7 +10,7 @@ Single source of truth for working in **planpage**. `CLAUDE.md` / `GEMINI.md` po
 
 | Path | Purpose |
 |---|---|
-| `src/components/` | shared primitives (flat), grouped by role — layout (`Shell` · `SectionCard` · `TreePanel` · `Accordion` · `Carousel`) · notes (`Callout` · `RiskList`) · sequence (`StatusChip` · `Steps` · `Timeline`) · brainstorm (`PickBlock` · `OptionCompare` · `QuestionCard`) · teach (`QuizCard` · `Flashcard`) · metrics (`PlanSummary` · `Scorecard`) · code (`DiffBlock` · `CodeBlock` · `AnnotatedCode` · `CodeExplorer` · `Terminal`) · diagram (`Flow`) · `SubmitBar` |
+| `src/components/` | shared primitives (flat), grouped by role — layout (`Shell` · `SectionCard` · `TreePanel` · `Accordion` · `Carousel`) · notes (`Callout` · `RiskList`) · sequence (`StatusChip` · `Steps` · `Timeline`) · brainstorm (`PickBlock` · `OptionCompare` · `QuestionCard`) · teach (`QuizCard` · `Flashcard`) · metrics (`PlanSummary` · `Scorecard`) · code (`DiffBlock` · `CodeBlock` · `AnnotatedCode` · `CodeExplorer` · `Terminal`) · diagram (`Flow`) · action (`FeedbackSidebar` · `SubmitBar`) |
 | `src/templates/<Name>/` | pages (folder-per-template: component + test + README) — `BeforeAfter`, `CodeStylePlan`, `PlanBrief` (flagship agent-plan page), `QuestionPoll` (preference poll), `Quiz` (graded teach/coach quiz), `Flashcards` (flip-card learn deck), `AuditReport` (scored audit), `Library` (auto-captured gallery); registry in `templates/index.tsx` |
 | `src/gallery/` | the living collection — `registry` (SSOT) · `capture` (pure diff) · sync test; powers `Library` + `planpage capture` |
 | `src/render/` | pure engine — `render()`, `raw()`, `codeMark` (the `data-hl` marker every code component emits), `clientScript/` (one island module each: theme · post-back · gallery filter · poll · quiz · explorer · carousel). `Shell` (in components) owns the `Theme` type + the animated sun/moon toggle |
@@ -34,7 +34,7 @@ Single source of truth for working in **planpage**. `CLAUDE.md` / `GEMINI.md` po
 - **Errors by layer** — render throws · server exit codes (0/2/3, never-hang) · CLI top-catch.
 - **Naming** — Comp `PascalCase` · props `XProps` · fns `camelCase` · consts `SCREAMING_SNAKE` · ids/flags `kebab-case`.
 - **Tests** — vitest, snapshot/assertion-first, co-located.
-- **Gallery is captured** — every `src/components/*.tsx` (bar `Shell`/`SubmitBar`) has a `GALLERY` entry in `src/gallery/registry.tsx`; the `gallery-sync` test fails on drift (`planpage capture` stubs the rest).
+- **Gallery is captured** — every `src/components/*.tsx` (bar `Shell`/`SubmitBar`/`FeedbackSidebar`) has a `GALLERY` entry in `src/gallery/registry.tsx`; the `gallery-sync` test fails on drift (`planpage capture` stubs the rest).
 - **Never** — micro-helpers (`isRecord`…), nested ternaries, generic names (`handleData`…), default exports, restyling the shell.
 - **biome** is the one gate. **Reuse before create.** SSOT / KISS / YAGNI / DRY.
 
@@ -59,3 +59,36 @@ From repo root: `npm run verify` must be green before shipping.
 ## Docs
 
 `PROJECT.md` (purpose) · `CONTEXT.md` (orientation) · `LANGUAGE.md` (glossary) · `CODE-STYLE.md` (how code is written — SSOT; `deslop` enforces per-diff) · `docs/adr/` (decisions).
+
+<!-- planpage:start -->
+## Rendering plans (planpage)
+
+When you present a plan or review-gate for approval, render it through the `planpage` package instead of dumping text:
+
+### Plan review (planpage — queue-then-send, not Approve/Adjust)
+
+1. Shape the plan as JSON for the `plan-brief` template (title · summary · steps · options · risks · code).
+2. Render + serve: `npx planpage render plan-brief --data plan.json --serve --decision decision.json` — browser opens; the user **annotates**, **edits in place**, and/or **attaches screenshots** in the fixed sidebar. Nothing is submitted until they click **Send to Agent**. Never hangs a non-TTY caller (clipboard fallback).
+3. Read `decision.json` — `{ approved, flips, revisit, notes, edits, annotations, screenshots }`.
+4. Act on the batch:
+   - `edits[]` — apply each original→edited change to the plan/code
+   - `annotations[]` — fix what each note says is wrong (use `label` / `selectedText`)
+   - `screenshots[]` — each has `name`, `mime`, `dataUrl` (data URL). Write to a temp file if you need to inspect, then fix the UI/code they show
+   - `flips` / `revisit` — re-open those PickBlock ids
+   - `notes` — free-text message from the sidebar composer
+   - `approved:true` only means the queue was empty (rare)
+5. If more review is needed, re-render the revised plan and serve again.
+
+### Interactive question flows (question-poll)
+
+When interviewing the user about preferences (code style, architecture, config):
+
+1. Shape questions as JSON: `{ title, layout?, questions: [{ id, text, group?, diagram?, options: [{ id, label, description?, code?, recommended? }] }] }`
+2. Render: `npx planpage render question-poll --data questions.json --serve --decision decision.json`
+3. Read the decision — each answer includes `questionId`, `picked`, `questionText`, `chosenText`.
+
+Layout options: `stack` (default), `grid-2`, `grid-3`, `grid-4`, `grid-5`.
+Add `diagram` (Mermaid source) to any question for visual context.
+
+Browse all components: `npx planpage library --open`.
+<!-- planpage:end -->

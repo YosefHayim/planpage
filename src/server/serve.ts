@@ -1,7 +1,7 @@
-import { spawn } from "node:child_process";
 import { readFileSync, writeFileSync } from "node:fs";
 import { type IncomingMessage, createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { openPath } from "../cli/io";
 
 export interface ServeOptions {
   readonly htmlPath: string;
@@ -14,8 +14,8 @@ export interface ServeOptions {
 
 /**
  * Serve an HTML plan on loopback, open the browser, and block until the page POSTs one
- * decision (or the idle timeout fires). Writes the decision JSON verbatim and resolves an
- * exit code: 0 = decision written · 2 = server/IO error · 3 = timeout. Never hangs a caller.
+ * feedback batch (or the idle timeout fires). Writes the JSON verbatim and resolves an
+ * exit code: 0 = feedback written · 2 = server/IO error · 3 = timeout. Never hangs a caller.
  *
  * Port handling: if a preferred port is given but busy, falls back to an OS-assigned
  * available port automatically — no manual retries, no collision.
@@ -53,7 +53,7 @@ export const serve = ({
           () => {
             res.writeHead(200, { "Content-Type": "text/html" });
             res.end(
-              "<body style='font:16px system-ui;padding:3rem'>Decision received — return to your terminal.</body>",
+              "<body style='font:16px system-ui;padding:3rem'>Feedback received — return to your terminal.</body>",
             );
             finish(0);
           },
@@ -85,16 +85,65 @@ export const serve = ({
         process.stdout.write(`planpage: port ${port} busy, using ${address.port} instead\n`);
       }
       process.stdout.write(`planpage: serving ${url}\n`);
-      process.stdout.write("planpage: waiting for your decision (Approve / Adjust)…\n");
-      openBrowser(url);
+      process.stdout.write(
+        "planpage: waiting for feedback — edit/annotate in the browser, then Send to Agent…\n",
+      );
+      // openPath dedupes per process so re-bind / retries do not spawn extra tabs
+      openPath(url);
     });
 
     const idle = setTimeout(() => {
-      process.stderr.write("planpage: timed out waiting for a decision\n");
+      process.stderr.write("planpage: timed out waiting for feedback\n");
       finish(3);
     }, timeoutSec * 1000);
     idle.unref();
   });
+};
+
+/** Loose POST body shape used only for the stdout count summary (write stays verbatim). */
+export type FeedbackSummaryBody = {
+  readonly notes?: string;
+  readonly edits?: unknown;
+  readonly annotations?: unknown;
+  readonly flips?: unknown;
+  readonly revisit?: unknown;
+  readonly screenshots?: unknown;
+  readonly diagrams?: unknown;
+  readonly whiteboards?: unknown;
+};
+
+const countArray = (value: unknown): number => (Array.isArray(value) ? value.length : 0);
+
+/**
+ * Best-effort lines for the post-back stdout summary after a successful write.
+ * Covers the full feedback queue contract: edits · annotations · screenshots · diagrams · whiteboards · flips · revisit.
+ */
+export const feedbackSummaryLines = (parsed: FeedbackSummaryBody): readonly string[] => {
+  const edits = countArray(parsed.edits);
+  const annos = countArray(parsed.annotations);
+  const flips = countArray(parsed.flips);
+  const revisit = countArray(parsed.revisit);
+  const shots = countArray(parsed.screenshots);
+  const diags = countArray(parsed.diagrams);
+  const wbs = countArray(parsed.whiteboards);
+  const lines: string[] = [
+    `planpage: ${edits} edit(s), ${annos} annotation(s), ${shots} screenshot(s), ${diags} diagram(s), ${wbs} whiteboard(s), ${flips} flip(s), ${revisit} revisit(s)`,
+  ];
+  const notes = typeof parsed.notes === "string" ? parsed.notes.trim() : "";
+  if (notes) {
+    lines.push(`planpage: notes — ${notes}`);
+  }
+  if (shots > 0) {
+    lines.push(
+      "planpage: screenshots are data URLs in the JSON — write each dataUrl to a file if you need to inspect them",
+    );
+  }
+  if (wbs > 0) {
+    lines.push(
+      "planpage: whiteboards include pngDataUrl fields — write each to a PNG file if you need to inspect them",
+    );
+  }
+  return lines;
 };
 
 function collectDecision(req: IncomingMessage, onDone: () => void, outPath: string): void {
@@ -104,21 +153,15 @@ function collectDecision(req: IncomingMessage, onDone: () => void, outPath: stri
   });
   req.on("end", () => {
     writeFileSync(outPath, body || "{}");
-    process.stdout.write(`planpage: decision written to ${outPath}\n`);
+    process.stdout.write(`planpage: feedback written to ${outPath}\n`);
+    try {
+      const parsed = JSON.parse(body || "{}") as FeedbackSummaryBody;
+      for (const line of feedbackSummaryLines(parsed)) {
+        process.stdout.write(`${line}\n`);
+      }
+    } catch {
+      /* body already on disk; summary is best-effort */
+    }
     onDone();
   });
-}
-
-function openBrowser(url: string): void {
-  const cmd =
-    process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
-  try {
-    spawn(cmd, [url], {
-      stdio: "ignore",
-      detached: true,
-      shell: process.platform === "win32",
-    }).unref();
-  } catch {
-    process.stdout.write(`planpage: open manually → ${url}\n`);
-  }
 }

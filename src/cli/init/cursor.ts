@@ -16,13 +16,13 @@ export const scaffoldCursor = (options: InitCommandOptions): ScaffoldResult => {
 function cursorRule(): string {
   return [
     "---",
-    "description: Render plans and review-gates as beautiful HTML via planpage, then collect one approve/adjust decision back. Apply at any plan or approval step.",
+    "description: Render plans and review-gates as interactive HTML via planpage. User edits/annotates/screenshots in a sidebar, then Send to Agent returns one feedback batch. Apply at any plan or review step.",
     "alwaysApply: false",
     "---",
     "",
     "# Render plans through planpage",
     "",
-    "When you present a plan, migration, or review-gate for approval, don't dump it as text. Render it through the `planpage` package and let me approve or adjust it in the browser.",
+    "When you present a plan, migration, or review-gate, don't dump it as text. Render it through the `planpage` package. I will edit/annotate the page, attach screenshots, stage feedback in the sidebar, then hit **Send to Agent** — you get one JSON batch (not Approve/Adjust).",
     "",
     fullInstructions(),
     "",
