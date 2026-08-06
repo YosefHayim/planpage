@@ -1,39 +1,34 @@
-# planpage — messy-repo wave plan (new surfaces + residual)
+# planpage — messy-repo wave 1 (complete)
 
-**Repo:** planpage  
-**Default:** `main` @ `1999ad60076e655e3869c3c262bbbc3f2fecc6c4` (origin)  
+**Host mode:** A — host subagents  
+**Default:** `main` @ `1999ad60076e655e3869c3c262bbbc3f2fecc6c4`  
 **Backup:** `backup/main-20260806T184749Z` @ same SHA  
-**Working branch (test-gap WIP):** `test/planpage-gaps-new-surfaces` (dirty + new tests; not on main)
+**Feature branch:** `test/planpage-gaps-new-surfaces` @ `5e65521`  
+**Feature PR → main:** https://github.com/YosefHayim/planpage/pull/19  
 
-## Feature inventory for lanes
-
-| id | Path globs | Risk | Suggested work |
-|----|------------|------|----------------|
-| `feedback-ux` | `src/components/FeedbackSidebar.tsx`, `src/render/clientScript/postback.ts`, `src/contracts/decision.ts`, `src/server/serve.ts` | med | harden · docs · keep tests green |
-| `whiteboard` | `src/components/Whiteboard.tsx`, `src/render/clientScript/whiteboard.ts` | med | harden canvas export · deslop |
-| `diagram-board` | `src/components/Flow.tsx`, `src/render/clientScript/diagram.ts` | med | harden mermaid re-render · docs |
-| `gallery-matrices` | `src/gallery/registry.tsx`, `src/templates/Library/**`, `src/cli/library.tsx` | low | polish state matrices · carousel scroll fix already in |
-| `shell-islands` | `src/components/Shell.tsx`, `src/render/clientScript/**` | med | island flag coherence · no page-scroll regressions |
-| `agent-skill` | `skills/planpage/**`, `src/cli/init/**` | low | skill/init wording matches queue-then-send |
-| `legacy-primitives` | remaining `src/components/*` without deep tests | low | optional unit matrix (partially filled) |
-
-## Status
+Harden PRs target **feature branch** (not main) so review stays layered.
 
 | Feature | Issue | Branch | Worktree | Host | cmux | PR | Head SHA | Verify | Notes |
 |---------|-------|--------|----------|------|------|----|----------|--------|-------|
-| — | — | — | — | **awaiting host mode** | — | — | — | — | Fan-out not started |
+| feedback-ux | — | `harden/feedback-ux` | `.worktrees/feedback-ux` | A | — | [#20](https://github.com/YosefHayim/planpage/pull/20) | `f459fa9` | pnpm test 89 · typecheck | serve summary diagrams/whiteboards |
+| whiteboard | — | `harden/whiteboard` | `.worktrees/whiteboard` | A | — | [#21](https://github.com/YosefHayim/planpage/pull/21) | `0510628` | pnpm test 92 · typecheck | empty/sticky/export guards |
+| gallery-matrices | — | `harden/gallery-matrices` | `.worktrees/gallery-matrices` | A | — | [#22](https://github.com/YosefHayim/planpage/pull/22) | `5c8a911` | pnpm test 87 · typecheck | matrix SSOT + library flags |
+| diagram-board | — | `harden/diagram-board` | `.worktrees/diagram-board` | A | — | [#23](https://github.com/YosefHayim/planpage/pull/23) | `b10e7f3` | pnpm test 99 · typecheck | original source + re-render |
 
-## Wave 1 recommendation (after host mode answer)
+## Review order
 
-1. **feedback-ux** — land feedback contract + serve + sidebar  
-2. **whiteboard** — sketch board  
-3. **diagram-board** — Flow board  
-4. **gallery-matrices** + shell islands (or merge 2–3 if small)
-
-Do **not** commit product work on `main`. Base PRs on current default after human review of this WIP branch.
+1. **#19** feature PR → main (product surface)  
+2. Harden stack into feature branch: **#20 → #21 → #23 → #22** (or any order; may conflict on shared files — rebase after first merge)  
+3. Re-verify feature branch, then merge #19 (or re-roll if harden landed first)
 
 ## Main safety
 
-- No force-push of main  
-- Backup ref local: `backup/main-20260806T184749Z`  
-- Push backup only if user requests off-machine copy  
+- No product commits on `main` from this run  
+- Backup local: `backup/main-20260806T184749Z`  
+- No remote branch deletions  
+- Terminals/cmux: N/A (host mode A)  
+
+## Deferred
+
+- Browser e2e for canvas/mermaid drag (no Playwright in repo)  
+- Wave 2: shell-islands · agent-skill · legacy-primitives  

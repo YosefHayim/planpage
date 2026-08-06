@@ -96,7 +96,8 @@ mocks: skip — N/A
 | integration | `serve.test.ts` POST /decision full feedback batch (edits/screenshots/diagrams/whiteboards) |
 | cli | `io.test.ts` openPath dedupe + PLANPAGE_NO_OPEN |
 
-**Result:** `pnpm test` → **85 passed** (28 files).
+**Result (orchestrator fill):** `pnpm test` → **85 passed** (28 files) at commit `5e65521`.  
+Harden lanes later raised counts further on their branches (see messy-repo MATRIX).
 
 ## Residual (deferred)
 
