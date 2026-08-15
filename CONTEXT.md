@@ -1,4 +1,4 @@
-# planpage
+# CONTEXT.md — planpage
 
 planpage renders a skill's plan, review-gate, or report as a beautiful, self-contained local HTML page. It exists so skills stop hand-rolling throwaway HTML, and so the developer reading a plan gets something clean and skimmable. This file is orientation — the vocabulary lives in [LANGUAGE.md](LANGUAGE.md).
 
