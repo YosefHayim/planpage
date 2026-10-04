@@ -33,7 +33,7 @@ Agents now generate rich plans faster than a human can absorb them from monochro
 
 ## Direction
 
-- **Built:** pure render engine (Preact → static HTML); ~25 shared components (layout, notes, sequence, brainstorm, teach, metrics, code, diagram); eight templates (`PlanBrief`, `BeforeAfter`, `CodeStylePlan`, `QuestionPoll`, `Quiz`, `Flashcards`, `AuditReport`, `Library`); gallery auto-capture + sync test; Shiki render-time highlight + `CodeExplorer`; dual-mode CLI (`render` / `serve` / `new` / `library` / `capture` / `init`) with clack menu; post-back server (never-hang); agent on-ramps for nine tools; published unscoped as **`planpage`** on npm (ADR 0013).
+- **Built:** pure render engine (Preact → static HTML); ~25 shared components (layout, notes, sequence, brainstorm, teach, metrics, code, diagram); eight templates (`PlanBrief`, `BeforeAfter`, `CodeStylePlan`, `QuestionPoll`, `Quiz`, `Flashcards`, `AuditReport`, `Library`); gallery auto-capture + sync test; Shiki render-time highlight + `CodeExplorer`; dual-mode CLI (`render` / `serve` / `new` / `library` / `capture` / `init`) with clack menu; post-back server (never-hang); agent on-ramps for nine tools; published unscoped as **`planpage`** on npm.
 - **Next:** keep dufflebag and other skills as thin consumers; broaden consumers beyond the originating grill/deslop skills; polish README / docs site if demand warrants.
 - **Maybe:** a public showcase site; a contribution guide; more teach/coach surfaces.
 
@@ -45,5 +45,5 @@ Agents now generate rich plans faster than a human can absorb them from monochro
 - **Self-contained output** — one HTML file, CDN-only, no reader-side build.
 - **Fixed shell, content in** — skills supply data + `data-id`s, never restyle.
 - **Pure data → HTML** — the render layer is pure; all I/O lives at the edges.
-- **Fit-for-purpose conventions** — decided fresh for a render library (see `docs/adr/`), not inherited.
+- **Fit-for-purpose conventions** — decided fresh for a render library, not inherited.
 - SSOT / KISS / YAGNI / DRY.

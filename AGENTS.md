@@ -4,7 +4,7 @@ Single source of truth for working in **planpage**. Claude Code and Codex load t
 
 ## What this is
 
-**planpage** — a reusable, open-source kit that renders a skill's plan / gate / report as a beautiful, self-contained **local HTML** page. Reader-first: the design center is the developer *reading* the plan. Authored as **Preact components → static HTML** (`render(<Template {...data} />) → string`); a static render is the floor, interactivity is opt-in islands (the `serve` **post-back** · the gallery **filter**). Clear of mcp-ui / MCP Apps (the protocol/host lane). Published unscoped as **`planpage`** — one name for the package, the CLI bin, and the import (ADR 0013). Seeded by extracting the `planpage` spike from `dufflebag`, which becomes a thin consumer.
+**planpage** — a reusable, open-source kit that renders a skill's plan / gate / report as a beautiful, self-contained **local HTML** page. Reader-first: the design center is the developer *reading* the plan. Authored as **Preact components → static HTML** (`render(<Template {...data} />) → string`); a static render is the floor, interactivity is opt-in islands (the `serve` **post-back** · the gallery **filter**). Clear of mcp-ui / MCP Apps (the protocol/host lane). Published unscoped as **`planpage`** — one name for the package, the CLI bin, and the import. Seeded by extracting the `planpage` spike from `dufflebag`, which becomes a thin consumer.
 
 ## Repo layout
 
@@ -14,18 +14,17 @@ Single source of truth for working in **planpage**. Claude Code and Codex load t
 | `src/templates/<Name>/` | pages (folder-per-template: component + test + README) — `BeforeAfter`, `CodeStylePlan`, `PlanBrief` (flagship agent-plan page), `QuestionPoll` (preference poll), `Quiz` (graded teach/coach quiz), `Flashcards` (flip-card learn deck), `AuditReport` (scored audit), `Library` (auto-captured gallery); registry in `templates/index.tsx` |
 | `src/gallery/` | the living collection — `registry` (SSOT) · `capture` (pure diff) · sync test; powers `Library` + `planpage capture` |
 | `src/render/` | pure engine — `render()`, `raw()`, `codeMark` (the `data-hl` marker every code component emits), `clientScript/` (one island module each: theme · post-back · gallery filter · poll · quiz · explorer · carousel). `Shell` (in components) owns the `Theme` type + the animated sun/moon toggle |
-| `src/highlight/` | the highlight pass — an **async edge transform** (`highlight` · `renderHighlighted`) that swaps `data-hl` markers for Shiki's VSCode dual-theme spans. Not part of the pure render (ADR 0015) |
+| `src/highlight/` | the highlight pass — an **async edge transform** (`highlight` · `renderHighlighted`) that swaps `data-hl` markers for Shiki's VSCode dual-theme spans. Not part of the pure render |
 | `src/server/` | opt-in post-back — `serve` (ephemeral port, never-hang), `Decision` |
 | `src/cli/` | dual-mode CLI (commander) — `render` / `serve` / `new` / `library` / `capture` / `init`; bare TTY → `menu` (clack); shared `io` (open/writeTemp); `init/` is one writer per agent |
 | `skills/planpage/` | agent skill SSOT (`SKILL.md` + `COMPONENTS.md`) — how other agents use the kit; `init` scaffolds thinner per-agent on-ramps |
 | `src/contracts/` | shared types — `Decision` |
 | `src/index.ts` | public API barrel |
-| `docs/adr/current/` | decisions (why) |
 | `*.test.tsx` (co-located) | vitest, beside source |
 
 ## Conventions
 <!-- rules digest — full guide in CODE-STYLE.md; edit there -->
-- **Pure render, effects at the edges** — `components`/`templates`/`render` are pure (data → HTML string); all I/O in `server` + `cli`. **Syntax highlighting is an edge step**: code components emit a `data-hl` marker (`render/codeMark.tsx`) so render stays sync; the async `highlight()` pass (`src/highlight/`) bakes in Shiki's VSCode colours at the edge, and unhighlighted output degrades to a readable no-JS fallback (ADR 0015).
+- **Pure render, effects at the edges** — `components`/`templates`/`render` are pure (data → HTML string); all I/O in `server` + `cli`. **Syntax highlighting is an edge step**: code components emit a `data-hl` marker (`render/codeMark.tsx`) so render stays sync; the async `highlight()` pass (`src/highlight/`) bakes in Shiki's VSCode colours at the edge, and unhighlighted output degrades to a readable no-JS fallback.
 - **Components + `render()`** — Preact, arrow-const, named exports, PascalCase files, exported `readonly XProps`.
 - **Escaping is default** — JSX auto-escapes; raw HTML only via `raw()`; `dangerouslySetInnerHTML` allowed only in `Shell` for constant infra.
 - **Client islands live in the Shell** — constant scripts from `render/clientScript/` (one module per island), each gated by a Shell flag (`interactive` → post-back · `filterable` → gallery filter · `explorable` → CodeExplorer file/variant switching · `pollable` → QuestionPoll · `quizzable` → Quiz grade/score · `carousel` → Carousel slideshow autoplay). Each island is scoped + early-returns, so it is inert on a page without its hooks. `Flashcard` flips via pure CSS (no island). Never inline a `<script>` in a template.
@@ -48,8 +47,8 @@ npm run cli -- capture          # check the gallery registry is in sync
 npm run cli -- init             # scaffold a ready skill into .claude/skills (agent on-ramp)
 npm test           # vitest
 npm run lint:fix   # biome check --write
-npm run build      # tsup → bundled ESM in dist/ (runs under plain node — ADR 0014)
-# publish: npm publish  (unscoped, public by default — ADR 0013)
+npm run build      # tsup → bundled ESM in dist/ (runs under plain node)
+# publish: npm publish  (unscoped, public by default)
 ```
 
 ## Validate changes
@@ -58,7 +57,7 @@ From repo root: `npm run verify` must be green before shipping.
 
 ## Docs
 
-`PROJECT.md` (purpose) · `CONTEXT.md` (orientation) · `LANGUAGE.md` (glossary) · `CODE-STYLE.md` (how code is written — SSOT; `deslop` enforces per-diff) · `docs/adr/` (decisions).
+`PROJECT.md` (purpose) · `CONTEXT.md` (orientation) · `LANGUAGE.md` (glossary) · `CODE-STYLE.md` (how code is written — SSOT; `deslop` enforces per-diff). Decisions go in the PR description.
 
 <!-- planpage:start -->
 ## Rendering plans (planpage)

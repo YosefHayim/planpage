@@ -2,7 +2,7 @@
 
 How code is written in **planpage**. Prescriptive SSOT: this file is the source, and the short rules digest in `AGENTS.md` is a mirror of it — edit here. `deslop` enforces it per-diff.
 
-Precedence: when a general habit conflicts with a rule below, **this file wins**; `PROJECT.md` (purpose), `CONTEXT.md` (shape), `LANGUAGE.md` (vocabulary), and `docs/adr/current/` (decisions) still own their subjects, and a rule here never restates them.
+Precedence: when a general habit conflicts with a rule below, **this file wins**; `PROJECT.md` (purpose), `CONTEXT.md` (shape), and `LANGUAGE.md` (vocabulary) still own their subjects, and a rule here never restates them.
 
 Only load-bearing, project-specific decisions live here. `dist/` and anything scaffolded into a consumer repo by `planpage init` are not authored source.
 
@@ -94,12 +94,11 @@ Why: these are pluggable sets, and a per-member module is what lets one be added
 ### Local scripts stay gitignored
 [rule:path.dev-scripts] · verify: judgment
 
-A personal or one-off script lives in the gitignored `scripts/dev/` directory.
+A personal or one-off script stays outside the repository.
 
 ```ts
-// ✓ .gitignore — the one home for personal scripts, never pushed
-// Local one-off / personal dev scripts (see CODE-STYLE.md)
-// scripts/dev/
+// ✓ a one-off probe kept in a personal scratch folder outside the repository
+// ~/scratch/probeHighlight.ts
 
 // ✗ a debugging script committed where CI and every contributor must carry it
 // scripts/probeHighlight.ts
@@ -224,7 +223,7 @@ A code-bearing component emits a `codeMark()` marker and leaves colouring to the
 const coloured = await codeToHtml(after, { lang, theme: "dark-plus" });
 ```
 
-Why: `render()` has to stay sync and pure, and an unswapped marker still degrades to readable escaped source (ADR 0015).
+Why: `render()` has to stay sync and pure, and an unswapped marker still degrades to readable escaped source.
 
 ### Arrow-const components
 [rule:component.arrow-const] · verify: judgment
@@ -781,7 +780,7 @@ The AI-slop fingerprint for planpage. Each entry is a concrete shape, not an abs
 - a new component with no `GALLERY` entry · [rule:gallery.registry-entry]
 - a prompt on a non-TTY path · [rule:cli.tty-only-prompt]
 - a menu branch that re-implements the command it offers · [rule:cli.shared-command-fn]
-- a one-off debug script committed outside `scripts/dev/` · [rule:path.dev-scripts]
+- a one-off debug script committed to the repository · [rule:path.dev-scripts]
 
 ## Formatting and verification
 

@@ -25,4 +25,4 @@ data → render() → marked HTML → highlight() → coloured HTML → (write /
 
 A static render is the floor; the serve step is opt-in and never blocks a non-TTY caller (it falls back to open-file + clipboard).
 
-See [PROJECT.md](PROJECT.md) for purpose & direction, [CODE-STYLE.md](CODE-STYLE.md) for how code is written, and [docs/adr/](docs/adr/current/) for the decisions.
+See [PROJECT.md](PROJECT.md) for purpose & direction and [CODE-STYLE.md](CODE-STYLE.md) for how code is written.

@@ -3,7 +3,7 @@ name: Publish Package
 # Publishes planpage to npm via OIDC trusted publishing — no NPM_TOKEN, no OTP.
 # OIDC binds provenance to THIS repo (YosefHayim/planpage) AND this exact filename
 # (publish.yml); renaming this file invalidates the trusted-publisher match.
-# Adapted from dufflebag's templates/workflows/publish.yml (its ADR 0009), on npm.
+# Adapted from dufflebag's templates/workflows/publish.yml, on npm.
 #
 # ONE-TIME SETUP (already done — recorded here):
 #   1. planpage@0.1.0 was published manually to create the package on npm.
