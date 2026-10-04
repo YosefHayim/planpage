@@ -1,25 +1,26 @@
-node_modules
-dist
-*.log
-.DS_Store
+# dependencies
+node_modules/
 
-# Local one-off / personal dev scripts (see CODE-STYLE.md)
-scripts/dev/
-
-# Agent worktrees (messy-repo / coordinate-worktrees lanes)
-.worktrees/
-
-# Local planpage init scaffolds (this package is not a consumer)
+# build (dist, plus planpage init output from local runs)
+dist/
 .amazonq/
-.claude/
+.claude/skills/
 .clinerules/
 .cursor/
+.github/copilot-instructions.md
+.kiro/
 .roo/
 .windsurf/
-.github/copilot-instructions.md
 
-# Kiro CLI agent config (local)
-.kiro
+# logs
+*.log
 
-# Kimi Code CLI local config + skills
-.kimi-code/
+# editor and OS
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# local
+.worktrees/

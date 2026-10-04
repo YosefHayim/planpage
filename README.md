@@ -125,7 +125,6 @@ Use `pnpm run cli -- library --open` to inspect the captured component gallery. 
 
 - [AGENTS.md](AGENTS.md) — conventions and validation commands for agents working in this repo
 - [PROJECT.md](PROJECT.md) · [CONTEXT.md](CONTEXT.md) · [LANGUAGE.md](LANGUAGE.md) · [CODE-STYLE.md](CODE-STYLE.md)
-- [docs/adr/](docs/adr/) — architecture decisions
 
 ## License
 
