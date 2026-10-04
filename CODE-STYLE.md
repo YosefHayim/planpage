@@ -94,12 +94,11 @@ Why: these are pluggable sets, and a per-member module is what lets one be added
 ### Local scripts stay gitignored
 [rule:path.dev-scripts] · verify: judgment
 
-A personal or one-off script lives in the gitignored `scripts/dev/` directory.
+A personal or one-off script stays outside the repository.
 
 ```ts
-// ✓ .gitignore — the one home for personal scripts, never pushed
-// Local one-off / personal dev scripts (see CODE-STYLE.md)
-// scripts/dev/
+// ✓ a one-off probe kept in a personal scratch folder outside the repository
+// ~/scratch/probeHighlight.ts
 
 // ✗ a debugging script committed where CI and every contributor must carry it
 // scripts/probeHighlight.ts
@@ -781,7 +780,7 @@ The AI-slop fingerprint for planpage. Each entry is a concrete shape, not an abs
 - a new component with no `GALLERY` entry · [rule:gallery.registry-entry]
 - a prompt on a non-TTY path · [rule:cli.tty-only-prompt]
 - a menu branch that re-implements the command it offers · [rule:cli.shared-command-fn]
-- a one-off debug script committed outside `scripts/dev/` · [rule:path.dev-scripts]
+- a one-off debug script committed to the repository · [rule:path.dev-scripts]
 
 ## Formatting and verification
 

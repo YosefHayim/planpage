@@ -19,7 +19,7 @@
     },
     {
       "id": "path.dev-scripts",
-      "statement": "A personal or one-off script lives in the gitignored `scripts/dev/` directory.",
+      "statement": "A personal or one-off script stays outside the repository.",
       "verify": "judgment"
     },
     {
