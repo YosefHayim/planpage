@@ -4,5 +4,9 @@ import { defineConfig } from "vitest/config";
 // biome-ignore lint/style/noDefaultExport: vitest requires a default-exported config
 export default defineConfig({
   esbuild: { jsx: "automatic", jsxImportSource: "preact" },
-  test: { environment: "node", include: ["src/**/*.test.{ts,tsx}"] },
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.{ts,tsx}"],
+    exclude: ["src/**/*.browser.test.{ts,tsx}"],
+  },
 });

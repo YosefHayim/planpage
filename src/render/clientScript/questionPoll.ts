@@ -157,7 +157,14 @@ export const QUESTION_POLL_SCRIPT = `(function(){
       }else{
         var wrap=document.createElement('div');
         wrap.className='flex items-center gap-2 mt-1';
-        wrap.innerHTML='<span class="text-xs">'+f.name+' (too large) — path:</span><input type="text" class="border rounded px-1 text-xs flex-1" data-path-input />';
+        const label=document.createElement('span');
+        label.className='text-xs';
+        label.textContent=f.name+' (too large) — path:';
+        const pathInput=document.createElement('input');
+        pathInput.type='text';
+        pathInput.className='border rounded px-1 text-xs flex-1';
+        pathInput.setAttribute('data-path-input','');
+        wrap.append(label,pathInput);
         zone.appendChild(wrap);
         var pi=wrap.querySelector('[data-path-input]');
         pi.addEventListener('change',function(){
@@ -172,7 +179,12 @@ export const QUESTION_POLL_SCRIPT = `(function(){
     var chip=document.createElement('div');
     chip.className='inline-flex items-center gap-1 mt-1 px-2 py-0.5 bg-slate-100 dark:bg-slate-800 rounded text-xs';
     if(file.type.startsWith('image/')){
-      chip.innerHTML='<img src="'+dataUrl+'" class="w-6 h-6 rounded object-cover" /> '+file.name;
+      const thumbnail=document.createElement('img');
+      thumbnail.src=dataUrl;
+      thumbnail.className='w-6 h-6 rounded object-cover';
+      chip.append(thumbnail);
+      const fileLabel=document.createTextNode(' '+file.name);
+      chip.append(fileLabel);
     }else{
       chip.textContent=file.name;
     }

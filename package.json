@@ -1,7 +1,7 @@
 {
   "name": "planpage",
   "version": "0.5.0",
-  "description": "Render a skill's plan, gate, or report as a beautiful, self-contained local HTML page — Preact components rendered to static HTML, with an opt-in post-back server.",
+  "description": "Render a skill's plan, gate, or report as a beautiful, self-contained local HTML page \u2014 Preact components rendered to static HTML, with an opt-in post-back server.",
   "keywords": ["skill", "claude", "agent", "html", "report", "preact", "cli"],
   "homepage": "https://github.com/YosefHayim/planpage#readme",
   "bugs": "https://github.com/YosefHayim/planpage/issues",
@@ -32,7 +32,8 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "verify": "biome ci . && tsc --noEmit && vitest run",
-    "prepare": "pnpm build"
+    "prepare": "pnpm build",
+    "test:e2e": "vitest run --config vitest.browser.config.ts"
   },
   "tsup": {
     "entry": ["src/index.ts", "src/cli/index.ts"],
@@ -52,6 +53,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.7.5",
+    "playwright": "^1.64.0",
     "tsup": "^8.5.1",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",
