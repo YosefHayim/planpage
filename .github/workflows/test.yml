@@ -1,34 +1,23 @@
 name: Test
-
-# Single-purpose, reusable (workflow_call): the unified vitest suite (workerd D1
-# route handlers + node/effect domain tests) via `alg test`. alg targets Node 24+
-# (uses `node:sqlite`), so this pins Node 24 rather than a legacy matrix.
-
-on:
-  workflow_call:
-
+'on':
+  workflow_call: null
 permissions:
   contents: read
-
 jobs:
   test:
     name: ubuntu / node 24
-    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
+      - name: Setup workspace
+        uses: ./.github/actions/setup
+      - name: Install Linux browser opener
+        run: |
+          command -v xdg-open >/dev/null || {
+            sudo apt-get update
+            sudo apt-get install -y --no-install-recommends xdg-utils
+          }
       - name: Run tests
         run: pnpm test
+    timeout-minutes: 20
