@@ -1,46 +1,35 @@
 name: CI
-
-# Local gate composing the single-purpose reusable workflows (biome / typecheck /
-# test / build), each `on: workflow_call`. It's yours to edit.
-#
-# - `CI Gate` is the single aggregated status check: require it in branch
-#   protection so a red leg blocks merges.
-# - `report-failure` opens/updates a ci-failure issue when main goes red (never
-#   for PRs).
-# - E2E is opt-in: alg has no `test:e2e` script yet, so the `e2e:` job stays
-#   commented. Add a script, then uncomment it here and add `e2e` to the gate's
-#   `needs` + success check (e2e.yml ships alongside; it installs Chromium).
-
-on:
+'on':
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
-
+    branches:
+      - main
+  workflow_dispatch: null
 permissions:
   contents: read
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   biome:
     uses: ./.github/workflows/biome.yml
-
   typecheck:
     uses: ./.github/workflows/typecheck.yml
-
   test:
     uses: ./.github/workflows/test.yml
-
   build:
     uses: ./.github/workflows/build.yml
-
-  # e2e:
-  #   uses: ./.github/workflows/e2e.yml
-
   gate:
     name: CI Gate
-    needs: [biome, typecheck, test, build]
+    needs:
+      - biome
+      - typecheck
+      - test
+      - build
     if: always()
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
     steps:
       - name: Require every gate to pass
         run: |
@@ -49,10 +38,14 @@ jobs:
             && test "${{ needs.typecheck.result }}" = "success" \
             && test "${{ needs.test.result }}" = "success" \
             && test "${{ needs.build.result }}" = "success"
-
+    timeout-minutes: 5
   report-failure:
     name: Open issue on main failure
-    needs: [biome, typecheck, test, build]
+    needs:
+      - biome
+      - typecheck
+      - test
+      - build
     if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read

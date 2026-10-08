@@ -1,34 +1,17 @@
 name: Typecheck
-
-# Single-purpose, reusable (workflow_call): tsc --noEmit across all four projects
-# (root/cli, scan, web, widget). Type results are deterministic across OS/Node, so
-# this runs single-leg (ubuntu, one Node) — no matrix.
-
-on:
-  workflow_call:
-
+'on':
+  workflow_call: null
 permissions:
   contents: read
-
 jobs:
   typecheck:
     name: Type check
-    if: github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 24
-          cache: pnpm
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
+      - name: Setup workspace
+        uses: ./.github/actions/setup
       - name: Type check
         run: pnpm typecheck
+    timeout-minutes: 15
