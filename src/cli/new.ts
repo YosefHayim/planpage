@@ -1,30 +1,44 @@
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 /** `planpage new <name>` — scaffold a template folder (component + test + README) per the recipe. */
 export const newCommand = (name: string): void => {
+  if (!/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/.test(name)) {
+    throw new Error("template name must be kebab-case, starting with a letter");
+  }
   const pascal = toPascal(name);
-  const dir = join("src", "templates", pascal);
-  mkdirSync(dir, { recursive: true });
-  writeFileSync(join(dir, `${pascal}.tsx`), componentStub(pascal));
-  writeFileSync(join(dir, `${pascal}.test.tsx`), testStub(pascal));
-  writeFileSync(
-    join(dir, "README.md"),
-    `# ${pascal}\n\nWhat it renders + an example \`data.json\`.\n`,
-  );
+  const parent = join("src", "templates");
+  const directory = join(parent, pascal);
+  if (existsSync(directory)) throw new Error(`template ${pascal} already exists`);
+  mkdirSync(parent, { recursive: true });
+  mkdirSync(directory);
+  const files = [
+    { name: `${pascal}.tsx`, content: componentStub(pascal) },
+    { name: `${pascal}.test.tsx`, content: testStub(pascal) },
+    { name: "README.md", content: `# ${pascal}\n\nWhat it renders + an example JSON input.\n` },
+  ];
+  try {
+    for (const file of files) {
+      const destination = join(directory, file.name);
+      writeFileSync(destination, file.content, { flag: "wx" });
+    }
+  } catch (error) {
+    rmSync(directory, { recursive: true, force: true });
+    throw error;
+  }
   process.stdout.write(
-    `planpage: scaffolded src/templates/${pascal}/ — register it in src/templates/index.ts\n`,
+    `planpage: scaffolded ${directory}/ — register it in src/templates/index.tsx\n`,
   );
 };
 
-function toPascal(name: string): string {
+const toPascal = (name: string): string => {
   return name
     .split(/[-_]/)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join("");
-}
+};
 
-function componentStub(name: string): string {
+const componentStub = (name: string): string => {
   return `import { SectionCard } from "../../components/SectionCard";
 
 export interface ${name}Props {
@@ -40,17 +54,25 @@ export const ${name} = ({ title }: ${name}Props) => {
   );
 };
 `;
-}
+};
 
-function testStub(name: string): string {
+const testStub = (name: string): string => {
   return `import { describe, expect, it } from "vitest";
 import { render } from "../../render/render";
 import { ${name} } from "./${name}";
 
 describe("${name}", () => {
   it("renders the title", () => {
-    expect(render(<${name} title="Hi" />)).toContain("Hi");
+    const html = render(<${name} title="Hi" />);
+    expect(html).toContain("Hi");
+  });
+  it("escapes the title", () => {
+    const html = render(<${name} title={"<img src=x>"} />);
+    expect(html).toContain("&lt;img");
+  });
+  it("requires a title", () => {
+    expect(() => render(<${name} title="" />)).toThrow(/title is required/);
   });
 });
 `;
-}
+};
