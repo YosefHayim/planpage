@@ -6,6 +6,11 @@ name: Test
 
 on:
   workflow_call:
+    inputs:
+      since:
+        description: Base commit to test changes against. Empty runs everything.
+        type: string
+        default: ''
 
 permissions:
   contents: read
@@ -18,6 +23,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v6
@@ -31,4 +38,11 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
+        if: inputs.since == ''
         run: pnpm test
+
+      - name: Run tests (changed files)
+        if: inputs.since != ''
+        env:
+          SINCE: ${{ inputs.since }}
+        run: pnpm exec vitest run --changed "$SINCE"
