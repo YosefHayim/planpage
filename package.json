@@ -26,12 +26,12 @@
     "cli": "tsx src/cli/index.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc/planpage.tsbuildinfo",
     "check:ci": "biome ci .",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
-    "verify": "biome ci . && tsc --noEmit && vitest run",
+    "verify": "biome ci . && pnpm typecheck && vitest run",
     "prepare": "pnpm build"
   },
   "tsup": {
