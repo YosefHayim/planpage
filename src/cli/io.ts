@@ -26,11 +26,13 @@ export const openPath = (path: string): void => {
   const cmd =
     process.platform === "darwin" ? "open" : process.platform === "win32" ? "start" : "xdg-open";
   try {
-    spawn(cmd, [path], {
+    const opener = spawn(cmd, [path], {
       stdio: "ignore",
       detached: true,
       shell: process.platform === "win32",
-    }).unref();
+    });
+    opener.on("error", () => process.stdout.write(`planpage: open manually → ${path}\n`));
+    opener.unref();
   } catch {
     process.stdout.write(`planpage: open manually → ${path}\n`);
   }
