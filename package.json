@@ -32,7 +32,7 @@
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",
     "verify": "biome ci . && pnpm typecheck && vitest run",
-    "prepare": "pnpm build"
+    "prepare": "husky && pnpm build"
   },
   "tsup": {
     "entry": ["src/index.ts", "src/cli/index.ts"],
@@ -52,6 +52,7 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.7.5",
+    "husky": "^9.1.7",
     "tsup": "^8.5.1",
     "tsx": "^4.19.1",
     "typescript": "^5.6.3",

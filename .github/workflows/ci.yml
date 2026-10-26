@@ -1,90 +1,77 @@
 name: CI
 
-# Local gate composing the single-purpose reusable workflows (biome / typecheck /
-# test / build), each `on: workflow_call`. It's yours to edit.
-#
-# - `CI Gate` is the single aggregated status check: require it in branch
-#   protection so a red leg blocks merges.
-# - `report-failure` opens/updates a ci-failure issue when main goes red (never
-#   for PRs).
-# - E2E is opt-in: alg has no `test:e2e` script yet, so the `e2e:` job stays
-#   commented. Add a script, then uncomment it here and add `e2e` to the gate's
-#   `needs` + success check (e2e.yml ships alongside; it installs Chromium).
+# Lint and typecheck run in the pre-push hook (.husky/pre-push), not here.
+# E2E is opt-in: there is no test:e2e script yet. Add one, then add an e2e job
+# that calls ./.github/workflows/e2e.yml and list it in the gate's needs.
 
-on:
-  push:
-    branches: [main]
+'on':
   pull_request:
-    branches: [main]
-
+    branches:
+      - main
+  workflow_dispatch: null
 permissions:
   contents: read
-
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   changes:
     name: Changes
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
     outputs:
       since: ${{ steps.filter.outputs.everything != 'true' && github.event.pull_request.base.sha || '' }}
+      code: ${{ github.event_name != 'pull_request' || steps.filter.outputs.code == 'true' }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
         id: filter
         if: github.event_name == 'pull_request'
         with:
           token: ''
           filters: |
-            everything:
+            everything: &everything
               - pnpm-lock.yaml
-              - biome.json
+              - package.json
               - 'tsconfig*.json'
               - 'vitest.config.ts'
-              - package.json
               - '.github/**'
+            code:
+              - *everything
+              - 'src/**'
+              - 'public/**'
+              - 'skills/**'
+  verify:
+    name: Test and build
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
     timeout-minutes: 5
-
-  biome:
-    needs: changes
-    uses: ./.github/workflows/biome.yml
-    with:
-      since: ${{ needs.changes.outputs.since }}
-
-  typecheck:
-    uses: ./.github/workflows/typecheck.yml
-
-  test:
-    needs: changes
-    uses: ./.github/workflows/test.yml
-    with:
-      since: ${{ needs.changes.outputs.since }}
-
-  build:
-    uses: ./.github/workflows/build.yml
-
-  # e2e:
-  #   uses: ./.github/workflows/e2e.yml
-
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - name: Setup workspace
+        uses: ./.github/actions/setup
+      - name: Run tests
+        if: needs.changes.outputs.since == ''
+        run: pnpm test
+      - name: Run tests (changed files)
+        if: needs.changes.outputs.since != ''
+        env:
+          SINCE: ${{ needs.changes.outputs.since }}
+        run: pnpm exec vitest run --changed "$SINCE"
+      - name: Build
+        run: pnpm build
   gate:
     name: CI Gate
-    needs: [changes, biome, typecheck, test, build]
+    runs-on: ubuntu-slim
+    timeout-minutes: 5
+    needs:
+      - changes
+      - verify
     if: always()
-    runs-on: ubuntu-latest
     steps:
-      - name: Require every gate to pass
-        run: |
-          echo "changes=${{ needs.changes.result }} biome=${{ needs.biome.result }} typecheck=${{ needs.typecheck.result }} test=${{ needs.test.result }} build=${{ needs.build.result }}"
-          test "${{ needs.changes.result }}" = "success" \
-            && test "${{ needs.biome.result }}" = "success" \
-            && test "${{ needs.typecheck.result }}" = "success" \
-            && test "${{ needs.test.result }}" = "success" \
-            && test "${{ needs.build.result }}" = "success"
-
-  report-failure:
-    name: Open issue on main failure
-    needs: [biome, typecheck, test, build]
-    if: failure() && github.event_name == 'push' && github.ref == 'refs/heads/main'
-    permissions:
-      contents: read
-      issues: write
-      actions: read
-    uses: ./.github/workflows/report-failure.yml
+      - name: Require every check to pass
+        if: contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled')
+        run: exit 1
