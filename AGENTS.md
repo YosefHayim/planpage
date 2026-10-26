@@ -40,7 +40,7 @@ Single source of truth for working in **planpage**. Claude Code and Codex load t
 ## Commands
 
 ```bash
-npm run verify     # biome ci + tsc --noEmit + vitest  (the one gate)
+npm run verify     # biome ci + tsc --noEmit + vitest  (the one gate; biome and tsc also run in the pre-push hook)
 npm run cli        # dual-mode CLI (bare = menu; -- <sub> = direct)
 npm run cli -- library --open   # render the auto-captured component gallery
 npm run cli -- capture          # check the gallery registry is in sync
@@ -53,7 +53,7 @@ npm run build      # tsup → bundled ESM in dist/ (runs under plain node)
 
 ## Validate changes
 
-From repo root: `npm run verify` must be green before shipping.
+From repo root: `npm run verify` must be green before shipping. CI runs only test and build; lint and typecheck run in the husky pre-push hook, so a new worktree needs `pnpm install` before its first push.
 
 ## Docs
 
