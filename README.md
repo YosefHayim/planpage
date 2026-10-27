@@ -102,6 +102,16 @@ data → render() → marked HTML → highlight() → coloured HTML → write/op
 
 Static render is the default. The post-back server is opt-in and blocks until the user sends a feedback batch — then exits cleanly.
 
+## Use as a library
+
+`preact` is a peer dependency, so your JSX and planpage share one Preact copy (two copies render a blank page). Install both:
+
+```bash
+npm install planpage preact
+```
+
+The CLI needs nothing extra: `npx planpage` installs `preact` for you.
+
 ## Build locally
 
 planpage is a Node.js package published on [npm](https://www.npmjs.com/package/planpage). Local development uses [pnpm](https://pnpm.io/):
