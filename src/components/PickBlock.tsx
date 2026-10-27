@@ -25,13 +25,13 @@ export const PickBlock = ({ id, rule, chosen, rejected, why, tag }: PickBlockPro
       <div class="mb-2 text-xs font-semibold text-emerald-600 dark:text-emerald-300">
         ✓ {rule} — chosen
       </div>
-      <pre class="code text-xs">
+      <pre class="code code-wrap text-xs">
         <code>{chosen}</code>
       </pre>
     </div>
     <div class="rejected rounded-xl border border-rose-700/40 p-3 opacity-60">
       <div class="mb-2 text-xs font-semibold text-rose-500 dark:text-rose-300">✗ not this</div>
-      <pre class="code text-xs">
+      <pre class="code code-wrap text-xs">
         <code>{rejected}</code>
       </pre>
     </div>

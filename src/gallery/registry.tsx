@@ -221,14 +221,22 @@ export const GALLERY = {
       { name: "tag", type: "string" },
     ],
     sample: () => (
-      <PickBlock
-        id="demo.pick"
-        rule="Function form"
-        chosen="const f = () => …"
-        rejected="function f() { … }"
-        why="arrow-const, named export"
-        tag="[taste]"
-      />
+      <div class="grid gap-4">
+        <PickBlock
+          id="demo.pick"
+          rule="Function form"
+          chosen="const f = () => …"
+          rejected="function f() { … }"
+          why="arrow-const, named export"
+          tag="[taste]"
+        />
+        <PickBlock
+          id="demo.pick.prose"
+          rule="Long prose wraps"
+          chosen="Prefer one clear sentence per decision, even when it runs well past the width of the box, because the reader should never have to scroll sideways to finish a thought."
+          rejected="Cram every decision into a single unbroken line that the box cuts off, so the rest of the sentence is hidden and the reader cannot see what was actually proposed."
+        />
+      </div>
     ),
   },
   OptionCompare: {

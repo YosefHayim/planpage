@@ -14,9 +14,6 @@ importers:
       commander:
         specifier: ^12.1.0
         version: 12.1.0
-      preact:
-        specifier: ^10.24.3
-        version: 10.29.3
       preact-render-to-string:
         specifier: ^6.5.11
         version: 6.7.0(preact@10.29.3)
@@ -33,6 +30,9 @@ importers:
       husky:
         specifier: ^9.1.7
         version: 9.1.7
+      preact:
+        specifier: ^10.24.3
+        version: 10.29.3
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(postcss@8.5.16)(tsx@4.22.4)(typescript@5.9.3)
