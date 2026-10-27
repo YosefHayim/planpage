@@ -23,7 +23,6 @@ Single source of truth for working in **planpage**. Claude Code and Codex load t
 | `*.test.tsx` (co-located) | vitest, beside source |
 
 ## Conventions
-<!-- rules digest — full guide in CODE-STYLE.md; edit there -->
 - **Pure render, effects at the edges** — `components`/`templates`/`render` are pure (data → HTML string); all I/O in `server` + `cli`. **Syntax highlighting is an edge step**: code components emit a `data-hl` marker (`render/codeMark.tsx`) so render stays sync; the async `highlight()` pass (`src/highlight/`) bakes in Shiki's VSCode colours at the edge, and unhighlighted output degrades to a readable no-JS fallback.
 - **Components + `render()`** — Preact, arrow-const, named exports, PascalCase files, exported `readonly XProps`.
 - **Escaping is default** — JSX auto-escapes; raw HTML only via `raw()`; `dangerouslySetInnerHTML` allowed only in `Shell` for constant infra.
@@ -57,7 +56,7 @@ From repo root: `npm run verify` must be green before shipping. CI runs only tes
 
 ## Docs
 
-`PROJECT.md` (purpose) · `CONTEXT.md` (orientation) · `LANGUAGE.md` (glossary) · `CODE-STYLE.md` (how code is written — SSOT; `deslop` enforces per-diff). Decisions go in the PR description.
+`PROJECT.md` (purpose) · `CONTEXT.md` (orientation) · `LANGUAGE.md` (glossary). Decisions go in the PR description.
 
 <!-- planpage:start -->
 ## Rendering plans (planpage)

@@ -122,7 +122,7 @@ pnpm run verify
 pnpm run cli -- render plan-brief --sample --open
 ```
 
-Use `pnpm run cli -- library --open` to inspect the captured component gallery. For code conventions and extension points, read [CODE-STYLE.md](CODE-STYLE.md) before adding templates, components, or CLI commands.
+Use `pnpm run cli -- library --open` to inspect the captured component gallery.
 
 ## Scope
 
@@ -134,7 +134,7 @@ Use `pnpm run cli -- library --open` to inspect the captured component gallery. 
 ## Docs
 
 - [AGENTS.md](AGENTS.md) — conventions and validation commands for agents working in this repo
-- [PROJECT.md](PROJECT.md) · [CONTEXT.md](CONTEXT.md) · [LANGUAGE.md](LANGUAGE.md) · [CODE-STYLE.md](CODE-STYLE.md)
+- [PROJECT.md](PROJECT.md) · [CONTEXT.md](CONTEXT.md) · [LANGUAGE.md](LANGUAGE.md)
 
 ## License
 
