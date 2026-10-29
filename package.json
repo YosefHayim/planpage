@@ -27,6 +27,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/tsc/planpage.tsbuildinfo",
+    "check": "turbo run lint typecheck test build --output-logs=errors-only",
     "check:ci": "biome ci .",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -54,10 +55,11 @@
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@types/node": "^22.7.5",
-    "husky": "^9.1.7",
+    "husky": "9.1.7",
     "preact": "^10.24.3",
     "tsup": "^8.5.1",
     "tsx": "^4.19.1",
+    "turbo": "2.11.8",
     "typescript": "^5.6.3",
     "vitest": "^2.1.3"
   },
