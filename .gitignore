@@ -3,6 +3,8 @@ node_modules/
 
 # build (dist, plus planpage init output from local runs)
 dist/
+.turbo/
+.worktrees/
 .amazonq/
 .claude/skills/
 .clinerules/

@@ -1,1 +1,1 @@
-pnpm check:ci && pnpm typecheck
+pnpm check
