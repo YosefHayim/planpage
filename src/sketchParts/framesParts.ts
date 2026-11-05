@@ -86,6 +86,16 @@ export const FRAMES_PARTS: readonly SketchPart[] = [
 </div>`,
       },
       {
+        label: "Right to left",
+        html: `<div dir="rtl" class="sk-app-window mx-auto max-w-lg">
+  <div class="sk-app-window-title">הגדרות</div>
+  <div class="space-y-3 p-4">
+    <p class="text-lg">תוכנית ההשקה</p>
+    <button type="button" class="sk-button sk-main">שמירה</button>
+  </div>
+</div>`,
+      },
+      {
         label: "Settings window",
         html: `<div class="sk-app-window mx-auto max-w-lg">
   <div class="sk-app-window-title">Settings</div>
@@ -198,7 +208,7 @@ export const FRAMES_PARTS: readonly SketchPart[] = [
     className: "sk-terminal-window",
     group: "frames",
     name: "Terminal window",
-    useFor: "A terminal with a dark title bar and monospace lines of commands and output.",
+    useFor: "A terminal with a solid title bar and monospace lines of commands and output.",
     examples: [
       {
         label: "Check run",
@@ -217,7 +227,7 @@ export const FRAMES_PARTS: readonly SketchPart[] = [
   <div class="sk-terminal-title">zsh, planpage</div>
   <div class="sk-terminal-body space-y-1">
     <p>$ pnpm test</p>
-    <p>1 test failed</p>
+    <p><span class="text-red-500">1 test failed</span></p>
   </div>
 </div>`,
       },

@@ -1,13 +1,37 @@
 export const MARKS_PART_SCRIPT = `
-const DEFAULT_TAP_RING_COUNT = 2;
-const TAP_DOT_RATIO = 0.3;
-const DEFAULT_RIPPLE_RING_COUNT = 3;
+const DEFAULT_TAP_RING_COUNT = 1;
+const TAP_DOT_RATIO = 0.5;
+const DEFAULT_RIPPLE_RING_COUNT = 2;
 const RIPPLE_INNER_RATIO = 0.4;
 const DEFAULT_CALLOUT_FILL = "yellow";
 const DEFAULT_STICKY_FILL = "yellow";
 const DEFAULT_HIGHLIGHT_FILL = "yellow";
-const HIGHLIGHT_TOP_RATIO = 0.45;
-const HIGHLIGHT_BOTTOM_RATIO = 0.92;
+const HIGHLIGHT_TOP_RATIO = 0.55;
+const HIGHLIGHT_BOTTOM_RATIO = 0.95;
+const HIGHLIGHT_BAND_OPACITY = 0.7;
+const HIGHLIGHT_BAND_COLORS = { yellow: "#ffd43b", green: "#8ce99a", blue: "#74c0fc", orange: "#ffa94d", red: "#ff8787", grey: "#ced4da" };
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+const TAP_DOT_COLOR = "#1971c2";
+
+const drawSolidDot = (layer, box, color) => {
+  const dotShape = document.createElementNS(SVG_NAMESPACE, "circle");
+  dotShape.setAttribute("cx", box.x + box.w / 2);
+  dotShape.setAttribute("cy", box.y + box.h / 2);
+  dotShape.setAttribute("r", Math.min(box.w, box.h) / 2);
+  dotShape.setAttribute("fill", color);
+  layer.svg.append(dotShape);
+};
+
+const drawSolidBand = (layer, box, color, opacity) => {
+  const bandShape = document.createElementNS(SVG_NAMESPACE, "rect");
+  bandShape.setAttribute("x", box.x);
+  bandShape.setAttribute("y", box.y);
+  bandShape.setAttribute("width", box.w);
+  bandShape.setAttribute("height", box.h);
+  bandShape.setAttribute("fill", color);
+  bandShape.setAttribute("fill-opacity", opacity);
+  layer.svg.append(bandShape);
+};
 const STRIKE_OVERHANG_RATIO = 0.04;
 const STRIKE_START_Y_RATIO = 0.55;
 const STRIKE_END_Y_RATIO = 0.45;
@@ -120,12 +144,12 @@ const pickInsetEdges = (frame, inset) => ({
 });
 
 window.SketchWireframe.definePart("sk-tap-marker", (drawing) => {
-  const { circle, readCount } = window.SketchWireframe;
+  const { readCount } = window.SketchWireframe;
   const { element, box, seed, over } = drawing;
   const ringCount = readCount(element, DEFAULT_TAP_RING_COUNT);
   const dotBox = pickCenteredBox(box, TAP_DOT_RATIO);
 
-  circle(over, dotBox, { tone: "blue", fill: "blue", seed });
+  drawSolidDot(over, dotBox, TAP_DOT_COLOR);
   drawRingsInBox(over, box, ringCount, TAP_DOT_RATIO, seed + 1);
 });
 
@@ -160,8 +184,8 @@ window.SketchWireframe.definePart("sk-numbered-callout", (drawing) => {
 });
 
 window.SketchWireframe.definePart("sk-highlight-marker", (drawing) => {
-  const { roundedRectangle, readFill } = window.SketchWireframe;
-  const { element, box, seed, under } = drawing;
+  const { readFill } = window.SketchWireframe;
+  const { element, box, under } = drawing;
   const highlightBox = {
     x: box.x,
     y: box.y + box.h * HIGHLIGHT_TOP_RATIO,
@@ -170,7 +194,7 @@ window.SketchWireframe.definePart("sk-highlight-marker", (drawing) => {
   };
   const highlightFill = readFill(element) ?? DEFAULT_HIGHLIGHT_FILL;
 
-  roundedRectangle(under, highlightBox, { tone: "orange", fill: highlightFill, seed });
+  drawSolidBand(under, highlightBox, HIGHLIGHT_BAND_COLORS[highlightFill], HIGHLIGHT_BAND_OPACITY);
 });
 
 window.SketchWireframe.definePart("sk-redline-strike", (drawing) => {
@@ -305,6 +329,20 @@ export const MARKS_PART_STYLE = `:where(.sk-tap-marker, .sk-click-ripple, .sk-cu
   min-height: 1.75rem;
 }
 
+:where(.sk-tap-marker) {
+  width: 2.4em;
+  height: 2.4em;
+  min-width: 0;
+  min-height: 0;
+}
+
+:where(.sk-click-ripple) {
+  width: 2.5em;
+  height: 2.5em;
+  min-width: 0;
+  min-height: 0;
+}
+
 :where(.sk-annotation-arrow) {
   min-width: 6rem;
   min-height: 4rem;
@@ -329,6 +367,10 @@ export const MARKS_PART_STYLE = `:where(.sk-tap-marker, .sk-click-ripple, .sk-cu
   border: 1.6px solid transparent;
   border-radius: 999px;
   font-weight: 700;
+}
+
+:where(.sk-highlight-marker) {
+  color: #1b1f23;
 }
 
 :where(.sk-highlight-marker, .sk-redline-strike) {

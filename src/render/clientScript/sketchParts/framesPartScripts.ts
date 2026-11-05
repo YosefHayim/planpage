@@ -3,7 +3,18 @@ const APP_WINDOW_DOT_FILLS = ["red", "yellow", "green"];
 const APP_WINDOW_DOT_SIDE_RATIO = 0.4;
 const APP_WINDOW_DOT_LEFT_RATIO = 0.4;
 const APP_WINDOW_DOT_STEP_RATIO = 0.6;
-const TERMINAL_HATCH_LINE_COUNT = 4;
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+const TERMINAL_TITLE_BAR_COLOR = "#343a40";
+
+const drawSolidBar = (layer, box, color) => {
+  const barShape = document.createElementNS(SVG_NAMESPACE, "rect");
+  barShape.setAttribute("x", box.x);
+  barShape.setAttribute("y", box.y);
+  barShape.setAttribute("width", box.w);
+  barShape.setAttribute("height", box.h);
+  barShape.setAttribute("fill", color);
+  layer.svg.append(barShape);
+};
 const EXTENSION_ARROW_HALF_WIDTH_RATIO = 0.06;
 const EXTENSION_ARROW_EDGE_RATIO = 0.2;
 const LAPTOP_NOTCH_LEFT_RATIO = 0.4;
@@ -65,20 +76,21 @@ window.SketchWireframe.definePart("sk-laptop", (drawing) => {
 });
 
 window.SketchWireframe.definePart("sk-app-window", (drawing) => {
-  const { roundedRectangle, line, circle } = window.SketchWireframe;
-  const { box, seed, under } = drawing;
+  const { roundedRectangle, line, circle, isRightToLeft } = window.SketchWireframe;
+  const { element, box, seed, under } = drawing;
   const [titleChild] = measureChildren(drawing, ".sk-app-window-title");
   const titleBar = titleChild.box;
   const titleBottomY = titleBar.y + titleBar.h;
   const dotSide = titleBar.h * APP_WINDOW_DOT_SIDE_RATIO;
   const dotTopY = titleBar.y + (titleBar.h - dotSide) / 2;
+  const isRight = isRightToLeft(element);
 
   roundedRectangle(under, box, { tone: "ink", seed });
   line(under, { x: box.x, y: titleBottomY }, { x: box.x + box.w, y: titleBottomY }, { tone: "ink", seed: seed + 1 });
 
   for (const [dotIndex, dotFill] of APP_WINDOW_DOT_FILLS.entries()) {
-    const dotLeftX =
-      titleBar.x + titleBar.h * APP_WINDOW_DOT_LEFT_RATIO + titleBar.h * APP_WINDOW_DOT_STEP_RATIO * dotIndex;
+    const dotOffsetX = titleBar.h * APP_WINDOW_DOT_LEFT_RATIO + titleBar.h * APP_WINDOW_DOT_STEP_RATIO * dotIndex;
+    const dotLeftX = isRight ? titleBar.x + titleBar.w - dotOffsetX - dotSide : titleBar.x + dotOffsetX;
     const dotBox = { x: dotLeftX, y: dotTopY, w: dotSide, h: dotSide };
     circle(under, dotBox, { tone: "ink", fill: dotFill, seed: seed + 10 + dotIndex });
   }
@@ -125,18 +137,12 @@ window.SketchWireframe.definePart("sk-watch", (drawing) => {
 });
 
 window.SketchWireframe.definePart("sk-terminal-window", (drawing) => {
-  const { roundedRectangle, line } = window.SketchWireframe;
+  const { roundedRectangle } = window.SketchWireframe;
   const { box, seed, under } = drawing;
   const [titleChild] = measureChildren(drawing, ".sk-terminal-title");
-  const titleBar = titleChild.box;
-  const hatchIndexes = [...Array(TERMINAL_HATCH_LINE_COUNT).keys()];
 
   roundedRectangle(under, box, { tone: "ink", seed });
-
-  for (const hatchIndex of hatchIndexes) {
-    const hatchY = titleBar.y + (titleBar.h * (hatchIndex + 1)) / (TERMINAL_HATCH_LINE_COUNT + 1);
-    line(under, { x: titleBar.x, y: hatchY }, { x: titleBar.x + titleBar.w, y: hatchY }, { tone: "soft", seed: seed + 1 + hatchIndex });
-  }
+  drawSolidBar(under, titleChild.box, TERMINAL_TITLE_BAR_COLOR);
 });
 
 window.SketchWireframe.definePart("sk-extension-popup", (drawing) => {
@@ -269,7 +275,9 @@ export const FRAMES_PART_STYLE = `:where(.sk-browser-window) {
 
 :where(.sk-app-window-title) {
   display: block;
-  padding: 0.375rem 0.75rem 0.375rem 4.5rem;
+  padding-block: 0.375rem;
+  padding-inline: 0.75rem;
+  padding-inline-start: 5.5rem;
   font-size: 0.95rem;
 }
 
@@ -380,6 +388,7 @@ export const FRAMES_PART_STYLE = `:where(.sk-browser-window) {
   display: block;
   padding: 0.25rem 0.75rem;
   font-size: 0.85rem;
+  color: #f8f9fa;
 }
 
 :where(.sk-terminal-body) {

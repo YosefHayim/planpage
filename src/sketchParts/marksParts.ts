@@ -12,7 +12,7 @@ export const MARKS_PARTS: readonly SketchPart[] = [
         html: `<div class="p-6">
   <div class="relative inline-block">
     <button type="button" class="sk-button sk-main">Save changes</button>
-    <span class="sk-tap-marker absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2"></span>
+    <span class="sk-tap-marker absolute left-[calc(100%+0.4em)] top-[calc(100%+0.4em)] -translate-x-1/2 -translate-y-1/2"></span>
   </div>
 </div>`,
       },
@@ -21,7 +21,7 @@ export const MARKS_PARTS: readonly SketchPart[] = [
         html: `<div class="p-6">
   <div class="relative inline-block">
     <button type="button" class="sk-button sk-main">Save changes</button>
-    <span class="sk-tap-marker absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2" data-count="4"></span>
+    <span class="sk-tap-marker absolute left-[calc(100%+0.4em)] top-[calc(100%+0.4em)] -translate-x-1/2 -translate-y-1/2" data-count="3"></span>
   </div>
 </div>`,
       },
@@ -64,7 +64,7 @@ export const MARKS_PARTS: readonly SketchPart[] = [
         html: `<div class="p-6">
   <div class="relative inline-block">
     <button type="button" class="sk-button">Add task</button>
-    <span class="sk-click-ripple absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2"></span>
+    <span class="sk-click-ripple absolute left-[calc(100%+0.4em)] top-[calc(100%+0.4em)] -translate-x-1/2 -translate-y-1/2"></span>
   </div>
 </div>`,
       },
@@ -73,7 +73,7 @@ export const MARKS_PARTS: readonly SketchPart[] = [
         html: `<div class="p-6">
   <div class="relative inline-block">
     <button type="button" class="sk-button">Add task</button>
-    <span class="sk-click-ripple absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2" data-count="4"></span>
+    <span class="sk-click-ripple absolute left-[calc(100%+0.4em)] top-[calc(100%+0.4em)] -translate-x-1/2 -translate-y-1/2" data-count="3"></span>
   </div>
 </div>`,
       },
