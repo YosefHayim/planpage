@@ -55,6 +55,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
   const LINK_GAP = 6;
   const BADGE_RADIUS = 11;
   const MIN_SCENE_SCALE = 0.6;
+  const SCENE_OVERFLOW_TOLERANCE_PX = 1;
 
   const createSvgElement = (tagName) => document.createElementNS(SVG_NAMESPACE, tagName);
 
@@ -806,29 +807,6 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     for (const pendingEdge of pendingEdges) drawPendingPartEdge(pendingEdge, sceneElement, sceneRect, sceneWidth);
   };
 
-  const drawPartEdgesOnceFontsLoad = (sceneElement, sceneWidth, pendingEdges) => {
-    const isNoEdgePending = pendingEdges.length === 0;
-    if (isNoEdgePending) return;
-
-    runOnceFontsLoad(() => drawPendingPartEdges(sceneElement, sceneWidth, pendingEdges));
-  };
-
-  const runOnceFontsLoad = (drawWhenReady) => {
-    const isFontsReady = document.fonts.status === "loaded";
-    if (isFontsReady) {
-      drawWhenReady();
-      return;
-    }
-    document.fonts.addEventListener("loadingdone", drawWhenReady, { once: true });
-  };
-
-  const linkNotesOnceFontsLoad = (sceneElement, sceneWidth, pendingLinks) => {
-    const isNoLinkPending = pendingLinks.length === 0;
-    if (isNoLinkPending) return;
-
-    runOnceFontsLoad(() => drawPendingNoteLinks(sceneElement, sceneWidth, pendingLinks));
-  };
-
   const drawStrike = ({ context, group, textElement }) => {
     const textBox = textElement.getBBox();
     const lineY = textBox.y + textBox.height / 2;
@@ -841,15 +819,6 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
         roughness: context.look.roughness ?? ROUGHNESS_EDGE,
       }),
     );
-  };
-
-  const strikeTextsOnceFontsLoad = (pendingStrikes) => {
-    const isNoStrikePending = pendingStrikes.length === 0;
-    if (isNoStrikePending) return;
-
-    runOnceFontsLoad(() => {
-      for (const pendingStrike of pendingStrikes) drawStrike(pendingStrike);
-    });
   };
 
   const pairPendingLinks = (placedNotes, noteElements) =>
@@ -1045,8 +1014,13 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     const sceneWidth = Number(frame.dataset.sceneWidth);
     const sceneHeight = Number(frame.dataset.sceneHeight);
     const scale = Math.max(frame.clientWidth / sceneWidth, MIN_SCENE_SCALE);
+    const isSceneWiderThanFrame = sceneWidth * scale > frame.clientWidth + SCENE_OVERFLOW_TOLERANCE_PX;
+    const scrollArea = frame.querySelector(".sketch-scroll");
+
     sceneElement.style.transform = \`scale(\${scale})\`;
-    frame.style.height = \`\${sceneHeight * scale}px\`;
+    scrollArea.style.height = \`\${sceneHeight * scale}px\`;
+    scrollArea.tabIndex = isSceneWiderThanFrame ? 0 : -1;
+    frame.dataset.sceneOverflows = String(isSceneWiderThanFrame);
   };
 
   const drawScene = (frame, scene) => {
@@ -1063,31 +1037,42 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     const noteElements = placedNotes.map((placedNote) => addNoteText(sceneElement, placedNote));
     for (const { node, offsetX } of findScreenNodes(scene)) addScreenNode(sceneElement, node, offsetX);
 
+    const scrollArea = document.createElement("div");
+    scrollArea.className = "sketch-scroll";
+    scrollArea.append(sceneElement);
+
     frame.dataset.sceneWidth = scene.width;
     frame.dataset.sceneHeight = scene.height;
-    frame.append(sceneElement);
+    frame.append(scrollArea);
     fitScene(frame);
-    linkNotesOnceFontsLoad(sceneElement, scene.width, pairPendingLinks(placedNotes, noteElements));
-    drawPartEdgesOnceFontsLoad(sceneElement, scene.width, pendingDrawings.partEdges);
-    strikeTextsOnceFontsLoad(pendingDrawings.strikes);
-  };
-
-  const fitScenes = (root) => {
-    for (const frame of root.querySelectorAll(".sketch-frame")) fitScene(frame);
+    drawPendingNoteLinks(sceneElement, scene.width, pairPendingLinks(placedNotes, noteElements));
+    drawPendingPartEdges(sceneElement, scene.width, pendingDrawings.partEdges);
+    for (const pendingStrike of pendingDrawings.strikes) drawStrike(pendingStrike);
   };
 
   const isFrameShown = (frame) => frame.getClientRects().length > 0;
-
-  const isFrameDrawn = (frame) => frame.dataset.sketchDrawn === "true";
 
   const readSceneOf = (frame) => {
     const sceneScript = frame.querySelector("script[data-sketch-scene]");
     return JSON.parse(sceneScript.textContent);
   };
 
+  const applyMode = (frame) => {
+    const chosenMode = frame.dataset.sketchMode;
+    const isNoModeChosen = chosenMode === undefined;
+    if (isNoModeChosen) return;
+
+    for (const element of frame.querySelectorAll("[data-path]")) {
+      const paths = element.dataset.path.split(" ");
+      const isOnChoice = paths.includes(chosenMode);
+      element.classList.toggle("is-dim", !isOnChoice);
+    }
+  };
+
   const drawFrame = (frame) => {
     const scene = readSceneOf(frame);
     drawScene(frame, scene);
+    applyMode(frame);
     frame.dataset.sketchDrawn = "true";
   };
 
@@ -1101,28 +1086,44 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
       document.addEventListener("pp-rough-ready", () => roughLoaded(), { once: true });
     });
 
-  const drawFramesIn = async (root) => {
+  const pendingFrames = new Set();
+  const drawSchedule = { isFlushQueued: false };
+
+  const flushPendingFrames = async () => {
+    drawSchedule.isFlushQueued = false;
+    const framesToDraw = [...pendingFrames];
+    pendingFrames.clear();
     await document.fonts.ready;
     await waitForRough();
-    for (const frame of root.querySelectorAll(".sketch-frame")) {
-      const isHiddenFrame = !isFrameShown(frame);
-      if (isHiddenFrame) continue;
 
-      const isFrameWaiting = !isFrameDrawn(frame);
-      if (isFrameWaiting) {
-        drawFrame(frame);
-        continue;
-      }
-      fitScene(frame);
+    for (const frame of framesToDraw) {
+      const isFrameVisible = isFrameShown(frame);
+      if (isFrameVisible) drawFrame(frame);
     }
   };
 
+  const queueFrame = (frame) => {
+    pendingFrames.add(frame);
+    const isFlushAlreadyQueued = drawSchedule.isFlushQueued;
+    if (isFlushAlreadyQueued) return;
+
+    drawSchedule.isFlushQueued = true;
+    requestAnimationFrame(flushPendingFrames);
+  };
+
+  const drawFramesIn = (root) => {
+    for (const frame of root.querySelectorAll(".sketch-frame")) queueFrame(frame);
+  };
+
+  const frameResizeObserver = new ResizeObserver((resizeReports) => {
+    for (const resizeReport of resizeReports) queueFrame(resizeReport.target);
+  });
+  for (const frame of document.querySelectorAll(".sketch-frame")) frameResizeObserver.observe(frame);
+  document.fonts.addEventListener("loadingdone", () => drawFramesIn(document));
+
   const setMode = (frame, choice) => {
-    for (const element of frame.querySelectorAll("[data-path]")) {
-      const paths = element.dataset.path.split(" ");
-      const isOnChoice = paths.includes(choice);
-      element.classList.toggle("is-dim", !isOnChoice);
-    }
+    frame.dataset.sketchMode = choice;
+    applyMode(frame);
   };
 
   const bindCodeToggle = (button, drawer) => {
@@ -1149,8 +1150,6 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     });
     applyNotesState();
   };
-
-  window.addEventListener("resize", () => fitScenes(document));
 
   window.SketchEngine = {
     drawFramesIn,
@@ -1272,7 +1271,25 @@ export const SKETCH_SCENE_STYLE = `:root {
     position: relative;
     width: 100%;
     margin-top: 18px;
+  }
+
+  .sketch-frame[data-scene-overflows="true"]::after {
+    content: "Scroll sideways to see the rest.";
+    display: block;
+    margin-top: 6px;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 12px;
+    color: var(--ink-soft);
+  }
+
+  .sketch-scroll {
+    position: relative;
     overflow-x: auto;
+  }
+
+  .sketch-scroll:focus-visible {
+    outline: 3px solid var(--active);
+    outline-offset: 2px;
   }
 
   .sketch-scene {
@@ -1682,9 +1699,13 @@ export const SKETCH_SCENE_STYLE = `:root {
     border-radius: 4px;
   }
 
-  .sketch-option:focus-within {
+  .sketch-option:has(input:focus-visible) {
     outline: 4px solid var(--active);
     outline-offset: 3px;
+  }
+
+  .sketch-option input:focus-visible {
+    outline: none;
   }
 
   html.dark .sketch-frame {
@@ -1744,7 +1765,7 @@ export const SKETCH_SCENE_STYLE = `:root {
   }
 
   html.dark .sketch-title:focus,
-  html.dark .sketch-option:focus-within {
+  html.dark .sketch-option:has(input:focus-visible) {
     outline-color: #e2e8f0;
   }
 `;
