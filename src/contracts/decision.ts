@@ -99,6 +99,8 @@ export interface Decision {
   readonly diagrams: readonly FeedbackDiagram[];
   /** Freehand whiteboard sketches (PNG data URLs + notes). */
   readonly whiteboards: readonly FeedbackWhiteboard[];
+  /** Letter of the option picked on a sketch-plan "Your call" page. */
+  readonly choice?: string;
 }
 
 /** Empty Decision shell — useful for tests and defensive defaults. Not written by serve. */
