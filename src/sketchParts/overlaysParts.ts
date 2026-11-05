@@ -210,7 +210,7 @@ export const OVERLAYS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Three toasts",
-        html: '<div class="sk-toast-stack max-w-xs"><div class="sk-toast"></div><div class="sk-toast"></div><div class="sk-toast" data-tone="green"><p class="font-bold">Changes saved</p><p>Your profile is up to date.</p></div></div>',
+        html: '<div class="sk-toast-stack max-w-xs pb-4 pe-4"><div class="sk-toast"></div><div class="sk-toast"></div><div class="sk-toast" data-tone="green"><p class="font-bold">Changes saved</p><p>Your profile is up to date.</p></div></div>',
       },
     ],
   },
@@ -238,7 +238,7 @@ export const OVERLAYS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Three notifications",
-        html: '<div class="sk-notification-stack max-w-sm"><div class="sk-notification"></div><div class="sk-notification"></div><div class="sk-notification"><p class="font-bold">Maya replied</p><p>Can we move the call to 4 pm?</p></div></div>',
+        html: '<div class="sk-notification-stack max-w-sm pb-4 pe-4"><div class="sk-notification"></div><div class="sk-notification"></div><div class="sk-notification"><p class="font-bold">Maya replied</p><p>Can we move the call to 4 pm?</p></div></div>',
       },
     ],
   },

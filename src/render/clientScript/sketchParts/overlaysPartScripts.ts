@@ -5,8 +5,7 @@ const HATCH_ANGLE = -41;
 const DRAWN_ROUGHNESS = 1.1;
 const DEFAULT_PANEL_FILL = "grey";
 const DEFAULT_BANNER_FILL = "yellow";
-const DRAWN_ICON_NAMES = ["search", "chevron-down", "x", "check", "plus", "bell"];
-const NOTICE_ICON_NAME_BY_TONE = { blue: "info", green: "check", orange: "warning", red: "x" };
+const NOTICE_ICON_NAME_BY_TONE = { blue: "info", green: "check", orange: "triangle-alert", red: "circle-alert" };
 const NOTICE_DEFAULT_ICON_NAME = "bell";
 const ALERT_FILL_BY_TONE = { blue: "blue", green: "green", orange: "orange", red: "red" };
 const NOTICE_ICON_SLOT_RATIO = 0.5;
@@ -70,15 +69,9 @@ const pickNoticeIconBox = (box, isRightToLeftLayout) => {
   return { x: iconStartX, y: iconTop, w: iconSide, h: iconSide };
 };
 
-const drawIconOrPlaceholder = (layer, box, iconName, style) => {
-  const { icon, circle } = window.SketchWireframe;
-  const isIconDrawn = DRAWN_ICON_NAMES.includes(iconName);
-  if (isIconDrawn) {
-    icon(layer, box, iconName, style);
-    return;
-  }
-
-  circle(layer, box, style);
+const drawNoticeIcon = (layer, box, iconName, style) => {
+  const { icon } = window.SketchWireframe;
+  icon(layer, box, iconName, style);
 };
 
 const drawNoticeCard = (drawing, defaultFillName) => {
@@ -91,7 +84,7 @@ const drawNoticeCard = (drawing, defaultFillName) => {
   const iconName = NOTICE_ICON_NAME_BY_TONE[tone] ?? NOTICE_DEFAULT_ICON_NAME;
   const isRightToLeftLayout = isRightToLeft(element);
   const iconBox = pickNoticeIconBox(box, isRightToLeftLayout);
-  drawIconOrPlaceholder(under, iconBox, iconName, { tone, seed: seed + 1 });
+  drawNoticeIcon(under, iconBox, iconName, { tone, seed: seed + 1 });
 };
 
 const drawAlert = (drawing) => {
