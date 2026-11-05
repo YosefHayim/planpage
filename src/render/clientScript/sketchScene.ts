@@ -777,6 +777,9 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
 
   const drawPendingNoteLinks = (sceneElement, sceneWidth, pendingLinks) => {
     const sceneRect = sceneElement.getBoundingClientRect();
+    const isSceneHidden = sceneRect.width === 0;
+    if (isSceneHidden) return;
+
     for (const { pendingLink, noteElement } of pendingLinks) {
       drawPendingNoteLink(pendingLink, noteElement, sceneElement, sceneRect, sceneWidth);
     }
@@ -1160,6 +1163,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
 
 export const SKETCH_SCENE_STYLE = `:root {
   --paper: #fbfaf6;
+  --card: #ffffff;
   --ink: #2b2b30;
   --ink-soft: #6b6b75;
   --rule: #d4d4d8;
@@ -1195,7 +1199,6 @@ export const SKETCH_SCENE_STYLE = `:root {
   }
 }
 
-@layer components {
   .sketch-page {
     max-width: 1100px;
     margin: 0 auto;
@@ -1472,7 +1475,7 @@ export const SKETCH_SCENE_STYLE = `:root {
     border: 1.5px solid var(--ink);
     border-radius: 10px;
     padding: 10px 12px;
-    background: #fff;
+    background: var(--card);
     cursor: pointer;
   }
 
@@ -1506,7 +1509,7 @@ export const SKETCH_SCENE_STYLE = `:root {
     padding: 8px 10px;
     border: 1.5px solid var(--ink);
     border-radius: 8px;
-    background: #fff;
+    background: var(--card);
     color: var(--ink);
   }
 
@@ -1609,7 +1612,6 @@ export const SKETCH_SCENE_STYLE = `:root {
     margin-top: 18px;
     min-height: 70px;
   }
-}
 
 @media (max-width: 600px) {
   :root {
@@ -1660,7 +1662,6 @@ export const SKETCH_SCENE_STYLE = `:root {
   font-size: var(--text-size-big-mono);
 }
 
-@layer components {
   .sketch-plan-title {
     margin: 0;
     font-size: 16px;
@@ -1669,7 +1670,7 @@ export const SKETCH_SCENE_STYLE = `:root {
   }
 
   .sketch-keys {
-    margin: 0;
+    margin: 12px 0 18px;
     font-family: "IBM Plex Mono", monospace;
     font-size: 12px;
     color: var(--ink-soft);
@@ -1689,5 +1690,61 @@ export const SKETCH_SCENE_STYLE = `:root {
   html.dark .sketch-frame {
     filter: invert(93%) hue-rotate(180deg);
   }
-}
+
+  html.dark {
+    --card: #0f172a;
+    background: #020617;
+  }
+
+  html.dark .sketch-button {
+    border-color: #94a3b8;
+    color: #e2e8f0;
+  }
+
+  html.dark .sketch-button--solid,
+  html.dark .sketch-button[aria-pressed="true"] {
+    background: #e2e8f0;
+    color: #020617;
+  }
+
+  html.dark .sketch-nav-step {
+    background: #020617;
+    color: #cbd5e1;
+  }
+
+  html.dark .sketch-nav-step[data-state="active"] {
+    background: #e2e8f0;
+    border-color: #e2e8f0;
+    color: #020617;
+  }
+
+  html.dark .sketch-nav-step[data-state="upcoming"] {
+    border-color: #3f3f46;
+  }
+
+  html.dark .sketch-nav-line[data-state="active"] {
+    background: #e2e8f0;
+  }
+
+  html.dark .sketch-nav-line[data-state="upcoming"] {
+    background: #3f3f46;
+  }
+
+  html.dark .sketch-option,
+  html.dark .sketch-textarea {
+    border-color: #64748b;
+  }
+
+  html.dark .sketch-option:has(input:checked) {
+    background: #1e3a5f;
+  }
+
+  html.dark .sketch-textarea {
+    color: #e2e8f0;
+  }
+
+  html.dark .sketch-title:focus,
+  html.dark .sketch-option:focus-within {
+    outline-color: #e2e8f0;
+  }
 `;

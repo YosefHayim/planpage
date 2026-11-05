@@ -12,7 +12,7 @@ export const SketchPlanDecision = ({ decision }: SketchPlanDecisionProps) => {
 
   const firstLetter = firstOption.letter;
   return (
-    <section class="sketch-decision" aria-label="Your call">
+    <section class="sketch-decision" data-sketch-decision="" aria-label="Your call">
       <p>{decision.question}</p>
       <div class="sketch-options">
         {decision.options.map((option, optionIndex) => {
