@@ -1,4 +1,5 @@
 import type { SketchRecipe } from "../contracts/sketchScene";
+import { ACCOUNT_RECIPES } from "./accountRecipes";
 import { DATA_RECIPES } from "./dataRecipes";
 import { DECISION_RECIPES } from "./decisionRecipes";
 import { FILE_RECIPES } from "./fileRecipes";
@@ -15,6 +16,7 @@ export const SKETCH_RECIPES: readonly SketchRecipe[] = [
   ...DATA_RECIPES,
   ...SYSTEM_RECIPES,
   ...SCREEN_RECIPES,
+  ...ACCOUNT_RECIPES,
   ...DECISION_RECIPES,
   ...LOOK_RECIPES,
 ];
