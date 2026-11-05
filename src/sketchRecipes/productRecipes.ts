@@ -132,7 +132,7 @@ const dashboardScreenHtml = `<div class="sk-app-shell w-full">
     <span class="sk-avatar" data-fill="blue">MK</span>
   </div>
   <div class="sk-app-shell-body">
-    <div class="sk-app-shell-sidebar space-y-1 py-3">
+    <div class="sk-app-shell-sidebar w-36 space-y-1 py-3">
       <p class="sk-app-shell-link" data-status="selected" data-part="sidebarDashboard">Dashboard</p>
       <p class="sk-app-shell-link">Orders</p>
       <p class="sk-app-shell-link">Customers</p>
@@ -173,7 +173,7 @@ const dashboardScreen: ProductScreen = {
   id: "dashboardScreen",
   left: FRAME_LEFT,
   width: FRAME_WIDTH,
-  height: 1020,
+  height: 820,
   html: dashboardScreenHtml,
 };
 
