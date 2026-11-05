@@ -1,7 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { SKETCH_RECIPES } from "../sketchRecipes/sketchRecipes";
 import { recipesCommand } from "./recipes";
-
-const EXPECTED_RECIPE_COUNT = 64;
 const BAD_USAGE_EXIT_CODE = 2;
 const OK_EXIT_CODE = 0;
 
@@ -38,7 +37,7 @@ describe("recipesCommand", () => {
 
     const listReply = JSON.parse(writtenToStdout) as { recipes: { id: string; group: string }[] };
     expect(exitCode).toBe(OK_EXIT_CODE);
-    expect(listReply.recipes).toHaveLength(EXPECTED_RECIPE_COUNT);
+    expect(listReply.recipes).toHaveLength(SKETCH_RECIPES.length);
     expect(listReply.recipes[0]).toMatchObject({ id: "flow", group: "flows" });
   });
 
@@ -48,7 +47,7 @@ describe("recipesCommand", () => {
     recipesCommand(undefined, {});
 
     const listReply = JSON.parse(writtenToStdout) as { recipes: unknown[] };
-    expect(listReply.recipes).toHaveLength(EXPECTED_RECIPE_COUNT);
+    expect(listReply.recipes).toHaveLength(SKETCH_RECIPES.length);
   });
 
   it("prints one recipe as JSON when given its id", () => {

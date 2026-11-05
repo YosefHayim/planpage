@@ -109,7 +109,7 @@ Plans can be drawn as hand-sketched pages: one picture per page, short notes tie
 ```bash
 planpage render sketch-plan --data plan.json --out plan.html   # write the page
 planpage serve plan.html decision.json --timeout 3600           # open it and wait for your pick
-planpage recipes                                                # list the 64 sketch recipes
+planpage recipes                                                # list the 80 sketch recipes
 ```
 
 The decision file has `approved`, `choice` (the letter you picked) and `notes`. The style guide, the scene format and the recipe list are in [skills/planpage/SKETCH-STYLE.md](skills/planpage/SKETCH-STYLE.md).
