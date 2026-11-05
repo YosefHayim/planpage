@@ -19,7 +19,10 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     examples: [
       { label: "Screen title", html: '<h2 class="sk-heading text-2xl">Order history</h2>' },
       { label: "Section title", html: '<h3 class="sk-heading text-lg">Shipping address</h3>' },
-      { label: "Hebrew, right to left", html: '<h2 class="sk-heading text-2xl" dir="rtl">היסטוריית הזמנות</h2>' },
+      {
+        label: "Hebrew, right to left",
+        html: '<h2 class="sk-heading text-2xl" dir="rtl">היסטוריית הזמנות</h2>',
+      },
     ],
   },
   {
@@ -56,7 +59,10 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     useFor: "A short name above a field or a value.",
     examples: [
       { label: "Plain", html: '<label class="sk-label">Email</label>' },
-      { label: "Error", html: '<span class="sk-label" data-status="error">Email is required</span>' },
+      {
+        label: "Error",
+        html: '<span class="sk-label" data-status="error">Email is required</span>',
+      },
     ],
   },
   {
@@ -123,7 +129,10 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
       { label: "Green", html: '<span class="sk-badge" data-fill="green">Paid</span>' },
       { label: "Yellow", html: '<span class="sk-badge" data-fill="yellow">Pending</span>' },
       { label: "Red", html: '<span class="sk-badge" data-fill="red">Overdue</span>' },
-      { label: "Hebrew, right to left", html: '<span class="sk-badge" data-fill="green" dir="rtl">פעיל</span>' },
+      {
+        label: "Hebrew, right to left",
+        html: '<span class="sk-badge" data-fill="green" dir="rtl">פעיל</span>',
+      },
     ],
   },
   {
@@ -147,7 +156,10 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
       { label: "Plain", html: '<span class="sk-tag">Design</span>' },
       { label: "Removable", html: '<span class="sk-tag" data-icon="x">Design</span>' },
       { label: "Selected", html: '<span class="sk-tag" data-status="selected">Design</span>' },
-      { label: "Hebrew, removable", html: '<span class="sk-tag" data-icon="x" dir="rtl">עיצוב</span>' },
+      {
+        label: "Hebrew, removable",
+        html: '<span class="sk-tag" data-icon="x" dir="rtl">עיצוב</span>',
+      },
     ],
   },
   {
@@ -171,7 +183,10 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
       { label: "Synced", html: '<span class="sk-status-light" data-fill="green">Synced</span>' },
       { label: "Working", html: '<span class="sk-status-light" data-fill="yellow">Syncing</span>' },
       { label: "Offline", html: '<span class="sk-status-light" data-fill="grey">Offline</span>' },
-      { label: "Hebrew, right to left", html: '<span class="sk-status-light" data-fill="green" dir="rtl">מסונכרן</span>' },
+      {
+        label: "Hebrew, right to left",
+        html: '<span class="sk-status-light" data-fill="green" dir="rtl">מסונכרן</span>',
+      },
     ],
   },
   {
@@ -422,7 +437,8 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     className: "sk-date-range-calendar",
     group: "content",
     name: "Date range calendar",
-    useFor: "A month grid for picking a start day and an end day, with the days between them shaded.",
+    useFor:
+      "A month grid for picking a start day and an end day, with the days between them shaded.",
     examples: [
       {
         label: "Range from 4 to 8",
@@ -470,7 +486,8 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     className: "sk-timeline-item",
     group: "content",
     name: "Timeline item",
-    useFor: "One dated event in a list of events, with a dot that holds an icon and a line to the next event.",
+    useFor:
+      "One dated event in a list of events, with a dot that holds an icon and a line to the next event.",
     examples: [
       {
         label: "Order history",
@@ -540,7 +557,8 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     className: "sk-image-viewer",
     group: "content",
     name: "Image viewer",
-    useFor: "A large picture with arrows to move to the next or previous photo, and dots for the position.",
+    useFor:
+      "A large picture with arrows to move to the next or previous photo, and dots for the position.",
     examples: [
       {
         label: "Three photos",
@@ -820,7 +838,10 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     useFor: "A small pill with a star and a score.",
     examples: [
       { label: "Score", html: '<span class="sk-rating-badge"><span>4.8</span></span>' },
-      { label: "Score and count", html: '<span class="sk-rating-badge"><span>4.9 (120 reviews)</span></span>' },
+      {
+        label: "Score and count",
+        html: '<span class="sk-rating-badge"><span>4.9 (120 reviews)</span></span>',
+      },
       {
         label: "Hebrew, right to left",
         html: '<span class="sk-rating-badge" dir="rtl"><span>4.8 מתוך 5</span></span>',
