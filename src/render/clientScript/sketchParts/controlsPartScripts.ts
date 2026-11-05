@@ -22,19 +22,34 @@ const COLOR_AREA_THUMB_X_RATIO = 0.7;
 const COLOR_AREA_THUMB_Y_RATIO = 0.3;
 const COLOR_HUE_THUMB_RATIO = 0.4;
 const COLOR_HUE_THUMB_SIDE_RATIO = 1.4;
-const SIGNATURE_POINT_COUNT = 160;
 const SIGNATURE_LEFT_RATIO = 0.08;
 const SIGNATURE_WIDTH_RATIO = 0.84;
 const SIGNATURE_BASELINE_RATIO = 0.78;
 const SIGNATURE_X_SIDE_RATIO = 0.08;
-const SIGNATURE_LOOP_COUNT = 6;
-const SIGNATURE_BUMP_RATIO = 0.22;
-const SIGNATURE_JITTER_RATIO = 0.04;
-const SIGNATURE_JITTER_FREQUENCY = 23;
-const SIGNATURE_DRIFT_RATIO = 0.03;
+const SIGNATURE_NAME_WIDTH_RATIO = 0.62;
+const SIGNATURE_SLANT_RATIO = 0.35;
+const SIGNATURE_LOOP_WIDTH_RATIO = 0.5;
+const SIGNATURE_POINTS_PER_LETTER = 24;
+const SIGNATURE_LEAD_IN_DROP_RATIO = 0.05;
+const SIGNATURE_SWASH_POINT_COUNT = 40;
+const SIGNATURE_SWASH_REACH_RATIO = 0.1;
+const SIGNATURE_SWASH_DROP_RATIO = 0.13;
+const SIGNATURE_SWASH_RETURN_RATIO = 0.4;
+const SIGNATURE_SWASH_END_RATIO = 0.2;
+const SIGNATURE_SWASH_END_DROP_RATIO = 0.03;
+const SIGNATURE_LETTERS = [
+  { heightRatio: 0.62, loopRatio: 0.95 },
+  { heightRatio: 0.22, loopRatio: 0.2 },
+  { heightRatio: 0.26, loopRatio: 0.75 },
+  { heightRatio: 0.5, loopRatio: 0.9 },
+  { heightRatio: 0.2, loopRatio: 0.15 },
+  { heightRatio: 0.24, loopRatio: 0.2 },
+  { heightRatio: 0.44, loopRatio: 0.85 },
+  { heightRatio: 0.2, loopRatio: 0.65 },
+];
 const HUE_SEGMENT_FILLS = ["red", "orange", "yellow", "green", "blue"];
 
-const { rectangle, roundedRectangle, circle, line, polyline, cross, tick, readStatus, isChecked, readPercent, readTone, readFill, isRightToLeft } = window.SketchWireframe;
+const { rectangle, roundedRectangle, circle, line, path, polyline, cross, tick, readStatus, isChecked, readPercent, readTone, readFill, isRightToLeft } = window.SketchWireframe;
 
 const insetBoxBy = (box, inset) => ({
   x: box.x + inset,
@@ -516,6 +531,20 @@ window.SketchWireframe.definePart("sk-radio", (drawing) => {
   if (isFocused) drawFocusRing(over, box, { seed, isRound: true });
 });
 
+const createPillPath = (box) => {
+  const radius = box.h / 2;
+  const right = box.x + box.w;
+  const bottom = box.y + box.h;
+  return [
+    "M", box.x + radius, box.y,
+    "H", right - radius,
+    "A", radius, radius, 0, 0, 1, right - radius, bottom,
+    "H", box.x + radius,
+    "A", radius, radius, 0, 0, 1, box.x + radius, box.y,
+    "Z",
+  ].join(" ");
+};
+
 window.SketchWireframe.definePart("sk-switch", (drawing) => {
   const { element, box, seed, under, over } = drawing;
   const isDisabled = readStatus(element) === "disabled";
@@ -529,9 +558,12 @@ window.SketchWireframe.definePart("sk-switch", (drawing) => {
   const knobX = isKnobOnRight ? box.x + box.w - knobInset - knobSide : box.x + knobInset;
   const knobBox = { x: knobX, y: box.y + knobInset, w: knobSide, h: knobSide };
 
-  roundedRectangle(under, box, { tone, fill: isSwitchOn ? "blue" : readFill(element), seed, dashed: isDisabled });
+  const trackPath = createPillPath(box);
+  const focusRingPath = createPillPath(insetBoxBy(box, FOCUS_RING_INSET));
+
+  path(under, trackPath, { tone, fill: isSwitchOn ? "blue" : readFill(element), seed, dashed: isDisabled });
   circle(under, knobBox, { tone, seed: seed + 1 });
-  if (isFocused) drawFocusRing(over, box, { seed, isRound: false });
+  if (isFocused) path(over, focusRingPath, { tone: "blue", seed, dashed: true });
 });
 
 window.SketchWireframe.definePart("sk-toggle", (drawing) => {
@@ -724,19 +756,49 @@ window.SketchWireframe.definePart("sk-file-upload-item", (drawing) => {
   drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
 });
 
-const pickScribblePoints = (box) => {
-  const pointIndexes = [...Array(SIGNATURE_POINT_COUNT + 1).keys()];
-  const baselineY = box.y + box.h * SIGNATURE_BASELINE_RATIO;
+const pickLetterPoints = (letter, letterBox) => {
+  const pointIndexes = [...Array(SIGNATURE_POINTS_PER_LETTER).keys()];
+  const letterHeight = letterBox.h * letter.heightRatio;
+  const loopWidth = letterBox.w * letter.loopRatio * SIGNATURE_LOOP_WIDTH_RATIO;
   return pointIndexes.map((pointIndex) => {
-    const progressRatio = pointIndex / SIGNATURE_POINT_COUNT;
-    const loopAngle = progressRatio * Math.PI * SIGNATURE_LOOP_COUNT;
-    const bumpHeight = box.h * SIGNATURE_BUMP_RATIO * Math.abs(Math.sin(loopAngle));
-    const jitterHeight = box.h * SIGNATURE_JITTER_RATIO * Math.sin(progressRatio * Math.PI * SIGNATURE_JITTER_FREQUENCY);
-    const driftWidth = box.w * SIGNATURE_DRIFT_RATIO * Math.sin(loopAngle + 1);
-    const pointX = box.x + box.w * (SIGNATURE_LEFT_RATIO + SIGNATURE_WIDTH_RATIO * progressRatio) + driftWidth;
-    const pointY = baselineY - bumpHeight - jitterHeight;
+    const strokeAngle = (pointIndex / SIGNATURE_POINTS_PER_LETTER) * FULL_TURN_RADIANS;
+    const riseHeight = (letterHeight * (1 - Math.cos(strokeAngle))) / 2;
+    const pointX = letterBox.x + (letterBox.w * strokeAngle) / FULL_TURN_RADIANS + loopWidth * Math.sin(strokeAngle) + riseHeight * SIGNATURE_SLANT_RATIO;
+    return { x: pointX, y: letterBox.y - riseHeight };
+  });
+};
+
+const pickSwashPoints = (start, box, baselineY) => {
+  const pointIndexes = [...Array(SIGNATURE_SWASH_POINT_COUNT + 1).keys()];
+  const reachPoint = { x: start.x + box.w * SIGNATURE_SWASH_REACH_RATIO, y: baselineY + box.h * SIGNATURE_SWASH_DROP_RATIO };
+  const returnPoint = { x: box.x + box.w * SIGNATURE_SWASH_RETURN_RATIO, y: baselineY + box.h * SIGNATURE_SWASH_DROP_RATIO };
+  const endPoint = { x: box.x + box.w * SIGNATURE_SWASH_END_RATIO, y: baselineY + box.h * SIGNATURE_SWASH_END_DROP_RATIO };
+  return pointIndexes.map((pointIndex) => {
+    const curveRatio = pointIndex / SIGNATURE_SWASH_POINT_COUNT;
+    const restRatio = 1 - curveRatio;
+    const startWeight = restRatio ** 3;
+    const reachWeight = 3 * restRatio ** 2 * curveRatio;
+    const returnWeight = 3 * restRatio * curveRatio ** 2;
+    const endWeight = curveRatio ** 3;
+    const pointX = start.x * startWeight + reachPoint.x * reachWeight + returnPoint.x * returnWeight + endPoint.x * endWeight;
+    const pointY = start.y * startWeight + reachPoint.y * reachWeight + returnPoint.y * returnWeight + endPoint.y * endWeight;
     return { x: pointX, y: pointY };
   });
+};
+
+const pickSignaturePoints = (box) => {
+  const baselineY = box.y + box.h * SIGNATURE_BASELINE_RATIO;
+  const nameStartX = box.x + box.w * SIGNATURE_LEFT_RATIO;
+  const letterWidth = (box.w * SIGNATURE_NAME_WIDTH_RATIO) / SIGNATURE_LETTERS.length;
+  const leadInPoint = { x: nameStartX - letterWidth / 2, y: baselineY + box.h * SIGNATURE_LEAD_IN_DROP_RATIO };
+  const letterPoints = SIGNATURE_LETTERS.flatMap((letter, index) => {
+    const letterBox = { x: nameStartX + letterWidth * index, y: baselineY, w: letterWidth, h: box.h };
+    return pickLetterPoints(letter, letterBox);
+  });
+  const nameEndPoint = { x: nameStartX + letterWidth * SIGNATURE_LETTERS.length, y: baselineY };
+  const swashPoints = pickSwashPoints(nameEndPoint, box, baselineY);
+
+  return [leadInPoint, ...letterPoints, ...swashPoints];
 };
 
 window.SketchWireframe.definePart("sk-signature-pad", (drawing) => {
@@ -754,7 +816,8 @@ window.SketchWireframe.definePart("sk-signature-pad", (drawing) => {
 
   if (isPadEmpty) return;
 
-  polyline(under, pickScribblePoints(box), { tone: "ink", seed: seed + 3 });
+  const signaturePoints = pickSignaturePoints(box);
+  polyline(under, signaturePoints, { tone: "ink", seed: seed + 3 });
 });
 
 window.SketchWireframe.definePart("sk-slide-to-confirm", (drawing) => {
