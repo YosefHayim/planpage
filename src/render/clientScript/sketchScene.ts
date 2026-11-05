@@ -723,7 +723,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     };
   };
 
-  const toSceneBox = (domRect, sceneRect, sceneWidth, offsetX) => {
+  const convertToSceneBox = (domRect, sceneRect, sceneWidth, offsetX) => {
     const scale = sceneRect.width / sceneWidth;
     return {
       left: (domRect.left - sceneRect.left) / scale - offsetX,
@@ -736,26 +736,26 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
   const measureNoteTextBox = (noteElement, sceneRect, sceneWidth, offsetX) => {
     const textRange = document.createRange();
     textRange.selectNodeContents(noteElement);
-    return toSceneBox(textRange.getBoundingClientRect(), sceneRect, sceneWidth, offsetX);
+    return convertToSceneBox(textRange.getBoundingClientRect(), sceneRect, sceneWidth, offsetX);
   };
 
   const isPartEndpoint = (endpoint) => typeof endpoint === "string" && endpoint.includes("#");
 
   const isPartEdge = (edge) => isPartEndpoint(edge.from) || isPartEndpoint(edge.to);
 
-  const partBoxOf = (partId, sceneElement, sceneRect, sceneWidth, offsetX) => {
+  const measurePartBox = (partId, sceneElement, sceneRect, sceneWidth, offsetX) => {
     const [screenId, partName] = partId.split("#");
     const partSelector = \`[data-screen-id="\${CSS.escape(screenId)}"] [data-part="\${CSS.escape(partName)}"]\`;
     const partElement = sceneElement.querySelector(partSelector);
     const isPartMissing = partElement === null;
     if (isPartMissing) throw new Error(\`Link points at unknown screen part "\${partId}"\`);
 
-    return toSceneBox(partElement.getBoundingClientRect(), sceneRect, sceneWidth, offsetX);
+    return convertToSceneBox(partElement.getBoundingClientRect(), sceneRect, sceneWidth, offsetX);
   };
 
-  const boxOfLinkTarget = (target, sceneElement, sceneRect, sceneWidth, offsetX) => {
+  const findLinkTargetBox = (target, sceneElement, sceneRect, sceneWidth, offsetX) => {
     const isPartTarget = target.partId !== undefined;
-    if (isPartTarget) return partBoxOf(target.partId, sceneElement, sceneRect, sceneWidth, offsetX);
+    if (isPartTarget) return measurePartBox(target.partId, sceneElement, sceneRect, sceneWidth, offsetX);
 
     return boxOfTarget(target);
   };
@@ -763,7 +763,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
   const drawPendingNoteLink = (pendingLink, noteElement, sceneElement, sceneRect, sceneWidth) => {
     const { context } = pendingLink;
     const noteBox = measureNoteTextBox(noteElement, sceneRect, sceneWidth, context.offsetX);
-    const targetBox = boxOfLinkTarget(pendingLink.target, sceneElement, sceneRect, sceneWidth, context.offsetX);
+    const targetBox = findLinkTargetBox(pendingLink.target, sceneElement, sceneRect, sceneWidth, context.offsetX);
     const { noteEnd, targetEnd } = closestEndsOf(noteBox, targetBox);
     const { from, to } = shortenSegment(noteEnd, targetEnd);
     const style = {
@@ -791,7 +791,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
       const isEndpointAPart = isPartEndpoint(endpoint);
       if (!isEndpointAPart) continue;
 
-      const partBox = partBoxOf(endpoint, sceneElement, sceneRect, sceneWidth, context.offsetX);
+      const partBox = measurePartBox(endpoint, sceneElement, sceneRect, sceneWidth, context.offsetX);
       nodesWithParts.set(endpoint, boxToNode(partBox));
     }
     const geometry = edgeGeometry(edge, nodesWithParts, context.look);
@@ -957,7 +957,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
 
   const isScreenNode = (node) => node.kind === "screen";
 
-  const screenNodesOf = (scene) => {
+  const findScreenNodes = (scene) => {
     const isPanelScene = scene.panels !== undefined;
     if (!isPanelScene) return screenNodesAt(scene.nodes, 0);
 
@@ -1058,7 +1058,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     const pendingDrawings = { strikes: [], partEdges: [] };
     const placedNotes = drawSceneBody(svg, scene, pendingDrawings);
     const noteElements = placedNotes.map((placedNote) => addNoteText(sceneElement, placedNote));
-    for (const { node, offsetX } of screenNodesOf(scene)) addScreenNode(sceneElement, node, offsetX);
+    for (const { node, offsetX } of findScreenNodes(scene)) addScreenNode(sceneElement, node, offsetX);
 
     frame.dataset.sceneWidth = scene.width;
     frame.dataset.sceneHeight = scene.height;
