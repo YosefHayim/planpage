@@ -453,11 +453,11 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Nested folders",
-        html: '<div class="sk-tree-view w-64"><div class="sk-tree-row sk-tree-folder" data-checked data-count="0" style="--depth: 0"><span>src</span></div><div class="sk-tree-row sk-tree-folder" data-count="1" style="--depth: 1"><span>screens</span></div><div class="sk-tree-row" data-count="2" style="--depth: 2"><span>home.tsx</span></div><div class="sk-tree-row" data-count="1" style="--depth: 1"><span>app.tsx</span></div></div>',
+        html: '<div class="sk-tree-view w-64"><div class="sk-tree-row sk-tree-folder" data-checked data-count="0" style="--depth: 0"><span>src</span></div><div class="sk-tree-row sk-tree-folder" data-checked data-count="1" style="--depth: 1"><span>screens</span></div><div class="sk-tree-row" data-count="2" style="--depth: 2"><span>home.tsx</span></div><div class="sk-tree-row" data-count="1" style="--depth: 1"><span>app.tsx</span></div></div>',
       },
       {
         label: "Hebrew, right to left",
-        html: '<div class="sk-tree-view w-64" dir="rtl"><div class="sk-tree-row sk-tree-folder" data-checked data-count="0" style="--depth: 0"><span>קוד</span></div><div class="sk-tree-row sk-tree-folder" data-count="1" style="--depth: 1"><span>מסכים</span></div><div class="sk-tree-row" data-count="2" style="--depth: 2"><span>דף הבית</span></div><div class="sk-tree-row" data-count="1" style="--depth: 1"><span>האפליקציה</span></div></div>',
+        html: '<div class="sk-tree-view w-64" dir="rtl"><div class="sk-tree-row sk-tree-folder" data-checked data-count="0" style="--depth: 0"><span>קוד</span></div><div class="sk-tree-row sk-tree-folder" data-checked data-count="1" style="--depth: 1"><span>מסכים</span></div><div class="sk-tree-row" data-count="2" style="--depth: 2"><span>דף הבית</span></div><div class="sk-tree-row" data-count="1" style="--depth: 1"><span>האפליקציה</span></div></div>',
       },
     ],
   },

@@ -438,7 +438,10 @@ const QR_GRID_SIZE = 21;
 const QR_FINDER_SIZE = 7;
 const QR_FINDER_INNER_SIZE = 3;
 const QR_FINDER_INNER_OFFSET = 2;
-const QR_DARK_CELL_MODULO = 4;
+const QR_DARK_CELL_PERCENT = 40;
+const QR_PERCENT_RANGE = 100;
+const QR_HASH_MIX = 0x5bd1e995;
+const QR_HASH_SHIFT = 15;
 const QR_MODULE_GAP_RATIO = 0.18;
 const CALENDAR_CELL_INSET_RATIO = 0.12;
 const TIMELINE_DOT_CENTER_EM = 0.6;
@@ -768,8 +771,10 @@ const isQrFinderZone = (row, column) => {
 };
 
 const isQrDarkCell = (row, column, seed) => {
-  const cellHash = (Math.imul(row + 1, 73856093) ^ Math.imul(column + 1, 19349663) ^ Math.imul(seed, 83492791)) >>> 0;
-  return cellHash % QR_DARK_CELL_MODULO === 0;
+  const cellHash = Math.imul(row + 1, 73856093) ^ Math.imul(column + 1, 19349663) ^ Math.imul(seed, 83492791);
+  const mixedHash = Math.imul(cellHash ^ (cellHash >>> QR_HASH_SHIFT), QR_HASH_MIX);
+  const spreadHash = (mixedHash ^ (mixedHash >>> QR_HASH_SHIFT)) >>> 0;
+  return spreadHash % QR_PERCENT_RANGE < QR_DARK_CELL_PERCENT;
 };
 
 const readQrModuleBox = (box, moduleSize, row, column, inset) => ({
