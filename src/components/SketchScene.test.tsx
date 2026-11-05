@@ -22,4 +22,25 @@ describe("SketchScene", () => {
     expect(html).not.toContain("</script><b>");
     expect(html).toContain("\\u003c/script>");
   });
+
+  it("carries a screen node's html into the scene markup", () => {
+    const screenScene: SketchSceneData = {
+      width: 300,
+      height: 200,
+      nodes: [
+        {
+          id: "login",
+          kind: "screen",
+          x: 10,
+          y: 10,
+          w: 200,
+          h: 120,
+          html: '<form class="sk-card">Hi</form>',
+        },
+      ],
+    };
+    const html = render(<SketchScene scene={screenScene} label="Login" />);
+    expect(html).toContain('"kind":"screen"');
+    expect(html).toContain('"html":"\\u003cform class=\\"sk-card\\">Hi\\u003c/form>"');
+  });
 });

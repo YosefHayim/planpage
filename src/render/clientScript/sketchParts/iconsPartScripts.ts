@@ -1,21 +1,67 @@
+import type { SketchIconShape } from "../../../contracts/sketchScene";
 import { WIREFRAME_ICONS } from "../../../sketchParts/wireframeIcons";
 
-const WIREFRAME_ICON_SHAPES_JSON = JSON.stringify(WIREFRAME_ICONS);
+const ARC_COMMAND_PATTERN = /([aA])([^a-zA-Z]*)/g;
+const ARC_NUMBER_PATTERN = /[-+]?(?:\d*\.\d+|\d+\.?)(?:e[-+]?\d+)?/gi;
+const ARC_PARAMETER_COUNT = 7;
+const ARC_FLAG_INDEXES = [3, 4];
+const PACKED_FLAGS_PATTERN = /^[01]\d/;
+
+const expandArcNumbers = (numberTexts: readonly string[]): string[] => {
+  const pendingTexts = [...numberTexts];
+  const expandedTexts: string[] = [];
+  while (pendingTexts.length > 0) {
+    const numberText = pendingTexts.shift() ?? "";
+    const position = expandedTexts.length % ARC_PARAMETER_COUNT;
+    const isFlagPosition = ARC_FLAG_INDEXES.includes(position);
+    const isPackedFlag = isFlagPosition && PACKED_FLAGS_PATTERN.test(numberText);
+    if (!isPackedFlag) {
+      expandedTexts.push(numberText);
+      continue;
+    }
+
+    expandedTexts.push(numberText.charAt(0));
+    pendingTexts.unshift(numberText.slice(1));
+  }
+  return expandedTexts;
+};
+
+const expandCompactArcFlags = (pathData: string): string =>
+  pathData.replace(
+    ARC_COMMAND_PATTERN,
+    (_arcText: string, commandLetter: string, parameterText: string) => {
+      const numberTexts = [...parameterText.matchAll(ARC_NUMBER_PATTERN)].map((match) => match[0]);
+      return `${commandLetter} ${expandArcNumbers(numberTexts).join(" ")}`;
+    },
+  );
+
+const expandShapeArcFlags = (shape: SketchIconShape): SketchIconShape => {
+  const isPathShape = shape.tag === "path";
+  if (!isPathShape) return shape;
+
+  const pathData = String(shape.attributes.d);
+  return {
+    tag: shape.tag,
+    attributes: { ...shape.attributes, d: expandCompactArcFlags(pathData) },
+  };
+};
+
+const EXPANDED_WIREFRAME_ICONS = Object.fromEntries(
+  Object.entries(WIREFRAME_ICONS).map(([iconName, shapes]) => [
+    iconName,
+    shapes.map(expandShapeArcFlags),
+  ]),
+);
 
 export const ICONS_PART_SCRIPT = `
 const ICON_GRID_SIZE = 24;
-const WIREFRAME_ICON_SHAPES = ${WIREFRAME_ICON_SHAPES_JSON};
+const WIREFRAME_ICON_SHAPES = ${JSON.stringify(EXPANDED_WIREFRAME_ICONS)};
 
 const parsePoints = (pointsText) =>
   pointsText.split(" ").map((pairText) => {
     const [xText, yText] = pairText.split(",");
     return { x: Number(xText), y: Number(yText) };
   });
-
-const closedPoints = (pointsText) => {
-  const points = parsePoints(pointsText);
-  return [...points, points[0]];
-};
 
 const SHAPE_DRAWERS = {
   path: (layer, attributes, style) => window.SketchWireframe.path(layer, attributes.d, style),
@@ -45,23 +91,27 @@ const SHAPE_DRAWERS = {
       style,
     ),
   polyline: (layer, attributes, style) => window.SketchWireframe.polyline(layer, parsePoints(attributes.points), style),
-  polygon: (layer, attributes, style) => window.SketchWireframe.polyline(layer, closedPoints(attributes.points), style),
+  polygon: (layer, attributes, style) => window.SketchWireframe.polygon(layer, parsePoints(attributes.points), style),
 };
 
-window.SketchWireframe.definePart("sk-icon", (drawing) => {
-  const { createScaledLayer } = window.SketchWireframe;
-  const { element, box, seed, under } = drawing;
-  const shapes = WIREFRAME_ICON_SHAPES[element.dataset.icon];
+const drawIcon = (layer, box, iconName, style) => {
+  const shapes = WIREFRAME_ICON_SHAPES[iconName];
   const isIconMissing = shapes === undefined;
   if (isIconMissing) return;
 
-  const iconLayer = createScaledLayer(under, box, ICON_GRID_SIZE);
-  const style = { tone: element.dataset.tone ?? "ink", seed };
-  shapes.forEach((shape) => SHAPE_DRAWERS[shape.tag](iconLayer, shape.attributes, style));
+  const iconLayer = window.SketchWireframe.createScaledLayer(layer, box, ICON_GRID_SIZE);
+  for (const shape of shapes) SHAPE_DRAWERS[shape.tag](iconLayer, shape.attributes, style);
+};
+window.SketchWireframe.icon = drawIcon;
+
+window.SketchWireframe.definePart("sk-icon", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const style = { tone: window.SketchWireframe.readTone(element), seed };
+  drawIcon(under, box, element.dataset.icon, style);
 });
 `;
 
-export const ICONS_PART_STYLE = `.sk-icon {
+export const ICONS_PART_STYLE = `:where(.sk-icon) {
   display: inline-block;
   width: 1.5rem;
   height: 1.5rem;

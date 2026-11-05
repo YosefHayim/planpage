@@ -1184,7 +1184,6 @@ export const SKETCH_SCENE_STYLE = `:root {
 
 @layer base {
   html {
-    background: var(--paper);
     color: var(--ink);
     font-family: "Kalam", cursive;
     font-size: 16px;

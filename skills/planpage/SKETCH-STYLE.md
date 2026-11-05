@@ -74,7 +74,7 @@ a `sk-*` class and a drawer in the wireframe island.
   background classes inside a wireframe, because a background covers the drawn layer.
 - A scene node of kind `screen` (`{ id, kind: "screen", x, y, w, h, html }`) puts a wireframe at
   its box. A note `link` or an edge end can point at one of its parts as `"<screenId>#<data-part>"`.
-  A part link needs `look.notePlacement: "beside"`.
+  For now, part links work only with `look.notePlacement: "beside"`.
 - Text stays real HTML. Never draw words with rough.js.
 
 

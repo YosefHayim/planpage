@@ -43,23 +43,25 @@ const DASH_PATTERN = ${JSON.stringify(SKETCH_LOOK.dashPattern)};
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const WIREFRAME_SELECTOR = ".sk-wireframe";
 const LAYER_CLASS = "sk-wireframe-layer";
+const DEFAULT_TONE = "ink";
 const ROUNDED_CORNER_RATIO = 0.12;
+const PERCENT_MAX = 100;
 const drawers = new Map();
 const watchedRoots = new WeakSet();
 const pendingRoots = new Set();
-let isWireframeReady = false;
-let isFrameQueued = false;
+const drawSchedule = { isReady: false, isFrameQueued: false };
 
-const styleOf = (style) => {
-  const isFilled = style.fill !== undefined && style.fill !== "none";
+const readRoughStyle = (style) => {
+  const fillName = style.fill ?? "none";
+  const isFilled = fillName !== "none";
   const isDashed = style.dashed === true;
   return {
-    stroke: SKETCH_TONES[style.tone ?? "ink"],
+    stroke: SKETCH_TONES[style.tone ?? DEFAULT_TONE],
     strokeWidth: STROKE_WIDTH,
     roughness: ROUGHNESS_SHAPE,
     bowing: BOWING,
     seed: style.seed,
-    fill: isFilled ? SKETCH_FILLS[style.fill] : undefined,
+    fill: isFilled ? SKETCH_FILLS[fillName] : undefined,
     fillStyle: "solid",
     strokeLineDash: isDashed ? DASH_PATTERN : undefined,
   };
@@ -69,7 +71,7 @@ const appendToLayer = (layer, shape) => {
   layer.svg.append(shape);
 };
 
-const roundedRectanglePath = (box) => {
+const createRoundedRectanglePath = (box) => {
   const radius = Math.min(box.w, box.h) * ROUNDED_CORNER_RATIO;
   const right = box.x + box.w;
   const bottom = box.y + box.h;
@@ -110,52 +112,62 @@ const CHEVRON_POINTS = {
   ],
 };
 
+const TICK_POINT_RATIOS = [
+  { x: 0, y: 0.55 },
+  { x: 0.38, y: 0.9 },
+  { x: 1, y: 0.1 },
+];
+
 const rectangle = (layer, box, style) => {
-  appendToLayer(layer, layer.rough.rectangle(box.x, box.y, box.w, box.h, styleOf(style)));
+  appendToLayer(layer, layer.rough.rectangle(box.x, box.y, box.w, box.h, readRoughStyle(style)));
 };
 
 const roundedRectangle = (layer, box, style) => {
-  appendToLayer(layer, layer.rough.path(roundedRectanglePath(box), styleOf(style)));
+  appendToLayer(layer, layer.rough.path(createRoundedRectanglePath(box), readRoughStyle(style)));
 };
 
 const line = (layer, from, to, style) => {
-  appendToLayer(layer, layer.rough.line(from.x, from.y, to.x, to.y, styleOf(style)));
+  appendToLayer(layer, layer.rough.line(from.x, from.y, to.x, to.y, readRoughStyle(style)));
 };
 
 const circle = (layer, box, style) => {
   const diameter = Math.min(box.w, box.h);
   const centerX = box.x + box.w / 2;
   const centerY = box.y + box.h / 2;
-  appendToLayer(layer, layer.rough.circle(centerX, centerY, diameter, styleOf(style)));
+  appendToLayer(layer, layer.rough.circle(centerX, centerY, diameter, readRoughStyle(style)));
 };
 
 const ellipse = (layer, box, style) => {
   const centerX = box.x + box.w / 2;
   const centerY = box.y + box.h / 2;
-  appendToLayer(layer, layer.rough.ellipse(centerX, centerY, box.w, box.h, styleOf(style)));
+  appendToLayer(layer, layer.rough.ellipse(centerX, centerY, box.w, box.h, readRoughStyle(style)));
 };
 
 const path = (layer, pathData, style) => {
-  appendToLayer(layer, layer.rough.path(pathData, styleOf(style)));
+  appendToLayer(layer, layer.rough.path(pathData, readRoughStyle(style)));
 };
 
+const toPointPairs = (points) => points.map((point) => [point.x, point.y]);
+
 const polyline = (layer, points, style) => {
-  const pointPairs = points.map((point) => [point.x, point.y]);
-  appendToLayer(layer, layer.rough.linearPath(pointPairs, styleOf(style)));
+  appendToLayer(layer, layer.rough.linearPath(toPointPairs(points), readRoughStyle(style)));
+};
+
+const polygon = (layer, points, style) => {
+  appendToLayer(layer, layer.rough.polygon(toPointPairs(points), readRoughStyle(style)));
 };
 
 const chevron = (layer, box, direction, style) => {
-  const pointsOf = CHEVRON_POINTS[direction];
-  polyline(layer, pointsOf(box), style);
+  const chevronPoints = CHEVRON_POINTS[direction](box);
+  polyline(layer, chevronPoints, style);
 };
 
 const tick = (layer, box, style) => {
-  const points = [
-    { x: box.x, y: box.y + box.h * 0.55 },
-    { x: box.x + box.w * 0.38, y: box.y + box.h * 0.9 },
-    { x: box.x + box.w, y: box.y + box.h * 0.1 },
-  ];
-  polyline(layer, points, style);
+  const tickPoints = TICK_POINT_RATIOS.map((ratio) => ({
+    x: box.x + box.w * ratio.x,
+    y: box.y + box.h * ratio.y,
+  }));
+  polyline(layer, tickPoints, style);
 };
 
 const cross = (layer, box, style) => {
@@ -171,6 +183,41 @@ const createScaledLayer = (layer, box, gridSize) => {
   return { svg: group, rough: layer.rough };
 };
 
+const readStatus = (element) => element.dataset.status ?? null;
+
+const isChecked = (element) => element.hasAttribute("data-checked");
+
+const readPercent = (element) => {
+  const percentText = element.dataset.percent;
+  const isPercentMissing = percentText === undefined || percentText === "";
+  if (isPercentMissing) return null;
+
+  const percent = Number(percentText);
+  const isPercentNumber = Number.isFinite(percent);
+  if (!isPercentNumber) return null;
+
+  return Math.min(PERCENT_MAX, Math.max(0, percent));
+};
+
+const readCount = (element, fallbackCount) => {
+  const countText = element.dataset.count;
+  const isCountMissing = countText === undefined || countText === "";
+  if (isCountMissing) return fallbackCount;
+
+  const count = Number(countText);
+  const isCountNumber = Number.isFinite(count);
+  return isCountNumber ? count : fallbackCount;
+};
+
+const readTone = (element) => element.dataset.tone ?? DEFAULT_TONE;
+
+const readFill = (element) => element.dataset.fill ?? null;
+
+const isRightToLeft = (element) => {
+  const direction = window.getComputedStyle(element).direction;
+  return direction === "rtl";
+};
+
 window.SketchWireframe = {
   definePart: (className, drawPart) => {
     drawers.set(className, drawPart);
@@ -182,24 +229,40 @@ window.SketchWireframe = {
   ellipse,
   path,
   polyline,
+  polygon,
   chevron,
   tick,
   cross,
   createScaledLayer,
+  readStatus,
+  isChecked,
+  readPercent,
+  readCount,
+  readTone,
+  readFill,
+  isRightToLeft,
 };
 
 const removeLayers = (root) => {
   for (const layer of root.querySelectorAll(":scope > ." + LAYER_CLASS)) layer.remove();
 };
 
-const createLayer = (root, isUnder, rootWidth, rootHeight) => {
+const placeLayer = (root, svg, isUnder) => {
+  if (isUnder) {
+    root.prepend(svg);
+    return;
+  }
+
+  root.append(svg);
+};
+
+const createLayer = (root, isUnder) => {
   const svg = document.createElementNS(SVG_NAMESPACE, "svg");
   const layerRole = isUnder ? "sk-wireframe-under" : "sk-wireframe-over";
   svg.setAttribute("class", LAYER_CLASS + " " + layerRole);
-  svg.setAttribute("viewBox", "0 0 " + rootWidth + " " + rootHeight);
+  svg.setAttribute("viewBox", "0 0 " + root.offsetWidth + " " + root.offsetHeight);
   svg.setAttribute("aria-hidden", "true");
-  if (isUnder) root.prepend(svg);
-  if (!isUnder) root.append(svg);
+  placeLayer(root, svg, isUnder);
   return { svg, rough: window.rough.svg(svg) };
 };
 
@@ -213,7 +276,7 @@ const measureBox = (element, rootRect, scale) => {
   };
 };
 
-const partElementsOf = (root) => {
+const findPartElements = (root) => {
   const partClassNames = [...drawers.keys()];
   const selector = partClassNames.map((className) => "." + className).join(", ");
   const candidates = [...root.querySelectorAll(selector)];
@@ -232,13 +295,13 @@ const drawRoot = (root) => {
   }
 
   removeLayers(root);
-  const under = createLayer(root, true, root.offsetWidth, root.offsetHeight);
-  const over = createLayer(root, false, root.offsetWidth, root.offsetHeight);
+  const under = createLayer(root, true);
+  const over = createLayer(root, false);
   const rootRect = root.getBoundingClientRect();
   const scale = rootRect.width / root.offsetWidth;
 
-  const partElements = partElementsOf(root);
-  partElements.forEach(({ element, className }, index) => {
+  const partElements = findPartElements(root);
+  for (const [index, { element, className }] of partElements.entries()) {
     const drawing = {
       element,
       box: measureBox(element, rootRect, scale),
@@ -247,12 +310,13 @@ const drawRoot = (root) => {
       over,
     };
     drawers.get(className)(drawing);
-  });
+  }
   root.dataset.drawn = "true";
 };
 
 const drawPendingRoots = () => {
-  isFrameQueued = false;
+  drawSchedule.isFrameQueued = false;
+  const isWireframeReady = drawSchedule.isReady;
   if (!isWireframeReady) return;
 
   for (const root of pendingRoots) drawRoot(root);
@@ -261,9 +325,10 @@ const drawPendingRoots = () => {
 
 const queueRoot = (root) => {
   pendingRoots.add(root);
-  if (isFrameQueued) return;
+  const isFrameAlreadyQueued = drawSchedule.isFrameQueued;
+  if (isFrameAlreadyQueued) return;
 
-  isFrameQueued = true;
+  drawSchedule.isFrameQueued = true;
   requestAnimationFrame(drawPendingRoots);
 };
 
@@ -271,8 +336,8 @@ const queueAllRoots = () => {
   for (const root of document.querySelectorAll(WIREFRAME_SELECTOR)) queueRoot(root);
 };
 
-const resizeObserver = new ResizeObserver((entries) => {
-  for (const entry of entries) queueRoot(entry.target);
+const resizeObserver = new ResizeObserver((resizeReports) => {
+  for (const report of resizeReports) queueRoot(report.target);
 });
 
 const watchRoot = (root) => {
@@ -287,7 +352,8 @@ const watchNewRoots = (node) => {
   const isElement = node.nodeType === Node.ELEMENT_NODE;
   if (!isElement) return;
 
-  if (node.matches(WIREFRAME_SELECTOR)) watchRoot(node);
+  const isWireframeNode = node.matches(WIREFRAME_SELECTOR);
+  if (isWireframeNode) watchRoot(node);
   for (const root of node.querySelectorAll(WIREFRAME_SELECTOR)) watchRoot(root);
 };
 
@@ -304,19 +370,18 @@ const waitForRough = () =>
 const startSketchWireframes = async () => {
   await document.fonts.ready;
   await waitForRough();
-  isWireframeReady = true;
+  drawSchedule.isReady = true;
   document.fonts.addEventListener("loadingdone", queueAllRoots);
   queueAllRoots();
 };
 
-new MutationObserver((records) => {
-  for (const record of records) {
-    for (const node of record.addedNodes) watchNewRoots(node);
+new MutationObserver((mutationList) => {
+  for (const mutation of mutationList) {
+    for (const addedNode of mutation.addedNodes) watchNewRoots(addedNode);
   }
 }).observe(document.body, { childList: true, subtree: true });
 watchNewRoots(document.body);
 `;
-
 export const SKETCH_WIREFRAME_SCRIPT = `(() => {${WIREFRAME_CORE_SCRIPT}\n${PART_BLOCKS}\nstartSketchWireframes();\n})();`;
 
 const WIREFRAME_CORE_STYLE = `.sk-wireframe {
