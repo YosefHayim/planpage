@@ -1024,7 +1024,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
   };
 
   const drawScene = (frame, scene) => {
-    frame.replaceChildren();
+    frame.querySelector(".sketch-scroll")?.remove();
     const sceneElement = document.createElement("div");
     sceneElement.className = "sketch-scene";
     sceneElement.style.width = \`\${scene.width}px\`;
