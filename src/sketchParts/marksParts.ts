@@ -93,7 +93,8 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     className: "sk-numbered-callout",
     group: "marks",
     name: "Numbered callout",
-    useFor: "A numbered pin that points at one part of a screen, so a review can refer to it by number.",
+    useFor:
+      "A numbered pin that points at one part of a screen, so a review can refer to it by number.",
     examples: [
       {
         label: "One pin on a button",
@@ -202,7 +203,8 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     className: "sk-taped-note",
     group: "marks",
     name: "Taped note",
-    useFor: "A tilted paper note held by a strip of tape, for a comment that sits on top of a screen.",
+    useFor:
+      "A tilted paper note held by a strip of tape, for a comment that sits on top of a screen.",
     examples: [
       {
         label: "Taped note",
@@ -249,7 +251,8 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     className: "sk-measure",
     group: "marks",
     name: "Spacing and size measure",
-    useFor: "A dimension line with end ticks and a size label, showing a width or the gap between two parts.",
+    useFor:
+      "A dimension line with end ticks and a size label, showing a width or the gap between two parts.",
     examples: [
       {
         label: "Width",
@@ -272,7 +275,8 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     className: "sk-swipe-arrow",
     group: "marks",
     name: "Swipe gesture arrow",
-    useFor: "An arrow with a finger dot showing a swipe across a list row, such as swipe to delete.",
+    useFor:
+      "An arrow with a finger dot showing a swipe across a list row, such as swipe to delete.",
     examples: [
       {
         label: "Swipe to delete",
