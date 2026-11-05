@@ -29,7 +29,7 @@ describe("SKETCH_PARTS", () => {
 describe("WIREFRAME_ICONS", () => {
   it("keys every icon by its kebab-case Lucide name", () => {
     const badNames = Object.keys(WIREFRAME_ICONS).filter(
-      (name) => !/^[a-z]+(-[a-z]+)*$/.test(name),
+      (name) => !/^[a-z0-9]+(-[a-z0-9]+)*$/.test(name),
     );
 
     expect(badNames).toEqual([]);
