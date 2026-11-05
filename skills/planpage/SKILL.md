@@ -24,6 +24,7 @@ with the package.
 | Need | Template / approach |
 |---|---|
 | Any plan (the default) | `sketch-plan` — see [SKETCH-STYLE.md](SKETCH-STYLE.md) |
+| A full app screen or wireframe (login, dashboard, checkout) | `sketch-plan` with the sketch kit — see [Wireframes](SKETCH-STYLE.md#wireframes) |
 | Multi-step plan + edit/annotate + screenshots | `plan-brief` |
 | Diff / deslop / migration report | `before-after` |
 | Code-style picks + canonical example | `code-style-plan` |

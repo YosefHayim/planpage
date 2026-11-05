@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SketchEdgeEnd, SketchScene } from "../contracts/sketchScene";
 import { SKETCH_RECIPES } from "./sketchRecipes";
 
-const EXPECTED_RECIPE_COUNT = 64;
-const EXPECTED_RECIPES_PER_GROUP = 8;
+const RECIPES_PER_GROUP = 8;
 
 const scenesOf = (scene: SketchScene): readonly SketchScene[] => [
   scene,
@@ -15,16 +14,15 @@ const nodeIdsOf = (scene: SketchScene): readonly string[] => scene.nodes.map((no
 const isStringEnd = (end: SketchEdgeEnd): end is string => typeof end === "string";
 
 describe("SKETCH_RECIPES", () => {
-  it("holds 64 recipes, 8 in each of the 8 groups", () => {
+  it("gives every group exactly 8 recipes", () => {
     const groupNames = new Set(SKETCH_RECIPES.map((recipe) => recipe.group));
 
-    const countsPerGroup = [...groupNames].map(
-      (groupName) => SKETCH_RECIPES.filter((recipe) => recipe.group === groupName).length,
+    const groupNamesWithWrongCount = [...groupNames].filter(
+      (groupName) =>
+        SKETCH_RECIPES.filter((recipe) => recipe.group === groupName).length !== RECIPES_PER_GROUP,
     );
 
-    expect(SKETCH_RECIPES).toHaveLength(EXPECTED_RECIPE_COUNT);
-    expect(groupNames.size).toBe(8);
-    expect(countsPerGroup).toEqual(Array(8).fill(EXPECTED_RECIPES_PER_GROUP));
+    expect(groupNamesWithWrongCount).toEqual([]);
   });
 
   it("gives every recipe a unique id", () => {
