@@ -175,7 +175,8 @@ export type SketchRecipeGroup =
   | "screens"
   | "account"
   | "decisions"
-  | "look";
+  | "look"
+  | "product";
 
 export interface SketchRecipe {
   readonly id: string;
