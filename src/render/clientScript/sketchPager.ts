@@ -69,26 +69,23 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
     sketchEngine.setMode(section.querySelector(".sketch-frame"), pressedButton.dataset.sketchMode);
   };
 
-  const showPage = async (pageNumber) => {
+  const showPage = (pageNumber) => {
     const pageSection = sectionOf(pageNumber);
     for (const section of sections) section.hidden = section !== pageSection;
     showNavState(pageNumber);
 
-    await sketchEngine.drawFramesIn(pageSection);
-    const isStillShown = !pageSection.hidden;
-    if (!isStillShown) return;
-
+    sketchEngine.drawFramesIn(pageSection);
     applyPressedMode(pageSection);
     pageSection.querySelector("[data-sketch-title]").focus();
     window.scrollTo(0, 0);
   };
 
-  const goToPage = async (pageNumber) => {
+  const goToPage = (pageNumber) => {
     const isPageNumberValid = pageNumber >= 1 && pageNumber <= sections.length;
     if (!isPageNumberValid) return;
 
     history.replaceState(null, "", \`#\${pageNumber}\`);
-    await showPage(pageNumber);
+    showPage(pageNumber);
   };
 
   const handleModeClick = (modeButton) => {
@@ -223,7 +220,7 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
       section.querySelector("[data-sketch-code-toggle]").click();
       return;
     }
-    await goToPage(pageNumber - 1);
+    goToPage(pageNumber - 1);
   };
 
   const handleKeydown = async (event) => {
@@ -255,12 +252,12 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
 
     if (event.key === "ArrowLeft") {
       event.preventDefault();
-      await goToPage(pageNumber - 1);
+      goToPage(pageNumber - 1);
       return;
     }
     if (event.key === "ArrowRight") {
       event.preventDefault();
-      await goToPage(pageNumber + 1);
+      goToPage(pageNumber + 1);
       return;
     }
     if (isDecisionPage && event.key === "ArrowUp") {
@@ -285,7 +282,7 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
       return;
     }
     if (isEnterKey) {
-      await goToPage(pageNumber + 1);
+      goToPage(pageNumber + 1);
       return;
     }
     if (event.key === "Escape") {
@@ -318,15 +315,15 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
     refreshApproveLabel(event.target.closest("[data-sketch-page]"));
   });
   document.addEventListener("keydown", handleKeydown);
-  window.addEventListener("hashchange", async () => {
-    await showPage(pageNumberOfHash());
+  window.addEventListener("hashchange", () => {
+    showPage(pageNumberOfHash());
   });
 
-  const startPager = async () => {
+  const startPager = () => {
     for (const section of sections) {
       if (decisionOf(section) !== null) refreshApproveLabel(section);
     }
-    await showPage(pageNumberOfHash());
+    showPage(pageNumberOfHash());
   };
   startPager();
 })();

@@ -142,7 +142,7 @@ Each page has these fields. The types live in `src/contracts/sketchScene.ts` as 
 
 ## The scene format
 
-A scene is a plain object. The types live in `src/contracts/sketchScene.ts` as `SketchScene`. The browser engine, `sketch-engine.js`, draws it into a `<div class="sketch-frame">`. Coordinates are in design units on a fixed canvas (`width` wide, `height` tall). The engine scales it to the frame width, but never below 0.6. On a narrow screen a wide scene scrolls sideways inside its frame instead of shrinking the text.
+A scene is a plain object. The types live in `src/contracts/sketchScene.ts` as `SketchScene`. The browser engine, `sketch-engine.js`, draws it into a `<div class="sketch-frame">`. Coordinates are in design units on a fixed canvas (`width` wide, `height` tall). The engine scales it to the frame width, but never below 0.6. On a narrow screen a wide scene scrolls sideways inside its frame instead of shrinking the text, and a short line under the frame tells the reader to scroll.
 
 Load order: `sketch.css`, rough.js (optional), `sketch-engine.js`.
 
