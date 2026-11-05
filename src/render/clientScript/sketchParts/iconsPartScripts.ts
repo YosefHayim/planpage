@@ -17,31 +17,35 @@ const DOT_CIRCLE_MAX_RADIUS = 1.2;
 const DOT_PATH_PATTERN = /^M(-?[\d.]+) (-?[\d.]+)h\.01$/;
 const DOT_PATH_RADIUS = 1;
 
-const expandArcNumbers = (numberTexts: readonly string[]): string[] => {
-  const pendingTexts = [...numberTexts];
-  const expandedTexts: string[] = [];
-  while (pendingTexts.length > 0) {
-    const numberText = pendingTexts.shift() ?? "";
-    const position = expandedTexts.length % ARC_PARAMETER_COUNT;
+const expandArcNumbers = (arcNumberStrings: readonly string[]): string[] => {
+  const pendingNumberStrings = [...arcNumberStrings];
+  const expandedNumberStrings: string[] = [];
+
+  while (pendingNumberStrings.length > 0) {
+    const numberString = pendingNumberStrings.shift() ?? "";
+    const position = expandedNumberStrings.length % ARC_PARAMETER_COUNT;
     const isFlagPosition = ARC_FLAG_INDEXES.includes(position);
-    const isPackedFlag = isFlagPosition && PACKED_FLAGS_PATTERN.test(numberText);
+    const isPackedFlag = isFlagPosition && PACKED_FLAGS_PATTERN.test(numberString);
     if (!isPackedFlag) {
-      expandedTexts.push(numberText);
+      expandedNumberStrings.push(numberString);
       continue;
     }
 
-    expandedTexts.push(numberText.charAt(0));
-    pendingTexts.unshift(numberText.slice(1));
+    expandedNumberStrings.push(numberString.charAt(0));
+    pendingNumberStrings.unshift(numberString.slice(1));
   }
-  return expandedTexts;
+
+  return expandedNumberStrings;
 };
 
 const expandCompactArcFlags = (pathData: string): string =>
   pathData.replace(
     ARC_COMMAND_PATTERN,
-    (_arcText: string, commandLetter: string, parameterText: string) => {
-      const numberTexts = [...parameterText.matchAll(ARC_NUMBER_PATTERN)].map((match) => match[0]);
-      return `${commandLetter} ${expandArcNumbers(numberTexts).join(" ")}`;
+    (_arcString: string, commandLetter: string, parameterString: string) => {
+      const arcNumberStrings = [...parameterString.matchAll(ARC_NUMBER_PATTERN)].map(
+        (arcNumberMatch) => arcNumberMatch[0],
+      );
+      return `${commandLetter} ${expandArcNumbers(arcNumberStrings).join(" ")}`;
     },
   );
 
@@ -56,7 +60,7 @@ const expandShapeArcFlags = (shape: SketchIconShape): SketchIconShape => {
   };
 };
 
-const toDotFromCircle = (shape: SketchIconShape): IconDotShape | null => {
+const findDotInCircle = (shape: SketchIconShape): IconDotShape | null => {
   const isCircle = shape.tag === "circle";
   if (!isCircle) return null;
 
@@ -70,22 +74,22 @@ const toDotFromCircle = (shape: SketchIconShape): IconDotShape | null => {
   };
 };
 
-const toDotFromPath = (shape: SketchIconShape): IconDotShape | null => {
+const findDotInPath = (shape: SketchIconShape): IconDotShape | null => {
   const isPath = shape.tag === "path";
   if (!isPath) return null;
 
-  const dotMatch = DOT_PATH_PATTERN.exec(String(shape.attributes.d));
-  const isDotPath = dotMatch !== null;
+  const dotPathParts = DOT_PATH_PATTERN.exec(String(shape.attributes.d));
+  const isDotPath = dotPathParts !== null;
   if (!isDotPath) return null;
 
   return {
     tag: "dot",
-    attributes: { cx: Number(dotMatch[1]), cy: Number(dotMatch[2]), r: DOT_PATH_RADIUS },
+    attributes: { cx: Number(dotPathParts[1]), cy: Number(dotPathParts[2]), r: DOT_PATH_RADIUS },
   };
 };
 
 const prepareShape = (shape: SketchIconShape): PreparedIconShape =>
-  toDotFromCircle(shape) ?? toDotFromPath(shape) ?? shape;
+  findDotInCircle(shape) ?? findDotInPath(shape) ?? shape;
 
 const PREPARED_WIREFRAME_ICONS: Readonly<Record<string, readonly PreparedIconShape[]>> =
   Object.fromEntries(
@@ -144,7 +148,7 @@ const insetBoxBy = (box, inset) => ({
 
 const pickIconLook = (iconSize) => ICON_LOOKS_BY_MAX_SIZE.find((look) => iconSize <= look.maxSize);
 
-const readIconRoughOptions = (style, look) => ({
+const createIconRoughStyle = (style, look) => ({
   stroke: SKETCH_TONES[style.tone],
   strokeWidth: look.strokeWidth,
   roughness: look.roughness,
@@ -160,14 +164,16 @@ const createIconLayer = (layer, box, isMirrored) => {
 
   const scale = Math.min(box.w, box.h) / ICON_GRID_SIZE;
   const mirroredLeft = box.x + ICON_GRID_SIZE * scale;
+
   iconLayer.svg.setAttribute("transform", "translate(" + mirroredLeft + " " + box.y + ") scale(" + -scale + " " + scale + ")");
+
   return iconLayer;
 };
 
-const readPointPairs = (pointsText) => {
-  const coordinates = pointsText.trim().split(/[\\s,]+/).map(Number);
-  const xValues = coordinates.filter((_coordinate, index) => index % 2 === 0);
-  return xValues.map((xValue, pairIndex) => [xValue, coordinates[pairIndex * 2 + 1]]);
+const readPointPairs = (pointsAttribute) => {
+  const coordinates = pointsAttribute.trim().split(/[\\s,]+/).map(Number);
+  const xCoordinates = coordinates.filter((_coordinate, index) => index % 2 === 0);
+  return xCoordinates.map((xCoordinate, pairIndex) => [xCoordinate, coordinates[pairIndex * 2 + 1]]);
 };
 
 const createRoundedRectanglePath = (attributes) => {
@@ -189,25 +195,25 @@ const createRoundedRectanglePath = (attributes) => {
   ].join(" ");
 };
 
-const drawRectangle = (rough, attributes, options) => {
+const drawRectangle = (rough, attributes, roughStyle) => {
   const cornerRadius = attributes.rx ?? 0;
   const isRounded = cornerRadius > 0;
-  if (isRounded) return rough.path(createRoundedRectanglePath({ ...attributes, rx: cornerRadius }), options);
+  if (isRounded) return rough.path(createRoundedRectanglePath({ ...attributes, rx: cornerRadius }), roughStyle);
 
-  return rough.rectangle(attributes.x, attributes.y, attributes.width, attributes.height, options);
+  return rough.rectangle(attributes.x, attributes.y, attributes.width, attributes.height, roughStyle);
 };
 
 const SHAPE_DRAWERS = {
-  path: (rough, attributes, options) => rough.path(attributes.d, options),
-  circle: (rough, attributes, options) =>
-    rough.circle(attributes.cx, attributes.cy, attributes.r * 2, options),
-  ellipse: (rough, attributes, options) =>
-    rough.ellipse(attributes.cx, attributes.cy, attributes.rx * 2, attributes.ry * 2, options),
+  path: (rough, attributes, roughStyle) => rough.path(attributes.d, roughStyle),
+  circle: (rough, attributes, roughStyle) =>
+    rough.circle(attributes.cx, attributes.cy, attributes.r * 2, roughStyle),
+  ellipse: (rough, attributes, roughStyle) =>
+    rough.ellipse(attributes.cx, attributes.cy, attributes.rx * 2, attributes.ry * 2, roughStyle),
   rect: drawRectangle,
-  line: (rough, attributes, options) =>
-    rough.line(attributes.x1, attributes.y1, attributes.x2, attributes.y2, options),
-  polyline: (rough, attributes, options) => rough.linearPath(readPointPairs(attributes.points), options),
-  polygon: (rough, attributes, options) => rough.polygon(readPointPairs(attributes.points), options),
+  line: (rough, attributes, roughStyle) =>
+    rough.line(attributes.x1, attributes.y1, attributes.x2, attributes.y2, roughStyle),
+  polyline: (rough, attributes, roughStyle) => rough.linearPath(readPointPairs(attributes.points), roughStyle),
+  polygon: (rough, attributes, roughStyle) => rough.polygon(readPointPairs(attributes.points), roughStyle),
 };
 
 const appendDot = (iconLayer, attributes, color) => {
@@ -220,11 +226,11 @@ const appendDot = (iconLayer, attributes, color) => {
   iconLayer.svg.append(dotNode);
 };
 
-const drawShape = (iconLayer, shape, options) => {
+const drawShape = (iconLayer, shape, roughStyle) => {
   const isDot = shape.tag === "dot";
-  if (isDot) return appendDot(iconLayer, shape.attributes, options.stroke);
+  if (isDot) return appendDot(iconLayer, shape.attributes, roughStyle.stroke);
 
-  const shapeNode = SHAPE_DRAWERS[shape.tag](iconLayer.rough, shape.attributes, options);
+  const shapeNode = SHAPE_DRAWERS[shape.tag](iconLayer.rough, shape.attributes, roughStyle);
   iconLayer.svg.append(shapeNode);
 };
 
@@ -235,10 +241,11 @@ const drawIcon = (layer, box, iconName, style) => {
 
   const iconSize = Math.min(box.w, box.h);
   const look = pickIconLook(iconSize);
-  const iconLayer = createIconLayer(layer, box, style.mirrored);
+
+  const iconLayer = createIconLayer(layer, box, style.isMirrored);
   for (const [shapeIndex, shape] of shapes.entries()) {
-    const options = readIconRoughOptions({ tone: style.tone, seed: style.seed + shapeIndex }, look);
-    drawShape(iconLayer, shape, options);
+    const roughStyle = createIconRoughStyle({ tone: style.tone, seed: style.seed + shapeIndex }, look);
+    drawShape(iconLayer, shape, roughStyle);
   }
 };
 window.SketchWireframe.icon = drawIcon;
@@ -246,11 +253,13 @@ window.SketchWireframe.icon = drawIcon;
 window.SketchWireframe.definePart("sk-icon", (drawing) => {
   const { element, box, seed, under } = drawing;
   const iconName = readIconName(element);
+
   const style = {
     tone: readIconTone(element),
     seed,
-    mirrored: isDirectionalIconMirrored(element, iconName),
+    isMirrored: isDirectionalIconMirrored(element, iconName),
   };
+
   drawIcon(under, box, iconName, style);
 });
 
@@ -259,14 +268,16 @@ window.SketchWireframe.definePart("sk-icon-tile", (drawing) => {
   const { element, box, seed, under } = drawing;
   const fillName = readFill(element) ?? DEFAULT_ICON_FILL;
   const iconName = readIconName(element);
+
   roundedRectangle(under, box, { tone: "soft", fill: fillName, seed });
 
   const iconBox = insetBoxBy(box, Math.min(box.w, box.h) * TILE_ICON_INSET_RATIO);
   const style = {
     tone: readIconTone(element),
     seed: seed + 1,
-    mirrored: isDirectionalIconMirrored(element, iconName),
+    isMirrored: isDirectionalIconMirrored(element, iconName),
   };
+
   drawIcon(under, iconBox, iconName, style);
 });
 
@@ -275,6 +286,7 @@ window.SketchWireframe.definePart("sk-featured-icon", (drawing) => {
   const { element, box, seed, under } = drawing;
   const fillName = readFill(element) ?? DEFAULT_ICON_FILL;
   const iconName = readIconName(element);
+
   const discBox = insetBoxBy(box, Math.min(box.w, box.h) * FEATURED_DISC_INSET_RATIO);
   circle(under, discBox, { tone: "soft", fill: fillName, seed });
   circle(under, box, { tone: "soft", seed: seed + 1 });
@@ -283,8 +295,9 @@ window.SketchWireframe.definePart("sk-featured-icon", (drawing) => {
   const style = {
     tone: readIconTone(element),
     seed: seed + 2,
-    mirrored: isDirectionalIconMirrored(element, iconName),
+    isMirrored: isDirectionalIconMirrored(element, iconName),
   };
+
   drawIcon(under, iconBox, iconName, style);
 });
 `;
