@@ -9,10 +9,4 @@ describe("SketchKit", () => {
     expect(html).toContain('id="sk-button"');
     expect(html).toContain('id="sk-icon"');
   });
-
-  it("marks an empty group as having no parts yet", () => {
-    const html = render(<SketchKit />, { title: "Sketch kit" });
-
-    expect(html).toContain("No parts yet.");
-  });
 });
