@@ -84,8 +84,7 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
     className: "sk-bottom-tab-bar",
     group: "navigation",
     name: "Bottom tab bar",
-    useFor:
-      "The row of icon tabs along the bottom of a phone app. The current tab is shaded.",
+    useFor: "The row of icon tabs along the bottom of a phone app. The current tab is shaded.",
     examples: [
       {
         label: "Four tabs",
@@ -143,8 +142,7 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
     className: "sk-breadcrumbs",
     group: "navigation",
     name: "Breadcrumbs",
-    useFor:
-      "The path to the current page, with a link to each level. The current page is shaded.",
+    useFor: "The path to the current page, with a link to each level. The current page is shaded.",
     examples: [
       {
         label: "Chevron separators",

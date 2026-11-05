@@ -19,7 +19,9 @@ const NAVIGATION_ICON_NAMES = [
   "x",
 ];
 
-const pickIconShapes = (iconNames: readonly string[]): Record<string, readonly SketchIconShape[]> => {
+const pickIconShapes = (
+  iconNames: readonly string[],
+): Record<string, readonly SketchIconShape[]> => {
   const iconShapesByName: Record<string, readonly SketchIconShape[]> = {};
   for (const iconName of iconNames) {
     const iconShapes = WIREFRAME_ICONS[iconName];
