@@ -163,7 +163,15 @@ export interface SketchPlanPage {
   readonly decision?: SketchDecisionQuestion;
 }
 
-export type SketchRecipeGroup = "flows" | "time" | "files" | "data" | "systems" | "screens" | "decisions" | "look";
+export type SketchRecipeGroup =
+  | "flows"
+  | "time"
+  | "files"
+  | "data"
+  | "systems"
+  | "screens"
+  | "decisions"
+  | "look";
 
 export interface SketchRecipe {
   readonly id: string;
