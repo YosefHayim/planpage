@@ -9,16 +9,20 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Tap",
-        html: `<div class="relative p-6">
-  <button type="button" class="sk-button sk-main">Save changes</button>
-  <span class="sk-tap-marker absolute left-24 top-9"></span>
+        html: `<div class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button sk-main">Save changes</button>
+    <span class="sk-tap-marker absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2"></span>
+  </div>
 </div>`,
       },
       {
         label: "Long press",
-        html: `<div class="relative p-6">
-  <button type="button" class="sk-button sk-main">Save changes</button>
-  <span class="sk-tap-marker absolute left-24 top-9" data-count="4"></span>
+        html: `<div class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button sk-main">Save changes</button>
+    <span class="sk-tap-marker absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2" data-count="4"></span>
+  </div>
 </div>`,
       },
     ],
@@ -31,16 +35,20 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Over a button",
-        html: `<div class="relative p-6">
-  <button type="button" class="sk-button sk-main">Save changes</button>
-  <span class="sk-cursor absolute left-32 top-9"></span>
+        html: `<div class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button sk-main">Save changes</button>
+    <span class="sk-cursor absolute left-full top-full"></span>
+  </div>
 </div>`,
       },
       {
         label: "Over a ghost button",
-        html: `<div class="relative p-6">
-  <button type="button" class="sk-button sk-ghost">Skip for now</button>
-  <span class="sk-cursor absolute left-24 top-9"></span>
+        html: `<div class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button sk-ghost">Skip for now</button>
+    <span class="sk-cursor absolute left-full top-full"></span>
+  </div>
 </div>`,
       },
     ],
@@ -53,16 +61,20 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Click",
-        html: `<div class="relative p-6">
-  <button type="button" class="sk-button">Add task</button>
-  <span class="sk-click-ripple absolute left-20 top-4"></span>
+        html: `<div class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button">Add task</button>
+    <span class="sk-click-ripple absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2"></span>
+  </div>
 </div>`,
       },
       {
         label: "Long press",
-        html: `<div class="relative p-6">
-  <button type="button" class="sk-button">Add task</button>
-  <span class="sk-click-ripple absolute left-20 top-4" data-count="4"></span>
+        html: `<div class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button">Add task</button>
+    <span class="sk-click-ripple absolute -end-7 top-1/2 h-6 w-6 min-h-0 min-w-0 -translate-y-1/2" data-count="4"></span>
+  </div>
 </div>`,
       },
     ],
@@ -98,25 +110,36 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "One pin on a button",
-        html: `<div class="relative inline-block p-8">
-  <button type="button" class="sk-button">Save changes</button>
-  <span class="sk-numbered-callout absolute -right-3 -top-3">1</span>
+        html: `<div class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button">Save changes</button>
+    <span class="sk-numbered-callout absolute -end-3.5 -top-3.5">1</span>
+  </div>
 </div>`,
       },
       {
         label: "Three pins on a screen",
-        html: `<div class="space-y-6 p-6 pl-10">
-  <div class="relative">
+        html: `<div class="space-y-6 p-6">
+  <div class="relative ps-8">
     <p class="text-lg">Launch plan</p>
-    <span class="sk-numbered-callout absolute -left-10 top-0">1</span>
+    <span class="sk-numbered-callout absolute -start-3.5 -top-3.5">1</span>
   </div>
-  <div class="relative">
+  <div class="relative ps-8">
     <p>Ship the sign-in page by Friday.</p>
-    <span class="sk-numbered-callout absolute -left-10 top-0">2</span>
+    <span class="sk-numbered-callout absolute -start-3.5 -top-3.5">2</span>
   </div>
   <div class="relative inline-block">
     <button type="button" class="sk-button sk-main">Save changes</button>
-    <span class="sk-numbered-callout absolute -right-3 -top-3">3</span>
+    <span class="sk-numbered-callout absolute -end-3.5 -top-3.5">3</span>
+  </div>
+</div>`,
+      },
+      {
+        label: "Right to left",
+        html: `<div dir="rtl" class="p-6">
+  <div class="relative inline-block">
+    <button type="button" class="sk-button">שמירה</button>
+    <span class="sk-numbered-callout absolute -end-3.5 -top-3.5">1</span>
   </div>
 </div>`,
       },
