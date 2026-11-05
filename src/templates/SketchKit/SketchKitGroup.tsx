@@ -7,15 +7,11 @@ export interface SketchKitGroupProps {
   readonly parts: readonly SketchPart[];
 }
 
-export const SketchKitGroup = ({ title, parts }: SketchKitGroupProps): VNode => {
-  const hasNoParts = parts.length === 0;
-  return (
-    <section class="space-y-6">
-      <h2 class="text-xl font-bold">{title}</h2>
-      {hasNoParts && <p>No parts yet.</p>}
-      {parts.map((part) => (
-        <SketchKitPartCard key={part.className} part={part} />
-      ))}
-    </section>
-  );
-};
+export const SketchKitGroup = ({ title, parts }: SketchKitGroupProps): VNode => (
+  <section class="space-y-6">
+    <h2 class="text-xl font-bold">{title}</h2>
+    {parts.map((part) => (
+      <SketchKitPartCard key={part.className} part={part} />
+    ))}
+  </section>
+);
