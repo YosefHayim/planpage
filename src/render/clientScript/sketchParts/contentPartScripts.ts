@@ -1,4 +1,16 @@
+import { SKETCH_LOOK } from "../sketchLook";
+
 export const CONTENT_PART_SCRIPT = `
+const SKETCH_TONE_COLORS = ${JSON.stringify(SKETCH_LOOK.tones)};
+const SKETCH_SATURATED_FILL_COLORS = ${JSON.stringify(SKETCH_LOOK.saturatedFills)};
+const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
+const STREAK_TICK_INSET_RATIO = 0.2;
+const WEEK_TODAY_INSET_RATIO = 0.04;
+const COPY_BUTTON_EM = 2;
+const COPY_BUTTON_INSET_EM = 0.5;
+const COPY_ICON_EM = 1.15;
+const ACTIVITY_AVATAR_EM = 2;
+const ACTIVITY_ICON_INSET_RATIO = 0.22;
 const TEXT_LINE_WIDTH_RATIOS = [1, 0.86, 0.6, 0.92];
 const TEXT_LAST_LINE_WIDTH_RATIO = 0.45;
 const TEXT_WAVE_RATIO = 0.08;
@@ -121,8 +133,8 @@ window.SketchWireframe.definePart("sk-tag", (drawing) => {
 });
 
 window.SketchWireframe.definePart("sk-status-light", (drawing) => {
-  const { circle, readTone, readFill, isRightToLeft } = window.SketchWireframe;
-  const { element, box, seed, under } = drawing;
+  const { isRightToLeft } = window.SketchWireframe;
+  const { element, box, under } = drawing;
   const fontSize = Number.parseFloat(window.getComputedStyle(element).fontSize);
   const dotDiameter = fontSize * STATUS_DOT_DIAMETER_EM;
   const dotCenterDistance = fontSize * STATUS_DOT_CENTER_EM;
@@ -135,13 +147,12 @@ window.SketchWireframe.definePart("sk-status-light", (drawing) => {
     w: dotDiameter,
     h: dotDiameter,
   };
-  circle(under, dotBox, { tone: readTone(element), fill: readFill(element), seed });
+  appendSolidCircle(under, dotBox, pickSolidDotColor(element));
 });
 
 window.SketchWireframe.definePart("sk-dot", (drawing) => {
-  const { circle, readTone, readFill } = window.SketchWireframe;
-  const { element, box, seed, under } = drawing;
-  circle(under, box, { tone: readTone(element), fill: readFill(element), seed });
+  const { element, box, under } = drawing;
+  appendSolidCircle(under, box, pickSolidDotColor(element));
 });
 
 const CARD_STACK_STEP = 8;
@@ -427,7 +438,8 @@ const QR_GRID_SIZE = 21;
 const QR_FINDER_SIZE = 7;
 const QR_FINDER_INNER_SIZE = 3;
 const QR_FINDER_INNER_OFFSET = 2;
-const QR_DARK_CELL_MODULO = 3;
+const QR_DARK_CELL_MODULO = 4;
+const QR_MODULE_GAP_RATIO = 0.18;
 const CALENDAR_CELL_INSET_RATIO = 0.12;
 const TIMELINE_DOT_CENTER_EM = 0.6;
 const TIMELINE_DOT_DIAMETER_EM = 0.8;
@@ -451,11 +463,40 @@ const CARD_CHIP_WIDTH_RATIO = 0.14;
 const CARD_CHIP_HEIGHT_RATIO = 0.2;
 const CARD_CHIP_TOP_RATIO = 0.3;
 const STREAK_DAY_COUNT = 7;
-const STREAK_DAY_DIAMETER_RATIO = 0.2;
-const STREAK_DAY_CENTER_Y_RATIO = 0.2;
+const STREAK_DAY_DIAMETER_RATIO = 0.6;
+const STREAK_DAY_SPACING_RATIO = 0.8;
 const RATING_STAR_RATIO = 0.32;
 const STAR_POINT_COUNT = 5;
 const STAR_INNER_RATIO = 0.45;
+
+const appendSolidCircle = (layer, box, color) => {
+  const circleNode = document.createElementNS(SVG_NAMESPACE, "circle");
+  circleNode.setAttribute("cx", box.x + box.w / 2);
+  circleNode.setAttribute("cy", box.y + box.h / 2);
+  circleNode.setAttribute("r", Math.min(box.w, box.h) / 2);
+  circleNode.setAttribute("fill", color);
+  circleNode.setAttribute("stroke", "none");
+  layer.svg.append(circleNode);
+};
+
+const appendSolidSquare = (layer, box, color) => {
+  const squareNode = document.createElementNS(SVG_NAMESPACE, "rect");
+  squareNode.setAttribute("x", box.x);
+  squareNode.setAttribute("y", box.y);
+  squareNode.setAttribute("width", box.w);
+  squareNode.setAttribute("height", box.h);
+  squareNode.setAttribute("fill", color);
+  squareNode.setAttribute("stroke", "none");
+  layer.svg.append(squareNode);
+};
+
+const pickSolidDotColor = (element) => {
+  const { readFill, readTone } = window.SketchWireframe;
+  const fill = readFill(element);
+  const hasFill = fill !== null;
+  if (hasFill) return SKETCH_SATURATED_FILL_COLORS[fill];
+  return SKETCH_TONE_COLORS[readTone(element)];
+};
 
 const shrinkBox = (box, inset) => ({
   x: box.x + inset,
@@ -581,18 +622,35 @@ window.SketchWireframe.definePart("sk-calendar", drawRoundedOutline);
 window.SketchWireframe.definePart("sk-date-range-calendar", drawRoundedOutline);
 window.SketchWireframe.definePart("sk-week-strip", drawRoundedOutline);
 window.SketchWireframe.definePart("sk-calendar-day", drawCalendarDay);
-window.SketchWireframe.definePart("sk-week-day", drawCalendarDay);
+const drawWeekDay = (drawing) => {
+  const { roundedRectangle, readStatus, isChecked } = window.SketchWireframe;
+  const { element, box, seed, under } = drawing;
+  const isSelected = readStatus(element) === "selected";
+  const isToday = isChecked(element);
+
+  if (isSelected) roundedRectangle(under, box, { tone: "blue", fill: "blue", seed: seed + 1 });
+
+  const todayBox = shrinkBox(box, Math.min(box.w, box.h) * WEEK_TODAY_INSET_RATIO);
+  if (isToday) roundedRectangle(under, todayBox, { tone: "red", seed: seed + 2 });
+};
+
+window.SketchWireframe.definePart("sk-week-day", drawWeekDay);
 
 window.SketchWireframe.definePart("sk-code-snippet", (drawing) => {
-  const { roundedRectangle, circle, readTone, readFill, isRightToLeft } = window.SketchWireframe;
+  const { roundedRectangle, icon, readTone, readFill, isRightToLeft } = window.SketchWireframe;
   const { element, box, seed, under } = drawing;
+  const fontSize = Number.parseFloat(window.getComputedStyle(element).fontSize);
   roundedRectangle(under, box, { tone: readTone(element), fill: readFill(element), seed });
 
-  const copyMarkSize = Math.min(box.w, box.h) * 0.08;
-  const copyMarkInset = copyMarkSize * 1.5;
-  const copyMarkX = pickEndDistanceX(box, copyMarkInset + copyMarkSize, isRightToLeft(element));
-  const copyMarkBox = { x: copyMarkX, y: box.y + copyMarkInset, w: copyMarkSize, h: copyMarkSize };
-  circle(under, copyMarkBox, { tone: "soft", seed: seed + 1 });
+  const buttonSize = fontSize * COPY_BUTTON_EM;
+  const buttonInset = fontSize * COPY_BUTTON_INSET_EM;
+  const buttonX = pickEndDistanceX(box, buttonInset + buttonSize, isRightToLeft(element));
+  const buttonBox = { x: buttonX, y: box.y + buttonInset, w: buttonSize, h: buttonSize };
+  roundedRectangle(under, buttonBox, { tone: "soft", seed: seed + 1 });
+
+  const iconSize = fontSize * COPY_ICON_EM;
+  const iconInset = (buttonSize - iconSize) / 2;
+  icon(under, shrinkBox(buttonBox, iconInset), "copy", { tone: "ink", seed: seed + 2 });
 });
 
 window.SketchWireframe.definePart("sk-image", (drawing) => {
@@ -714,22 +772,26 @@ const isQrDarkCell = (row, column, seed) => {
   return cellHash % QR_DARK_CELL_MODULO === 0;
 };
 
+const readQrModuleBox = (box, moduleSize, row, column, inset) => ({
+  x: box.x + column * moduleSize + inset,
+  y: box.y + row * moduleSize + inset,
+  w: moduleSize - inset * 2,
+  h: moduleSize - inset * 2,
+});
+
 window.SketchWireframe.definePart("sk-qr-code", (drawing) => {
-  const { createScaledLayer, rectangle, readTone } = window.SketchWireframe;
-  const { element, box, seed, under } = drawing;
-  const tone = readTone(element);
-  const gridLayer = createScaledLayer(under, box, QR_GRID_SIZE);
+  const { rectangle } = window.SketchWireframe;
+  const { box, seed, under } = drawing;
+  const moduleSize = Math.min(box.w, box.h) / QR_GRID_SIZE;
+  const moduleInset = moduleSize * QR_MODULE_GAP_RATIO;
 
   const cellIndexes = [...Array(QR_GRID_SIZE * QR_GRID_SIZE).keys()];
-  const darkCellIndexes = cellIndexes.filter((cellIndex) => {
-    const row = Math.floor(cellIndex / QR_GRID_SIZE);
-    const column = cellIndex % QR_GRID_SIZE;
-    return !isQrFinderZone(row, column) && isQrDarkCell(row, column, seed);
-  });
-  for (const cellIndex of darkCellIndexes) {
-    const row = Math.floor(cellIndex / QR_GRID_SIZE);
-    const column = cellIndex % QR_GRID_SIZE;
-    rectangle(gridLayer, { x: column, y: row, w: 1, h: 1 }, { tone, seed: seed + cellIndex });
+  const darkCells = cellIndexes
+    .map((cellIndex) => ({ row: Math.floor(cellIndex / QR_GRID_SIZE), column: cellIndex % QR_GRID_SIZE }))
+    .filter((cell) => !isQrFinderZone(cell.row, cell.column) && isQrDarkCell(cell.row, cell.column, seed));
+  for (const darkCell of darkCells) {
+    const moduleBox = readQrModuleBox(box, moduleSize, darkCell.row, darkCell.column, moduleInset);
+    appendSolidSquare(under, moduleBox, SKETCH_TONE_COLORS.ink);
   }
 
   const finderEdge = QR_GRID_SIZE - QR_FINDER_SIZE;
@@ -739,15 +801,15 @@ window.SketchWireframe.definePart("sk-qr-code", (drawing) => {
     { row: finderEdge, column: 0 },
   ];
   for (const [finderIndex, finderCorner] of finderCorners.entries()) {
-    const finderBox = { x: finderCorner.column, y: finderCorner.row, w: QR_FINDER_SIZE, h: QR_FINDER_SIZE };
-    rectangle(gridLayer, finderBox, { tone, seed: seed + 900 + finderIndex });
-    const innerBox = {
-      x: finderCorner.column + QR_FINDER_INNER_OFFSET,
-      y: finderCorner.row + QR_FINDER_INNER_OFFSET,
-      w: QR_FINDER_INNER_SIZE,
-      h: QR_FINDER_INNER_SIZE,
+    const finderBox = {
+      x: box.x + finderCorner.column * moduleSize,
+      y: box.y + finderCorner.row * moduleSize,
+      w: QR_FINDER_SIZE * moduleSize,
+      h: QR_FINDER_SIZE * moduleSize,
     };
-    rectangle(gridLayer, innerBox, { tone, fill: "grey", seed: seed + 910 + finderIndex });
+    rectangle(under, finderBox, { tone: "ink", seed: seed + 900 + finderIndex });
+    const innerBox = readQrModuleBox(box, moduleSize, finderCorner.row + QR_FINDER_INNER_OFFSET, finderCorner.column + QR_FINDER_INNER_OFFSET, 0);
+    appendSolidSquare(under, { ...innerBox, w: QR_FINDER_INNER_SIZE * moduleSize, h: QR_FINDER_INNER_SIZE * moduleSize }, SKETCH_TONE_COLORS.ink);
   }
 });
 
@@ -772,6 +834,31 @@ window.SketchWireframe.definePart("sk-timeline-item", (drawing) => {
 
   const lineTopY = dotCenterY + dotDiameter / 2;
   line(under, { x: dotCenterX, y: lineTopY }, { x: dotCenterX, y: box.y + box.h }, { tone: "soft", seed: seed + 2 });
+});
+
+window.SketchWireframe.definePart("sk-activity-feed", (drawing) => {
+  const { circle, icon, line, readTone, readFill, isRightToLeft } = window.SketchWireframe;
+  const { element, box, seed, under } = drawing;
+  const fontSize = Number.parseFloat(window.getComputedStyle(element).fontSize);
+  const isRtl = isRightToLeft(element);
+  const tone = readTone(element);
+  const avatarDiameter = fontSize * ACTIVITY_AVATAR_EM;
+  const avatarCenterX = pickStartDistanceX(box, avatarDiameter / 2, isRtl);
+  const avatarCenterY = box.y + avatarDiameter / 2;
+  const avatarBox = {
+    x: avatarCenterX - avatarDiameter / 2,
+    y: avatarCenterY - avatarDiameter / 2,
+    w: avatarDiameter,
+    h: avatarDiameter,
+  };
+  circle(under, avatarBox, { tone: "soft", fill: readFill(element), seed });
+  icon(under, shrinkBox(avatarBox, avatarDiameter * ACTIVITY_ICON_INSET_RATIO), "user", { tone, seed: seed + 1 });
+
+  const isLastRow = element.nextElementSibling === null;
+  if (isLastRow) return;
+
+  const lineTopY = avatarCenterY + avatarDiameter / 2;
+  line(under, { x: avatarCenterX, y: lineTopY }, { x: avatarCenterX, y: box.y + box.h }, { tone: "soft", seed: seed + 2 });
 });
 
 window.SketchWireframe.definePart("sk-speech-bubble", (drawing) => {
@@ -934,19 +1021,25 @@ window.SketchWireframe.definePart("sk-credit-card", (drawing) => {
 });
 
 window.SketchWireframe.definePart("sk-streak", (drawing) => {
-  const { circle, readCount, readTone, isRightToLeft } = window.SketchWireframe;
+  const { circle, readCount, readTone, isRightToLeft, tick } = window.SketchWireframe;
   const { element, box, seed, under } = drawing;
   const doneDayCount = readCount(element, 0);
   const isRtl = isRightToLeft(element);
   const daySpacing = box.w / STREAK_DAY_COUNT;
-  const dayDiameter = Math.min(daySpacing * 0.6, box.h * STREAK_DAY_DIAMETER_RATIO);
-  const dayCenterY = box.y + box.h * STREAK_DAY_CENTER_Y_RATIO;
+  const dayDiameter = Math.min(daySpacing * STREAK_DAY_SPACING_RATIO, box.h * STREAK_DAY_DIAMETER_RATIO);
+  const dayCenterY = box.y + box.h / 2;
   for (const dayIndex of [...Array(STREAK_DAY_COUNT).keys()]) {
     const dayCenterX = pickStartDistanceX(box, daySpacing * (dayIndex + 0.5), isRtl);
-    const isDayDone = dayIndex < doneDayCount;
-    const fill = isDayDone ? "orange" : null;
     const dayBox = { x: dayCenterX - dayDiameter / 2, y: dayCenterY - dayDiameter / 2, w: dayDiameter, h: dayDiameter };
-    circle(under, dayBox, { tone: readTone(element), fill, seed: seed + dayIndex });
+    const isDayDone = dayIndex < doneDayCount;
+    const isDayEmpty = dayIndex >= doneDayCount;
+
+    if (isDayDone) {
+      appendSolidCircle(under, dayBox, SKETCH_SATURATED_FILL_COLORS.green);
+      tick(under, shrinkBox(dayBox, dayDiameter * STREAK_TICK_INSET_RATIO), { tone: "ink", seed: seed + 20 + dayIndex });
+    }
+
+    if (isDayEmpty) circle(under, dayBox, { tone: readTone(element), seed: seed + dayIndex });
   }
 });
 
@@ -1165,6 +1258,7 @@ export const CONTENT_PART_STYLE = `:where(.sk-card) {
   display: flex;
   align-items: center;
   min-height: 3rem;
+  overflow: hidden;
   border: 1.6px solid transparent;
   border-radius: 0.5rem;
 }
@@ -1327,6 +1421,15 @@ export const CONTENT_PART_STYLE = `:where(.sk-card) {
   position: relative;
   min-height: 2.5rem;
   padding-inline-start: 2em;
+  padding-bottom: 1rem;
+  font-size: 1rem;
+}
+
+:where(.sk-activity-feed) {
+  display: block;
+  min-height: 3rem;
+  padding-inline-start: 2.75em;
+  padding-inline-end: 0.5rem;
   padding-bottom: 1rem;
   font-size: 1rem;
 }

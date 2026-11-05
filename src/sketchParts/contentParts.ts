@@ -1,5 +1,49 @@
 import type { SketchPart } from "../contracts/sketchScene";
 
+interface MonthGrid {
+  className: string;
+  weekdayLabels: readonly string[];
+  rootAttributes: string;
+  attributesByDay: (day: number) => string;
+}
+
+const MONTH_DAY_COUNT = 30;
+const MONTH_EMPTY_CELL_COUNT = 5;
+const MONTH_WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const MONTH_WEEKDAY_LABELS_HEBREW = ["א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳"];
+const MONTH_DAY_NUMBERS = [...Array(MONTH_DAY_COUNT).keys()].map((dayIndex) => dayIndex + 1);
+const PICKED_DAY = 9;
+const TODAY_DAY = 12;
+const RANGE_START_DAY = 4;
+const RANGE_END_DAY = 8;
+
+const createPickedDayAttributes = (day: number): string => {
+  const isPickedDay = day === PICKED_DAY;
+  const isTodayDay = day === TODAY_DAY;
+  if (isPickedDay) return ' data-status="selected"';
+  if (isTodayDay) return " data-checked";
+  return "";
+};
+
+const createRangeDayAttributes = (day: number): string => {
+  const isInRange = day >= RANGE_START_DAY && day <= RANGE_END_DAY;
+  const isRangeEnd = day === RANGE_START_DAY || day === RANGE_END_DAY;
+  const rangeFillAttribute = isInRange ? ' data-fill="blue"' : "";
+  const statusAttribute = isRangeEnd ? ' data-status="selected"' : "";
+  return `${statusAttribute}${rangeFillAttribute}`;
+};
+
+const createMonthGridHtml = (monthGrid: MonthGrid): string => {
+  const headerCellsHtml = monthGrid.weekdayLabels
+    .map((label) => `<span class="text-xs">${label}</span>`)
+    .join("");
+  const dayCellsHtml = MONTH_DAY_NUMBERS.map(
+    (day) => `<span class="sk-calendar-day"${monthGrid.attributesByDay(day)}>${day}</span>`,
+  ).join("");
+  const emptyCellsHtml = "<span></span>".repeat(MONTH_EMPTY_CELL_COUNT);
+  return `<div class="${monthGrid.className}"${monthGrid.rootAttributes}>${headerCellsHtml}${dayCellsHtml}${emptyCellsHtml}</div>`;
+};
+
 export const CONTENT_PARTS: readonly SketchPart[] = [
   {
     className: "sk-card",
@@ -181,7 +225,7 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     useFor: "A dot with a short word that shows if something is synced, working or offline.",
     examples: [
       { label: "Synced", html: '<span class="sk-status-light" data-fill="green">Synced</span>' },
-      { label: "Working", html: '<span class="sk-status-light" data-fill="yellow">Syncing</span>' },
+      { label: "Working", html: '<span class="sk-status-light" data-fill="orange">Syncing</span>' },
       { label: "Offline", html: '<span class="sk-status-light" data-fill="grey">Offline</span>' },
       {
         label: "Hebrew, right to left",
@@ -333,11 +377,11 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Delete revealed",
-        html: '<div class="sk-swipe-row w-72"><span class="flex-1 px-4">Lunch with Dana</span><span class="sk-swipe-action w-1/3 text-center font-bold">Delete</span></div>',
+        html: '<div class="sk-swipe-row w-72"><span class="min-w-0 flex-1 truncate px-4">Lunch with Dana</span><span class="sk-swipe-action w-1/3 text-center font-bold">Delete</span></div>',
       },
       {
         label: "Hebrew, right to left",
-        html: '<div class="sk-swipe-row w-72" dir="rtl"><span class="flex-1 px-4">ארוחת צהריים עם דנה</span><span class="sk-swipe-action w-1/3 text-center font-bold">מחק</span></div>',
+        html: '<div class="sk-swipe-row w-72" dir="rtl"><span class="min-w-0 flex-1 truncate px-4">ארוחת צהריים עם דנה</span><span class="sk-swipe-action w-1/3 text-center font-bold">מחק</span></div>',
       },
     ],
   },
@@ -413,7 +457,7 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
       },
       {
         label: "Hebrew, right to left",
-        html: '<div class="sk-tree-view w-64" dir="rtl"><div class="sk-tree-row sk-tree-folder" data-checked data-count="0" style="--depth: 0"><span>מסך</span></div><div class="sk-tree-row" data-count="1" style="--depth: 1"><span>דף הבית</span></div></div>',
+        html: '<div class="sk-tree-view w-64" dir="rtl"><div class="sk-tree-row sk-tree-folder" data-checked data-count="0" style="--depth: 0"><span>קוד</span></div><div class="sk-tree-row sk-tree-folder" data-count="1" style="--depth: 1"><span>מסכים</span></div><div class="sk-tree-row" data-count="2" style="--depth: 2"><span>דף הבית</span></div><div class="sk-tree-row" data-count="1" style="--depth: 1"><span>האפליקציה</span></div></div>',
       },
     ],
   },
@@ -425,11 +469,21 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Picked day and today",
-        html: '<div class="sk-calendar"><span class="sk-calendar-day">1</span><span class="sk-calendar-day">2</span><span class="sk-calendar-day">3</span><span class="sk-calendar-day">4</span><span class="sk-calendar-day">5</span><span class="sk-calendar-day">6</span><span class="sk-calendar-day">7</span><span class="sk-calendar-day">8</span><span class="sk-calendar-day" data-status="selected">9</span><span class="sk-calendar-day">10</span><span class="sk-calendar-day">11</span><span class="sk-calendar-day" data-checked>12</span><span class="sk-calendar-day">13</span><span class="sk-calendar-day">14</span></div>',
+        html: createMonthGridHtml({
+          className: "sk-calendar",
+          weekdayLabels: MONTH_WEEKDAY_LABELS,
+          rootAttributes: "",
+          attributesByDay: createPickedDayAttributes,
+        }),
       },
       {
         label: "Hebrew, right to left",
-        html: '<div class="sk-calendar" dir="rtl"><span class="sk-calendar-day">1</span><span class="sk-calendar-day">2</span><span class="sk-calendar-day">3</span><span class="sk-calendar-day">4</span><span class="sk-calendar-day">5</span><span class="sk-calendar-day">6</span><span class="sk-calendar-day">7</span><span class="sk-calendar-day">8</span><span class="sk-calendar-day" data-status="selected">9</span><span class="sk-calendar-day">10</span><span class="sk-calendar-day">11</span><span class="sk-calendar-day" data-checked>12</span><span class="sk-calendar-day">13</span><span class="sk-calendar-day">14</span></div>',
+        html: createMonthGridHtml({
+          className: "sk-calendar",
+          weekdayLabels: MONTH_WEEKDAY_LABELS_HEBREW,
+          rootAttributes: ' dir="rtl"',
+          attributesByDay: createPickedDayAttributes,
+        }),
       },
     ],
   },
@@ -442,7 +496,12 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Range from 4 to 8",
-        html: '<div class="sk-date-range-calendar"><span class="sk-calendar-day">1</span><span class="sk-calendar-day">2</span><span class="sk-calendar-day">3</span><span class="sk-calendar-day" data-status="selected" data-fill="blue">4</span><span class="sk-calendar-day" data-fill="blue">5</span><span class="sk-calendar-day" data-fill="blue">6</span><span class="sk-calendar-day" data-fill="blue">7</span><span class="sk-calendar-day" data-status="selected" data-fill="blue">8</span><span class="sk-calendar-day">9</span><span class="sk-calendar-day">10</span><span class="sk-calendar-day">11</span><span class="sk-calendar-day">12</span><span class="sk-calendar-day">13</span><span class="sk-calendar-day">14</span></div>',
+        html: createMonthGridHtml({
+          className: "sk-date-range-calendar",
+          weekdayLabels: MONTH_WEEKDAY_LABELS,
+          rootAttributes: "",
+          attributesByDay: createRangeDayAttributes,
+        }),
       },
     ],
   },
@@ -496,6 +555,23 @@ export const CONTENT_PARTS: readonly SketchPart[] = [
       {
         label: "Hebrew, right to left",
         html: '<div class="flex w-80 flex-col" dir="rtl"><div class="sk-timeline-item" data-icon="check" data-fill="green"><p class="font-medium">ההזמנה נמסרה</p><p class="text-sm">היום, 09:40</p></div><div class="sk-timeline-item" data-icon="send"><p class="font-medium">ההזמנה יצאה לדרך</p><p class="text-sm">אתמול, 18:05</p></div><div class="sk-timeline-item" data-icon="shopping-bag"><p class="font-medium">ההזמנה נוצרה</p><p class="text-sm">יום שני, 11:12</p></div></div>',
+      },
+    ],
+  },
+  {
+    className: "sk-activity-feed",
+    group: "content",
+    name: "Activity feed row",
+    useFor:
+      "One row of an activity feed: an avatar, one line of text and a time. Rows are joined by a line.",
+    examples: [
+      {
+        label: "Recent activity",
+        html: '<div class="flex w-80 flex-col"><div class="sk-activity-feed" data-fill="blue"><p class="font-medium">Dana commented on the plan</p><p class="text-sm">2 minutes ago</p></div><div class="sk-activity-feed"><p class="font-medium">Omer invited you to a board</p><p class="text-sm">1 hour ago</p></div><div class="sk-activity-feed"><p class="font-medium">Maya uploaded 3 photos</p><p class="text-sm">Yesterday</p></div></div>',
+      },
+      {
+        label: "Hebrew, right to left",
+        html: '<div class="flex w-80 flex-col" dir="rtl"><div class="sk-activity-feed"><p class="font-medium">דנה הגיבה על התוכנית</p><p class="text-sm">לפני 2 דקות</p></div><div class="sk-activity-feed"><p class="font-medium">עומר הזמין אותך ללוח</p><p class="text-sm">לפני שעה</p></div></div>',
       },
     ],
   },
