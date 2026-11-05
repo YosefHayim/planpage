@@ -236,11 +236,18 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
       return;
     }
 
+    const isDecisionPage = decisionOf(section) !== null;
+    const isSendShortcut = event.key === "Enter" && (event.metaKey || event.ctrlKey);
+    if (isSendShortcut && isDecisionPage) {
+      event.preventDefault();
+      await sendApprove(section);
+      return;
+    }
+
     const hasSystemModifier = event.metaKey || event.ctrlKey || event.altKey;
     const isFormTyping = isEditableTarget(event.target);
     if (hasSystemModifier || isFormTyping) return;
 
-    const isDecisionPage = decisionOf(section) !== null;
     const isEnterKey = event.key === "Enter";
     const isOnButtonOrLink = isButtonOrLinkTarget(event.target);
     const optionIndex = isDecisionPage ? indexOfOptionKey(section, event.key) : -1;
