@@ -81,6 +81,24 @@ _Avoid_: decision page, choice page, final page.
 A mono note tied to one part of the picture by a dashed line. Set with `link` on the note.
 _Avoid_: callout, annotation, pointer.
 
+## Sketch kit
+
+**wireframe**:
+A hand-drawn layout made of plain HTML and `sk-*` parts, drawn by the wireframe island.
+_Avoid_: mockup picture, drawn screen
+
+**sketch part**:
+One reusable wireframe piece (a button, a card, an icon) with its drawer and gallery examples.
+_Avoid_: widget, component (in the sketch kit)
+
+**screen node**:
+A scene node of kind `screen` that holds a wireframe's HTML at a box in the scene.
+_Avoid_: screen box, html node
+
+**part link**:
+A note link or edge end written `"screenId#part"`, pointing at a `data-part` element in a screen node.
+_Avoid_: element link, deep link
+
 ## Relationships
 
 - A **template** composes **component**s and nests inside the **shell**.

@@ -678,6 +678,11 @@ export const TEMPLATE_INDEX: ReadonlyArray<TemplateInfo> = [
     category: "plan",
   },
   {
+    name: "sketch-kit",
+    blurb: "Every hand-drawn wireframe part (buttons, cards, icons, frames) with its examples and states.",
+    category: "meta",
+  },
+  {
     name: "library",
     blurb: "This page — the living, auto-captured component gallery.",
     category: "meta",

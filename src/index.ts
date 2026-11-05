@@ -131,4 +131,13 @@ export { Quiz, type QuizProps } from "./templates/Quiz/Quiz";
 export { SketchPlan, type SketchPlanProps } from "./templates/SketchPlan/SketchPlan";
 export { QuizCard, type QuizCardProps, type QuizOption } from "./components/QuizCard";
 export { SKETCH_RECIPES } from "./sketchRecipes/sketchRecipes";
+export { SKETCH_PARTS } from "./sketchParts/sketchParts";
+export { SKETCH_KIT_FILE_NAME, SketchKit } from "./templates/SketchKit/SketchKit";
+export type {
+  SketchIconShape,
+  SketchIconTag,
+  SketchPart,
+  SketchPartExample,
+  SketchPartGroup,
+} from "./contracts/sketchScene";
 export { SAMPLES, TEMPLATES, type TemplateName } from "./templates";

@@ -16,7 +16,8 @@ export type SketchNodeKind =
   | "sticky"
   | "rows"
   | "lane"
-  | "bare";
+  | "bare"
+  | "screen";
 
 export interface SketchPoint {
   readonly x: number;
@@ -52,6 +53,8 @@ export interface SketchNode extends SketchWords {
   readonly border?: "thick";
   readonly tilt?: number;
   readonly rows?: readonly (string | SketchRow)[];
+  // The wireframe HTML a "screen" node shows inside its box (h is required there).
+  readonly html?: string;
 }
 
 export type SketchEdgeEnd = string | SketchPoint;
@@ -181,4 +184,34 @@ export interface SketchRecipe {
   readonly scene: SketchScene;
   readonly toggle?: SketchToggle;
   readonly code?: SketchCode;
+}
+
+export type SketchPartGroup =
+  | "controls"
+  | "navigation"
+  | "overlays"
+  | "content"
+  | "charts"
+  | "frames"
+  | "marks"
+  | "icons";
+
+export interface SketchPartExample {
+  readonly label: string;
+  readonly html: string;
+}
+
+export interface SketchPart {
+  readonly className: string;
+  readonly group: SketchPartGroup;
+  readonly name: string;
+  readonly useFor: string;
+  readonly examples: readonly SketchPartExample[];
+}
+
+export type SketchIconTag = "path" | "circle" | "rect" | "line" | "polyline" | "polygon" | "ellipse";
+
+export interface SketchIconShape {
+  readonly tag: SketchIconTag;
+  readonly attributes: Readonly<Record<string, string | number>>;
 }

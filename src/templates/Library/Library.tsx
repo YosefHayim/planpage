@@ -1,5 +1,6 @@
 import { CodeBlock } from "../../components/CodeBlock";
 import { GALLERY, type GalleryName, type PropDoc, TEMPLATE_INDEX } from "../../gallery/registry";
+import { SKETCH_KIT_FILE_NAME } from "../SketchKit/SketchKit";
 
 /** Category display order for the rail + sections (an unknown category falls to the end). */
 const CATEGORY_ORDER: ReadonlyArray<string> = [
@@ -57,6 +58,9 @@ export const Library = ({ title = "planpage — component gallery" }: LibraryPro
             {Object.keys(GALLERY).length} components, captured automatically — live preview, usage,
             and props.
           </p>
+          <a class="mt-2 inline-block text-sm underline" href={SKETCH_KIT_FILE_NAME}>
+            Sketch kit: every wireframe part
+          </a>
         </div>
 
         {groups.map(([category, names]) => (

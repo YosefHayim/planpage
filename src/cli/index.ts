@@ -7,6 +7,7 @@ import { initCommand } from "./init";
 import { libraryCommand } from "./library";
 import { runMenu } from "./menu";
 import { newCommand } from "./new";
+import { type PartsCommandOptions, partsCommand } from "./parts";
 import { type RecipesCommandOptions, recipesCommand } from "./recipes";
 import { renderCommand } from "./render";
 import { serveCommand } from "./serve";
@@ -78,6 +79,15 @@ program
   .option("--json", "print the list as JSON (also used when there is no TTY)")
   .action((recipeId: string | undefined, options: RecipesCommandOptions) => {
     process.exitCode = recipesCommand(recipeId, options);
+  });
+
+program
+  .command("parts")
+  .description("list the sketch kit parts, or print one part example HTML (planpage parts <className>)")
+  .argument("[className]", "part class name to print, e.g. sk-button")
+  .option("--json", "print the list as JSON (also used when there is no TTY)")
+  .action((className: string | undefined, options: PartsCommandOptions) => {
+    process.exitCode = partsCommand(className, options);
   });
 
 program

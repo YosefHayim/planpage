@@ -41,7 +41,8 @@ export const renderCommand = async (
       carousel: template === "library",
       // interactive plans also get diagram boards via Shell (diagramable || interactive)
       diagramable: template === "library",
-      hasSketchScenes: template === "sketch-plan" || template === "library",
+      hasSketchScenes:
+        template === "sketch-plan" || template === "library" || template === "sketch-kit",
     }),
   );
 

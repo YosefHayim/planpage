@@ -1,10 +1,11 @@
 import { writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import type { Theme } from "../components/Shell";
 import { highlight } from "../highlight/highlight";
 import { render } from "../render/render";
 import { Library } from "../templates/Library/Library";
+import { SKETCH_KIT_FILE_NAME, SketchKit } from "../templates/SketchKit/SketchKit";
 import { openPath } from "./io";
 
 export interface LibraryCommandOptions {
@@ -43,5 +44,13 @@ export const libraryCommand = async (options: LibraryCommandOptions): Promise<vo
   const out = options.out ?? join(tmpdir(), "planpage-gallery.html");
   writeFileSync(out, html);
   process.stdout.write(`planpage: wrote ${out}\n`);
+  const sketchKitOut = join(dirname(out), SKETCH_KIT_FILE_NAME);
+  const sketchKitHtml = render(<SketchKit />, {
+    title: "planpage — sketch kit",
+    theme: options.theme,
+    hasSketchScenes: true,
+  });
+  writeFileSync(sketchKitOut, sketchKitHtml);
+  process.stdout.write(`planpage: wrote ${sketchKitOut}\n`);
   if (options.open) openPath(out);
 };

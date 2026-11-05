@@ -1,29 +1,10 @@
+import { SKETCH_LOOK } from "./sketchLook";
+
 export const SKETCH_SCENE_SCRIPT = `(() => {
   const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
-  const FILLS = {
-    blue: "#d0ebff",
-    grey: "#e9ecef",
-    orange: "#ffe8cc",
-    green: "#d3f9d8",
-    red: "#ffe3e3",
-    yellow: "#fff3bf",
-  };
-  const SATURATED_FILLS = {
-    blue: "#74c0fc",
-    grey: "#ced4da",
-    orange: "#ffa94d",
-    green: "#69db7c",
-    red: "#ff8787",
-    yellow: "#ffd43b",
-  };
-  const TONES = {
-    ink: "#2b2b30",
-    red: "#c92a2a",
-    green: "#2b8a3e",
-    blue: "#1c7ed6",
-    orange: "#e8590c",
-    soft: "#8a8a94",
-  };
+  const FILLS = ${JSON.stringify(SKETCH_LOOK.pastelFills)};
+  const SATURATED_FILLS = ${JSON.stringify(SKETCH_LOOK.saturatedFills)};
+  const TONES = ${JSON.stringify(SKETCH_LOOK.tones)};
   const HATCH_COLOR = "#8a8a94";
   const PAPER_LINE_COLOR = "#d4d4d8";
   const PAPER_PATTERN_SIZE = 20;
@@ -38,13 +19,13 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     density: "airy",
     paper: "plain",
   };
-  const ROUGHNESS_SHAPE = 1.1;
-  const ROUGHNESS_EDGE = 0.9;
-  const BOWING = 0.8;
+  const ROUGHNESS_SHAPE = ${SKETCH_LOOK.roughnessShape};
+  const ROUGHNESS_EDGE = ${SKETCH_LOOK.roughnessEdge};
+  const BOWING = ${SKETCH_LOOK.bowing};
   const HACHURE_GAP = 5;
-  const STROKE_WIDTH = 1.6;
+  const STROKE_WIDTH = ${SKETCH_LOOK.strokeWidth};
   const THICK_STROKE_WIDTH = 3.4;
-  const DASH_PATTERN = [6, 6];
+  const DASH_PATTERN = ${JSON.stringify(SKETCH_LOOK.dashPattern)};
   const SEED_FIRST = 7;
   const SEED_STEP = 13;
   const CORNER_RADIUS = 6;
@@ -131,13 +112,13 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     });
   };
 
-  const createDrawingContext = ({ svg, look, offsetX = 0, pendingStrikes }) => {
+  const createDrawingContext = ({ svg, look, offsetX = 0, pendingDrawings }) => {
     const roughLibrary = window.rough;
     const seedState = { next: SEED_FIRST };
     return {
       look,
       offsetX,
-      pendingStrikes,
+      pendingDrawings,
       generator: roughLibrary ? roughLibrary.svg(svg) : null,
       nextSeed: () => {
         const seed = seedState.next;
@@ -202,7 +183,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
   const addSceneText = (context, group, words, placement) => {
     const textElement = addTextLines(group, words, placement);
     const isStruck = placement.struck === true;
-    if (isStruck) context.pendingStrikes.push({ context, group, textElement });
+    if (isStruck) context.pendingDrawings.strikes.push({ context, group, textElement });
     return textElement;
   };
 
@@ -742,22 +723,48 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     };
   };
 
-  const measureNoteTextBox = (noteElement, sceneRect, sceneWidth, offsetX) => {
-    const textRange = document.createRange();
-    textRange.selectNodeContents(noteElement);
-    const textRect = textRange.getBoundingClientRect();
+  const toSceneBox = (domRect, sceneRect, sceneWidth, offsetX) => {
     const scale = sceneRect.width / sceneWidth;
     return {
-      left: (textRect.left - sceneRect.left) / scale - offsetX,
-      right: (textRect.right - sceneRect.left) / scale - offsetX,
-      top: (textRect.top - sceneRect.top) / scale,
-      bottom: (textRect.bottom - sceneRect.top) / scale,
+      left: (domRect.left - sceneRect.left) / scale - offsetX,
+      right: (domRect.right - sceneRect.left) / scale - offsetX,
+      top: (domRect.top - sceneRect.top) / scale,
+      bottom: (domRect.bottom - sceneRect.top) / scale,
     };
   };
 
-  const drawPendingNoteLink = (pendingLink, noteElement, sceneRect, sceneWidth) => {
-    const noteBox = measureNoteTextBox(noteElement, sceneRect, sceneWidth, pendingLink.context.offsetX);
-    const { noteEnd, targetEnd } = closestEndsOf(noteBox, boxOfTarget(pendingLink.target));
+  const measureNoteTextBox = (noteElement, sceneRect, sceneWidth, offsetX) => {
+    const textRange = document.createRange();
+    textRange.selectNodeContents(noteElement);
+    return toSceneBox(textRange.getBoundingClientRect(), sceneRect, sceneWidth, offsetX);
+  };
+
+  const isPartEndpoint = (endpoint) => typeof endpoint === "string" && endpoint.includes("#");
+
+  const isPartEdge = (edge) => isPartEndpoint(edge.from) || isPartEndpoint(edge.to);
+
+  const partBoxOf = (partId, sceneElement, sceneRect, sceneWidth, offsetX) => {
+    const [screenId, partName] = partId.split("#");
+    const partSelector = \`[data-screen-id="\${CSS.escape(screenId)}"] [data-part="\${CSS.escape(partName)}"]\`;
+    const partElement = sceneElement.querySelector(partSelector);
+    const isPartMissing = partElement === null;
+    if (isPartMissing) throw new Error(\`Link points at unknown screen part "\${partId}"\`);
+
+    return toSceneBox(partElement.getBoundingClientRect(), sceneRect, sceneWidth, offsetX);
+  };
+
+  const boxOfLinkTarget = (target, sceneElement, sceneRect, sceneWidth, offsetX) => {
+    const isPartTarget = target.partId !== undefined;
+    if (isPartTarget) return partBoxOf(target.partId, sceneElement, sceneRect, sceneWidth, offsetX);
+
+    return boxOfTarget(target);
+  };
+
+  const drawPendingNoteLink = (pendingLink, noteElement, sceneElement, sceneRect, sceneWidth) => {
+    const { context } = pendingLink;
+    const noteBox = measureNoteTextBox(noteElement, sceneRect, sceneWidth, context.offsetX);
+    const targetBox = boxOfLinkTarget(pendingLink.target, sceneElement, sceneRect, sceneWidth, context.offsetX);
+    const { noteEnd, targetEnd } = closestEndsOf(noteBox, targetBox);
     const { from, to } = shortenSegment(noteEnd, targetEnd);
     const style = {
       fill: "none",
@@ -771,8 +778,36 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
   const drawPendingNoteLinks = (sceneElement, sceneWidth, pendingLinks) => {
     const sceneRect = sceneElement.getBoundingClientRect();
     for (const { pendingLink, noteElement } of pendingLinks) {
-      drawPendingNoteLink(pendingLink, noteElement, sceneRect, sceneWidth);
+      drawPendingNoteLink(pendingLink, noteElement, sceneElement, sceneRect, sceneWidth);
     }
+  };
+
+  const boxToNode = (box) => ({ x: box.left, y: box.top, w: box.right - box.left, h: box.bottom - box.top });
+
+  const drawPendingPartEdge = (pendingEdge, sceneElement, sceneRect, sceneWidth) => {
+    const { edge, context, parent, nodesById } = pendingEdge;
+    const nodesWithParts = new Map(nodesById);
+    for (const endpoint of [edge.from, edge.to]) {
+      const isEndpointAPart = isPartEndpoint(endpoint);
+      if (!isEndpointAPart) continue;
+
+      const partBox = partBoxOf(endpoint, sceneElement, sceneRect, sceneWidth, context.offsetX);
+      nodesWithParts.set(endpoint, boxToNode(partBox));
+    }
+    const geometry = edgeGeometry(edge, nodesWithParts, context.look);
+    drawEdgeGroup(context, parent, edge, geometry);
+  };
+
+  const drawPendingPartEdges = (sceneElement, sceneWidth, pendingEdges) => {
+    const sceneRect = sceneElement.getBoundingClientRect();
+    for (const pendingEdge of pendingEdges) drawPendingPartEdge(pendingEdge, sceneElement, sceneRect, sceneWidth);
+  };
+
+  const drawPartEdgesOnceFontsLoad = (sceneElement, sceneWidth, pendingEdges) => {
+    const isNoEdgePending = pendingEdges.length === 0;
+    if (isNoEdgePending) return;
+
+    runOnceFontsLoad(() => drawPendingPartEdges(sceneElement, sceneWidth, pendingEdges));
   };
 
   const runOnceFontsLoad = (drawWhenReady) => {
@@ -850,10 +885,21 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     return { ...note, x: noteX, y: noteY, w: note.w ?? NOTE_DEFAULT_WIDTH };
   };
 
+  const placePartNote = (context, parent, note, beside) => {
+    const isBesideLook = context.look.notePlacement === "beside";
+    if (!isBesideLook) throw new Error(\`A note linked to a screen part needs notePlacement "beside": "\${note.link}"\`);
+
+    const pendingLink = placeNoteLink(context, parent, note, { partId: note.link });
+    return { ...beside, pendingLink };
+  };
+
   const placeNote = (context, parent, note, targets, badgeNumber) => {
     const isLinked = note.link !== undefined;
     const beside = { ...note, w: note.w ?? NOTE_DEFAULT_WIDTH };
     if (!isLinked) return beside;
+
+    const isPartLink = isPartEndpoint(note.link);
+    if (isPartLink) return placePartNote(context, parent, note, beside);
 
     const target = targets.get(note.link);
     if (target === undefined) throw new Error(\`Note links to unknown id "\${note.link}"\`);
@@ -891,9 +937,15 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     const targets = new Map(nodes.map((node) => [node.id, targetOfNode(node)]));
 
     for (const rule of scene.rules ?? []) drawRule(context, parent, rule);
-    for (const node of nodes) drawNode(context, parent, node);
+    const svgNodes = nodes.filter((node) => !isScreenNode(node));
+    for (const node of svgNodes) drawNode(context, parent, node);
 
     for (const edge of scene.edges ?? []) {
+      const isEdgeToPart = isPartEdge(edge);
+      if (isEdgeToPart) {
+        context.pendingDrawings.partEdges.push({ edge, context, parent, nodesById });
+        continue;
+      }
       const geometry = edgeGeometry(edge, nodesById, context.look);
       targets.set(edge.id, targetOfEdge(geometry));
       drawEdgeGroup(context, parent, edge, geometry);
@@ -901,6 +953,32 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
 
     for (const label of scene.labels ?? []) drawLabel(context, parent, label);
     return placeNotes(context, parent, scene.notes ?? [], targets);
+  };
+
+  const isScreenNode = (node) => node.kind === "screen";
+
+  const screenNodesOf = (scene) => {
+    const isPanelScene = scene.panels !== undefined;
+    if (!isPanelScene) return screenNodesAt(scene.nodes, 0);
+
+    return scene.panels.flatMap((panel) => screenNodesAt(panel.scene.nodes, panel.offsetX));
+  };
+
+  const screenNodesAt = (nodes, offsetX) => nodes.filter(isScreenNode).map((node) => ({ node, offsetX }));
+
+  const addScreenNode = (sceneElement, node, offsetX) => {
+    const isHtmlMissing = node.html === undefined;
+    if (isHtmlMissing) throw new Error(\`Screen node "\${node.id}" needs html\`);
+
+    const screenElement = document.createElement("div");
+    screenElement.className = "sketch-screen";
+    screenElement.dataset.screenId = node.id;
+    screenElement.style.left = \`\${node.x + offsetX}px\`;
+    screenElement.style.top = \`\${node.y}px\`;
+    screenElement.style.width = \`\${node.w}px\`;
+    screenElement.style.height = \`\${node.h}px\`;
+    screenElement.innerHTML = \`<div class="sk-wireframe">\${node.html}</div>\`;
+    sceneElement.append(screenElement);
   };
 
   const addNoteText = (sceneElement, placedNote) => {
@@ -916,7 +994,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     return noteElement;
   };
 
-  const drawPanel = (svg, panel, pendingStrikes) => {
+  const drawPanel = (svg, panel, pendingDrawings) => {
     const look = normalizeLook(panel.scene.look);
     const panelGroup = createSvgElement("g");
     setAttributes(panelGroup, { transform: \`translate(\${panel.offsetX} 0)\` });
@@ -925,7 +1003,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     svg.append(panelGroup);
 
     createPaperRect(panelGroup, { x: 0, y: 0, w: panel.width, h: panel.height }, look.paper);
-    const context = createDrawingContext({ svg, look, offsetX: panel.offsetX, pendingStrikes });
+    const context = createDrawingContext({ svg, look, offsetX: panel.offsetX, pendingDrawings });
     const placedNotes = drawSceneGraphics(panelGroup, panel.scene, context);
     return placedNotes.map((placedNote) => ({
       ...placedNote,
@@ -934,15 +1012,15 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     }));
   };
 
-  const drawSceneBody = (svg, scene, pendingStrikes) => {
+  const drawSceneBody = (svg, scene, pendingDrawings) => {
     const isPanelScene = scene.panels !== undefined;
     if (!isPanelScene) {
-      return drawPanel(svg, { offsetX: 0, width: scene.width, height: scene.height, scene }, pendingStrikes);
+      return drawPanel(svg, { offsetX: 0, width: scene.width, height: scene.height, scene }, pendingDrawings);
     }
 
-    const outerContext = createDrawingContext({ svg, look: normalizeLook(), pendingStrikes });
+    const outerContext = createDrawingContext({ svg, look: normalizeLook(), pendingDrawings });
     drawSceneGraphics(svg, { rules: scene.rules, labels: scene.labels }, outerContext);
-    return scene.panels.flatMap((panel) => drawPanel(svg, panel, pendingStrikes));
+    return scene.panels.flatMap((panel) => drawPanel(svg, panel, pendingDrawings));
   };
 
   const createSceneSvg = (scene) => {
@@ -977,16 +1055,18 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
 
     const svg = createSceneSvg(scene);
     sceneElement.append(svg);
-    const pendingStrikes = [];
-    const placedNotes = drawSceneBody(svg, scene, pendingStrikes);
+    const pendingDrawings = { strikes: [], partEdges: [] };
+    const placedNotes = drawSceneBody(svg, scene, pendingDrawings);
     const noteElements = placedNotes.map((placedNote) => addNoteText(sceneElement, placedNote));
+    for (const { node, offsetX } of screenNodesOf(scene)) addScreenNode(sceneElement, node, offsetX);
 
     frame.dataset.sceneWidth = scene.width;
     frame.dataset.sceneHeight = scene.height;
     frame.append(sceneElement);
     fitScene(frame);
     linkNotesOnceFontsLoad(sceneElement, scene.width, pairPendingLinks(placedNotes, noteElements));
-    strikeTextsOnceFontsLoad(pendingStrikes);
+    drawPartEdgesOnceFontsLoad(sceneElement, scene.width, pendingDrawings.partEdges);
+    strikeTextsOnceFontsLoad(pendingDrawings.strikes);
   };
 
   const fitScenes = (root) => {
@@ -1175,6 +1255,15 @@ export const SKETCH_SCENE_STYLE = `:root {
     font-family: "IBM Plex Mono", monospace;
     font-size: 12px;
     color: var(--ink-soft);
+  }
+
+  .sketch-screen {
+    position: absolute;
+  }
+
+  .sketch-screen > .sk-wireframe {
+    width: 100%;
+    height: 100%;
   }
 
   .sketch-frame {
