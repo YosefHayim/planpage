@@ -3,18 +3,7 @@ const APP_WINDOW_DOT_FILLS = ["red", "yellow", "green"];
 const APP_WINDOW_DOT_SIDE_RATIO = 0.4;
 const APP_WINDOW_DOT_LEFT_RATIO = 0.4;
 const APP_WINDOW_DOT_STEP_RATIO = 0.6;
-const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const TERMINAL_TITLE_BAR_COLOR = "#343a40";
-
-const drawSolidBar = (layer, box, color) => {
-  const barShape = document.createElementNS(SVG_NAMESPACE, "rect");
-  barShape.setAttribute("x", box.x);
-  barShape.setAttribute("y", box.y);
-  barShape.setAttribute("width", box.w);
-  barShape.setAttribute("height", box.h);
-  barShape.setAttribute("fill", color);
-  layer.svg.append(barShape);
-};
 const EXTENSION_ARROW_HALF_WIDTH_RATIO = 0.06;
 const EXTENSION_ARROW_EDGE_RATIO = 0.2;
 const LAPTOP_NOTCH_LEFT_RATIO = 0.4;
@@ -137,12 +126,12 @@ window.SketchWireframe.definePart("sk-watch", (drawing) => {
 });
 
 window.SketchWireframe.definePart("sk-terminal-window", (drawing) => {
-  const { roundedRectangle } = window.SketchWireframe;
+  const { roundedRectangle, solidFill } = window.SketchWireframe;
   const { box, seed, under } = drawing;
   const [titleChild] = measureChildren(drawing, ".sk-terminal-title");
 
   roundedRectangle(under, box, { tone: "ink", seed });
-  drawSolidBar(under, titleChild.box, TERMINAL_TITLE_BAR_COLOR);
+  solidFill(under, titleChild.box, { color: TERMINAL_TITLE_BAR_COLOR });
 });
 
 window.SketchWireframe.definePart("sk-extension-popup", (drawing) => {

@@ -482,17 +482,6 @@ const appendSolidCircle = (layer, box, color) => {
   layer.svg.append(circleNode);
 };
 
-const appendSolidSquare = (layer, box, color) => {
-  const squareNode = document.createElementNS(SVG_NAMESPACE, "rect");
-  squareNode.setAttribute("x", box.x);
-  squareNode.setAttribute("y", box.y);
-  squareNode.setAttribute("width", box.w);
-  squareNode.setAttribute("height", box.h);
-  squareNode.setAttribute("fill", color);
-  squareNode.setAttribute("stroke", "none");
-  layer.svg.append(squareNode);
-};
-
 const pickSolidDotColor = (element) => {
   const { readFill, readTone } = window.SketchWireframe;
   const fill = readFill(element);
@@ -785,7 +774,7 @@ const readQrModuleBox = (box, moduleSize, row, column, inset) => ({
 });
 
 window.SketchWireframe.definePart("sk-qr-code", (drawing) => {
-  const { rectangle } = window.SketchWireframe;
+  const { rectangle, solidFill } = window.SketchWireframe;
   const { box, seed, under } = drawing;
   const moduleSize = Math.min(box.w, box.h) / QR_GRID_SIZE;
   const moduleInset = moduleSize * QR_MODULE_GAP_RATIO;
@@ -796,7 +785,7 @@ window.SketchWireframe.definePart("sk-qr-code", (drawing) => {
     .filter((cell) => !isQrFinderZone(cell.row, cell.column) && isQrDarkCell(cell.row, cell.column, seed));
   for (const darkCell of darkCells) {
     const moduleBox = readQrModuleBox(box, moduleSize, darkCell.row, darkCell.column, moduleInset);
-    appendSolidSquare(under, moduleBox, SKETCH_TONE_COLORS.ink);
+    solidFill(under, moduleBox, { color: SKETCH_TONE_COLORS.ink });
   }
 
   const finderEdge = QR_GRID_SIZE - QR_FINDER_SIZE;
@@ -814,7 +803,7 @@ window.SketchWireframe.definePart("sk-qr-code", (drawing) => {
     };
     rectangle(under, finderBox, { tone: "ink", seed: seed + 900 + finderIndex });
     const innerBox = readQrModuleBox(box, moduleSize, finderCorner.row + QR_FINDER_INNER_OFFSET, finderCorner.column + QR_FINDER_INNER_OFFSET, 0);
-    appendSolidSquare(under, { ...innerBox, w: QR_FINDER_INNER_SIZE * moduleSize, h: QR_FINDER_INNER_SIZE * moduleSize }, SKETCH_TONE_COLORS.ink);
+    solidFill(under, { ...innerBox, w: QR_FINDER_INNER_SIZE * moduleSize, h: QR_FINDER_INNER_SIZE * moduleSize }, { color: SKETCH_TONE_COLORS.ink });
   }
 });
 
