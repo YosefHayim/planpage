@@ -102,6 +102,18 @@ data → render() → marked HTML → highlight() → coloured HTML → write/op
 
 Static render is the default. The post-back server is opt-in and blocks until the user sends a feedback batch — then exits cleanly.
 
+## Sketch plans
+
+Plans can be drawn as hand-sketched pages: one picture per page, short notes tied to their part, and a last "Your call" page with options A, B and C. `sketch-plan` is the default template for plans.
+
+```bash
+planpage render sketch-plan --data plan.json --out plan.html   # write the page
+planpage serve plan.html decision.json --timeout 3600           # open it and wait for your pick
+planpage recipes                                                # list the 64 sketch recipes
+```
+
+The decision file has `approved`, `choice` (the letter you picked) and `notes`. The style guide, the scene format and the recipe list are in [skills/planpage/SKETCH-STYLE.md](skills/planpage/SKETCH-STYLE.md).
+
 ## Use as a library
 
 `preact` is a peer dependency, so your JSX and planpage share one Preact copy (two copies render a blank page). Install both:
