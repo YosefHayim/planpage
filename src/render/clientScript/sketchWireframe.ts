@@ -71,8 +71,8 @@ const appendToLayer = (layer, shape) => {
   layer.svg.append(shape);
 };
 
-const createRoundedRectanglePath = (box) => {
-  const radius = Math.min(box.w, box.h) * ROUNDED_CORNER_RATIO;
+const createRoundedRectanglePath = (box, cornerRatio) => {
+  const radius = Math.min(box.w, box.h) * cornerRatio;
   const right = box.x + box.w;
   const bottom = box.y + box.h;
   return [
@@ -123,7 +123,20 @@ const rectangle = (layer, box, style) => {
 };
 
 const roundedRectangle = (layer, box, style) => {
-  appendToLayer(layer, layer.rough.path(createRoundedRectanglePath(box), readRoughStyle(style)));
+  appendToLayer(layer, layer.rough.path(createRoundedRectanglePath(box, ROUNDED_CORNER_RATIO), readRoughStyle(style)));
+};
+
+const solidFill = (layer, box, style) => {
+  const fillPath = createRoundedRectanglePath(box, style.cornerRatio ?? 0);
+  const solidShape = layer.rough.path(fillPath, {
+    fill: style.color,
+    fillStyle: "solid",
+    stroke: "none",
+    roughness: 0,
+    bowing: 0,
+  });
+
+  appendToLayer(layer, solidShape);
 };
 
 const line = (layer, from, to, style) => {
@@ -224,6 +237,7 @@ window.SketchWireframe = {
   },
   rectangle,
   roundedRectangle,
+  solidFill,
   line,
   circle,
   ellipse,

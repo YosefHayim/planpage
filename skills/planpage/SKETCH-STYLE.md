@@ -77,6 +77,35 @@ a `sk-*` class and a drawer in the wireframe island.
   For now, part links work only with `look.notePlacement: "beside"`.
 - Text stays real HTML. Never draw words with rough.js.
 
+### How to sketch a wireframe
+
+1. Start from a screen recipe. `npx planpage recipes` lists them, and `npx planpage recipes <id>` prints one. Copy its `screen` node and change it.
+2. Look up the parts. `npx planpage parts` lists them, and `npx planpage parts <className>` prints the example HTML of one.
+3. Lay out the screen with Tailwind classes (`flex`, `grid`, `gap-4`, `p-4`) inside one device frame part: `sk-phone`, `sk-browser-window` or `sk-terminal-window`. Put the other parts inside the frame.
+4. Set states with data attributes, such as `data-status="error"` or `data-checked`.
+5. Give a part a `data-part` name when a note points at it. The note's `link` is `"<screenId>#<data-part>"`.
+6. Write text as real HTML. For Hebrew, add `dir="rtl"` to the element that holds the text.
+
+This scene has one phone screen and one note that points at its main button:
+
+```json
+{
+  "width": 1000,
+  "height": 700,
+  "look": { "notePlacement": "beside" },
+  "nodes": [
+    {
+      "id": "loginScreen", "kind": "screen", "x": 40, "y": 40, "w": 320, "h": 600,
+      "html": "<div class='sk-phone'><div class='flex flex-col gap-4 p-4'><h2>Log in</h2><input class='sk-input' placeholder='Email'><button class='sk-button sk-main' data-part='log-in-button'>Log in</button></div></div>"
+    }
+  ],
+  "notes": [
+    { "x": 600, "y": 300, "w": 170, "link": "loginScreen#log-in-button", "words": "The main action." }
+  ]
+}
+```
+
+## Plan page format
 
 A plan is one JSON file with a title and a list of pages. `SketchPlan` draws it.
 
@@ -261,7 +290,7 @@ The owner's answer comes back as JSON. See [Reading the decision](#reading-the-d
 
 ## Recipes
 
-There are 64 approved recipes in 8 groups. Each recipe is a ready-made `SketchScene` (plus optional `toggle` and `code`) with a `useFor` line. The recipes are in `src/sketchRecipes/`, one file per group, and `SKETCH_RECIPES` exports them all.
+There are 80 approved recipes in 10 groups. Each recipe is a ready-made `SketchScene` (plus optional `toggle` and `code`) with a `useFor` line. The recipes are in `src/sketchRecipes/`, one file per group, and `SKETCH_RECIPES` exports them all.
 
 Pull one recipe into a plan:
 
@@ -349,6 +378,32 @@ Use it for, in short. The full notes per recipe are in each group file.
 | `ui-states` | Loading, empty, error and ready. |
 | `rtl-mirror` | Hebrew layouts. |
 | `form-errors` | A form with its checks. |
+
+### Account screens (`accountRecipes.ts`)
+
+| id | Use it for |
+| --- | --- |
+| `login-screen` | A log-in screen with email, password and social sign-in. |
+| `signup-screen` | A sign-up form with its checks. |
+| `forgot-password-screen` | Asking for a reset link. |
+| `verify-code-screen` | A one-time code step. |
+| `onboarding-screen` | First-run steps that teach the app. |
+| `settings-screen` | Account and app settings with switches. |
+| `profile-screen` | A user profile with its actions. |
+| `paywall-screen` | Choosing a plan before the app opens. |
+
+### Product screens (`productRecipes.ts`)
+
+| id | Use it for |
+| --- | --- |
+| `dashboard-screen` | Stats, a chart and recent activity. |
+| `list-detail-screen` | A list with the chosen item open beside it. |
+| `ai-chat-screen` | A chat with an assistant. |
+| `checkout-screen` | Paying for an order. |
+| `pricing-screen` | Comparing plans. |
+| `landing-screen` | A marketing home page. |
+| `not-found-screen` | A missing page or an empty result. |
+| `search-screen` | Search with filters and results. |
 
 ### Decisions (`decisionRecipes.ts`)
 
