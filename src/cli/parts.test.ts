@@ -8,12 +8,12 @@ describe("partsCommand", () => {
   beforeEach(() => {
     writtenText = "";
     errorText = "";
-    vi.spyOn(process.stdout, "write").mockImplementation((text: string) => {
-      writtenText += text;
+    vi.spyOn(process.stdout, "write").mockImplementation((text) => {
+      writtenText += String(text);
       return true;
     });
-    vi.spyOn(process.stderr, "write").mockImplementation((text: string) => {
-      errorText += text;
+    vi.spyOn(process.stderr, "write").mockImplementation((text) => {
+      errorText += String(text);
       return true;
     });
   });

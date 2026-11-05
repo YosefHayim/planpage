@@ -679,7 +679,8 @@ export const TEMPLATE_INDEX: ReadonlyArray<TemplateInfo> = [
   },
   {
     name: "sketch-kit",
-    blurb: "Every hand-drawn wireframe part (buttons, cards, icons, frames) with its examples and states.",
+    blurb:
+      "Every hand-drawn wireframe part (buttons, cards, icons, frames) with its examples and states.",
     category: "meta",
   },
   {

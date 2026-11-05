@@ -61,7 +61,10 @@ const printOnePart = (className: string, options: PartsCommandOptions): number =
   return printPartExamples(part);
 };
 
-export const partsCommand = (className: string | undefined, options: PartsCommandOptions): number => {
+export const partsCommand = (
+  className: string | undefined,
+  options: PartsCommandOptions,
+): number => {
   const isClassNameGiven = className !== undefined;
   if (isClassNameGiven) return printOnePart(className, options);
 

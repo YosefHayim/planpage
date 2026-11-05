@@ -28,7 +28,9 @@ describe("SKETCH_PARTS", () => {
 
 describe("WIREFRAME_ICONS", () => {
   it("keys every icon by its kebab-case Lucide name", () => {
-    const badNames = Object.keys(WIREFRAME_ICONS).filter((name) => !/^[a-z]+(-[a-z]+)*$/.test(name));
+    const badNames = Object.keys(WIREFRAME_ICONS).filter(
+      (name) => !/^[a-z]+(-[a-z]+)*$/.test(name),
+    );
 
     expect(badNames).toEqual([]);
   });

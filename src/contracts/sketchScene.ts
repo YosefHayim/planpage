@@ -209,7 +209,14 @@ export interface SketchPart {
   readonly examples: readonly SketchPartExample[];
 }
 
-export type SketchIconTag = "path" | "circle" | "rect" | "line" | "polyline" | "polygon" | "ellipse";
+export type SketchIconTag =
+  | "path"
+  | "circle"
+  | "rect"
+  | "line"
+  | "polyline"
+  | "polygon"
+  | "ellipse";
 
 export interface SketchIconShape {
   readonly tag: SketchIconTag;

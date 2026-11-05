@@ -1,12 +1,12 @@
+import { SKETCH_LOOK } from "./sketchLook";
 import { CHARTS_PART_SCRIPT, CHARTS_PART_STYLE } from "./sketchParts/chartsPartScripts";
-import { CONTROLS_PART_SCRIPT, CONTROLS_PART_STYLE } from "./sketchParts/controlsPartScripts";
 import { CONTENT_PART_SCRIPT, CONTENT_PART_STYLE } from "./sketchParts/contentPartScripts";
+import { CONTROLS_PART_SCRIPT, CONTROLS_PART_STYLE } from "./sketchParts/controlsPartScripts";
 import { FRAMES_PART_SCRIPT, FRAMES_PART_STYLE } from "./sketchParts/framesPartScripts";
 import { ICONS_PART_SCRIPT, ICONS_PART_STYLE } from "./sketchParts/iconsPartScripts";
 import { MARKS_PART_SCRIPT, MARKS_PART_STYLE } from "./sketchParts/marksPartScripts";
 import { NAVIGATION_PART_SCRIPT, NAVIGATION_PART_STYLE } from "./sketchParts/navigationPartScripts";
 import { OVERLAYS_PART_SCRIPT, OVERLAYS_PART_STYLE } from "./sketchParts/overlaysPartScripts";
-import { SKETCH_LOOK } from "./sketchLook";
 
 const PART_SCRIPTS = [
   CONTROLS_PART_SCRIPT,

@@ -25,10 +25,16 @@ export const SketchKit = (): VNode => (
   <div class="space-y-12">
     <header class="space-y-2">
       <h1 class="text-2xl font-bold">Sketch kit</h1>
-      <p>Every hand-drawn wireframe part, with its examples and states. Layout is plain Tailwind.</p>
+      <p>
+        Every hand-drawn wireframe part, with its examples and states. Layout is plain Tailwind.
+      </p>
     </header>
     {SKETCH_KIT_SECTIONS.map(({ group, title }) => (
-      <SketchKitGroup key={group} title={title} parts={SKETCH_PARTS.filter((part) => part.group === group)} />
+      <SketchKitGroup
+        key={group}
+        title={title}
+        parts={SKETCH_PARTS.filter((part) => part.group === group)}
+      />
     ))}
   </div>
 );

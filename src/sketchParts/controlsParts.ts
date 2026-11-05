@@ -10,10 +10,22 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
       { label: "Main", html: '<button type="button" class="sk-button sk-main">Save</button>' },
       { label: "Secondary", html: '<button type="button" class="sk-button">Cancel</button>' },
       { label: "Ghost", html: '<button type="button" class="sk-button sk-ghost">Skip</button>' },
-      { label: "Danger", html: '<button type="button" class="sk-button sk-danger">Delete</button>' },
-      { label: "Focus", html: '<button type="button" class="sk-button sk-main" data-status="focus">Save</button>' },
-      { label: "Disabled", html: '<button type="button" class="sk-button" data-status="disabled">Save</button>' },
-      { label: "Error", html: '<button type="button" class="sk-button" data-status="error">Retry</button>' },
+      {
+        label: "Danger",
+        html: '<button type="button" class="sk-button sk-danger">Delete</button>',
+      },
+      {
+        label: "Focus",
+        html: '<button type="button" class="sk-button sk-main" data-status="focus">Save</button>',
+      },
+      {
+        label: "Disabled",
+        html: '<button type="button" class="sk-button" data-status="disabled">Save</button>',
+      },
+      {
+        label: "Error",
+        html: '<button type="button" class="sk-button" data-status="error">Retry</button>',
+      },
     ],
   },
   {

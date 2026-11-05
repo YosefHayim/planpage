@@ -83,7 +83,9 @@ program
 
 program
   .command("parts")
-  .description("list the sketch kit parts, or print one part example HTML (planpage parts <className>)")
+  .description(
+    "list the sketch kit parts, or print one part example HTML (planpage parts <className>)",
+  )
   .argument("[className]", "part class name to print, e.g. sk-button")
   .option("--json", "print the list as JSON (also used when there is no TTY)")
   .action((className: string | undefined, options: PartsCommandOptions) => {
