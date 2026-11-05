@@ -8,6 +8,15 @@ const SCALE_40_LABELS_HTML =
   "<span>40</span><span>30</span><span>20</span><span>10</span><span>0</span>";
 const SCALE_90_LABELS_HTML = "<span>90</span><span>60</span><span>30</span><span>0</span>";
 
+const SCALE_80_LABELS_HTML =
+  "<span>80</span><span>60</span><span>40</span><span>20</span><span>0</span>";
+const X_SCALE_80_LABELS_HTML =
+  "<span>0</span><span>20</span><span>40</span><span>60</span><span>80</span>";
+const TWELVE_WEEK_CALENDAR_NUMBERS = Array.from(
+  { length: 84 },
+  (_, dayIndex) => (dayIndex * 5 + 3) % 9,
+).join(",");
+
 export const CHARTS_PARTS: readonly SketchPart[] = [
   {
     className: "sk-bar-chart",
@@ -169,20 +178,22 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
       {
         label: "Dots",
         html: `<div class="flex w-full gap-3">
-  <div class="flex h-40 flex-col justify-between text-right text-xs">${SCALE_40_LABELS_HTML}</div>
+  <div class="flex h-40 flex-col justify-between text-right text-xs">${SCALE_80_LABELS_HTML}</div>
   <div class="flex min-w-0 flex-1 flex-col gap-1">
-    <div class="sk-scatter-chart h-40" data-numbers="10,20,25,40,40,28,55,62,70,50,85,75"></div>
-    <div class="flex justify-between text-xs"><span>Height</span><span>Weight</span></div>
+    <div class="sk-scatter-chart h-40" data-numbers="10,20,25,40,40,28,55,62,70,50,80,80"></div>
+    <div class="flex justify-between text-xs">${X_SCALE_80_LABELS_HTML}</div>
+    <div class="flex justify-between text-xs"><span>Visits across, sign-ups up</span></div>
   </div>
 </div>`,
       },
       {
         label: "Bubbles sized by second numbers",
         html: `<div class="flex w-full gap-3">
-  <div class="flex h-40 flex-col justify-between text-right text-xs">${SCALE_40_LABELS_HTML}</div>
+  <div class="flex h-40 flex-col justify-between text-right text-xs">${SCALE_80_LABELS_HTML}</div>
   <div class="flex min-w-0 flex-1 flex-col gap-1">
-    <div class="sk-scatter-chart sk-bubble h-40" data-numbers="10,20,25,40,40,28,55,62,70,50,85,75" data-second-numbers="4,9,6,12,7,3"></div>
-    <div class="flex justify-between text-xs"><span>Spend</span><span>Sales</span></div>
+    <div class="sk-scatter-chart sk-bubble h-40" data-numbers="10,20,25,40,40,28,55,62,70,50,80,80" data-second-numbers="4,9,6,12,7,3"></div>
+    <div class="flex justify-between text-xs">${X_SCALE_80_LABELS_HTML}</div>
+    <div class="flex justify-between text-xs"><span>Ad spend across, sales up</span></div>
   </div>
 </div>`,
       },
@@ -268,7 +279,7 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
         label: "Calendar, one column per week",
         html: `<div class="flex w-full gap-3">
   <div class="flex h-40 flex-col justify-around text-right text-xs"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
-  <div class="sk-heatmap-chart sk-calendar h-40 min-w-0 flex-1" data-numbers="2,5,9,4,7,3,8,6,1,3,9,10,4,2,6,8,7,3,5,2,6"></div>
+  <div class="sk-heatmap-chart sk-calendar h-40 min-w-0 flex-1" data-numbers="${TWELVE_WEEK_CALENDAR_NUMBERS}"></div>
 </div>`,
       },
       {
@@ -363,16 +374,18 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Three flows",
-        html: `<div class="flex w-full flex-col gap-2">
-  <div class="sk-sankey-chart h-44"></div>
-  <div class="flex justify-between text-xs"><span>Traffic</span><span>Plans</span></div>
+        html: `<div class="flex w-full gap-3">
+  <div class="flex h-44 flex-col justify-around text-right text-sm"><span>Search</span><span>Social</span><span>Email</span></div>
+  <div class="sk-sankey-chart h-44 min-w-0 flex-1" data-numbers="40,30,20"></div>
+  <div class="flex h-44 flex-col justify-around text-sm"><span>Team</span><span>Pro</span><span>Free</span></div>
 </div>`,
       },
       {
         label: "Right to left, Hebrew labels",
-        html: `<div dir="rtl" class="flex w-full flex-col gap-2">
-  <div class="sk-sankey-chart h-44"></div>
-  <div class="flex justify-between text-xs"><span>תנועה</span><span>תוכניות</span></div>
+        html: `<div dir="rtl" class="flex w-full gap-3">
+  <div class="flex h-44 flex-col justify-around text-right text-sm"><span>חיפוש</span><span>רשתות</span><span>מייל</span></div>
+  <div class="sk-sankey-chart h-44 min-w-0 flex-1" data-numbers="40,30,20"></div>
+  <div class="flex h-44 flex-col justify-around text-sm"><span>צוות</span><span>מקצועי</span><span>חינם</span></div>
 </div>`,
       },
     ],

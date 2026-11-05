@@ -7,7 +7,7 @@ const CHART_SAMPLE_CANDLE_NUMBERS = [20, 28, 18, 26, 26, 30, 24, 28, 28, 29, 20,
 const CHART_SAMPLE_BUMP_RANKS = [1, 2, 3, 2];
 const CHART_SAMPLE_BUMP_SECOND_RANKS = [3, 1, 2, 1];
 const CHART_SAMPLE_PIE_NUMBERS = [30, 45, 15, 10];
-const CHART_SAMPLE_SCATTER_NUMBERS = [10, 20, 25, 40, 40, 28, 55, 62, 70, 50, 85, 75];
+const CHART_SAMPLE_SCATTER_NUMBERS = [10, 20, 25, 40, 40, 28, 55, 62, 70, 50, 80, 80];
 const CHART_SAMPLE_BUBBLE_SIZES = [4, 9, 6, 12, 7, 3];
 const CHART_SAMPLE_RADAR_NUMBERS = [60, 80, 45, 70, 50];
 const CHART_SAMPLE_POLAR_NUMBERS = [30, 45, 20, 60, 35];
@@ -56,8 +56,7 @@ const FUNNEL_MIN_WIDTH_RATIO = 0.2;
 const SANKEY_SOURCE_LEFT_RATIO = 0.1;
 const SANKEY_TARGET_LEFT_RATIO = 0.82;
 const SANKEY_NODE_WIDTH_RATIO = 0.08;
-const SANKEY_STACK_RATIO = 0.8;
-const SANKEY_NODE_GAP_RATIO = 0.04;
+const SANKEY_NODE_FILL_RATIO = 0.7;
 const SANKEY_STEP_COUNT = 16;
 const LIQUID_STEP_COUNT = 32;
 const LIQUID_WAVE_HEIGHT_RATIO = 0.04;
@@ -108,14 +107,14 @@ const readSecondNumbers = (element) => {
   return null;
 };
 
-const presentNumbersOf = (numbers) => numbers.filter((amount) => amount !== null);
+const listPresentNumbers = (numbers) => numbers.filter((amount) => amount !== null);
 
-const zeroForGaps = (numbers) => numbers.map((amount) => amount ?? 0);
+const fillGapsWithZero = (numbers) => numbers.map((amount) => amount ?? 0);
 
-const sumOf = (amounts) => amounts.reduce((sum, amount) => sum + amount, 0);
+const addUp = (amounts) => amounts.reduce((sum, amount) => sum + amount, 0);
 
 const createValueRange = (amounts, isZeroIncluded) => {
-  const presentAmounts = presentNumbersOf(amounts);
+  const presentAmounts = listPresentNumbers(amounts);
   const lowestAmount = Math.min(...presentAmounts);
   const highestAmount = Math.max(...presentAmounts);
   const low = isZeroIncluded ? Math.min(0, lowestAmount) : lowestAmount;
@@ -126,7 +125,7 @@ const createValueRange = (amounts, isZeroIncluded) => {
   return { low, span };
 };
 
-const ratioOfAmount = (range, amount) => (amount - range.low) / range.span;
+const findAmountRatio = (range, amount) => (amount - range.low) / range.span;
 
 const insetBox = (box, ratio) => {
   const insetX = box.w * ratio;
@@ -183,7 +182,7 @@ const createChartFrame = (element, box, isHorizontal) => {
   return { plotBox, xAt, yAt, pointAt };
 };
 
-const alongRatioOf = (index, count) => {
+const findAlongRatio = (index, count) => {
   const isSingleSlot = count === 1;
   if (isSingleSlot) return 0.5;
 
@@ -192,8 +191,8 @@ const alongRatioOf = (index, count) => {
 
 const planSeriesPoints = (frame, series, range) =>
   series.map((amount, index) => {
-    const alongRatio = alongRatioOf(index, series.length);
-    const valueRatio = ratioOfAmount(range, amount);
+    const alongRatio = findAlongRatio(index, series.length);
+    const valueRatio = findAmountRatio(range, amount);
     return frame.pointAt(alongRatio, valueRatio);
   });
 
@@ -237,10 +236,10 @@ const drawBarChart = (drawing) => {
   const { element, box, seed, under } = drawing;
   const isHorizontal = element.classList.contains("sk-horizontal");
   const isStacked = element.classList.contains("sk-stacked");
-  const firstNumbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_NUMBERS));
+  const firstNumbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_NUMBERS));
   const secondNumbers = readSecondNumbers(element);
   const hasSecondSeries = secondNumbers !== null;
-  const seriesNumbers = hasSecondSeries ? [firstNumbers, zeroForGaps(secondNumbers)] : [firstNumbers];
+  const seriesNumbers = hasSecondSeries ? [firstNumbers, fillGapsWithZero(secondNumbers)] : [firstNumbers];
   const stackedTotals = firstNumbers.map((_, index) => sumBelow(seriesNumbers, seriesNumbers.length, index));
   const rangeAmounts = isStacked ? stackedTotals : seriesNumbers.flat();
   const range = createValueRange(rangeAmounts, true);
@@ -249,8 +248,8 @@ const drawBarChart = (drawing) => {
 
   const bars = planBars(firstNumbers, seriesNumbers, isStacked);
   for (const [barIndex, bar] of bars.entries()) {
-    const startPoint = frame.pointAt(bar.alongFrom, ratioOfAmount(range, bar.valueFrom));
-    const endPoint = frame.pointAt(bar.alongTo, ratioOfAmount(range, bar.valueTo));
+    const startPoint = frame.pointAt(bar.alongFrom, findAmountRatio(range, bar.valueFrom));
+    const endPoint = frame.pointAt(bar.alongTo, findAmountRatio(range, bar.valueTo));
     const tone = SERIES_TONES[bar.seriesIndex];
     const fill = SERIES_FILLS[bar.seriesIndex];
     rectangle(under, boxBetween(startPoint, endPoint), { tone, fill, seed: seed + barIndex });
@@ -259,10 +258,10 @@ const drawBarChart = (drawing) => {
 
 const drawSeriesLines = (drawing, isAreaFilled) => {
   const { element, box, seed, under } = drawing;
-  const firstNumbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_NUMBERS));
+  const firstNumbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_NUMBERS));
   const secondNumbers = readSecondNumbers(element);
   const hasSecondSeries = secondNumbers !== null;
-  const seriesNumbers = hasSecondSeries ? [firstNumbers, zeroForGaps(secondNumbers)] : [firstNumbers];
+  const seriesNumbers = hasSecondSeries ? [firstNumbers, fillGapsWithZero(secondNumbers)] : [firstNumbers];
   const range = createValueRange(seriesNumbers.flat(), true);
   const frame = createChartFrame(element, box, false);
   const dotSize = Math.min(frame.plotBox.w, frame.plotBox.h) * DOT_SIZE_RATIO;
@@ -284,7 +283,7 @@ const drawSeriesLines = (drawing, isAreaFilled) => {
 };
 
 const planSliceAngles = (numbers) => {
-  const total = sumOf(numbers);
+  const total = addUp(numbers);
   return numbers.reduce((slices, amount) => {
     const isFirstSlice = slices.length === 0;
     const previousSlice = slices.at(-1);
@@ -296,8 +295,8 @@ const planSliceAngles = (numbers) => {
 
 const drawSlices = (drawing, hasCenterHole) => {
   const { element, box, seed, under } = drawing;
-  const numbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_PIE_NUMBERS));
-  const isNothingToDraw = sumOf(numbers) <= 0;
+  const numbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_PIE_NUMBERS));
+  const isNothingToDraw = addUp(numbers) <= 0;
   if (isNothingToDraw) return;
 
   const center = boxCenter(box);
@@ -322,10 +321,10 @@ const planScatterPairs = (numbers) =>
 const drawScatterChart = (drawing) => {
   const { element, box, seed, under } = drawing;
   const isBubble = element.classList.contains("sk-bubble");
-  const pairs = planScatterPairs(zeroForGaps(readChartNumbers(element, CHART_SAMPLE_SCATTER_NUMBERS)));
-  const sizeNumbers = zeroForGaps(readSecondNumbers(element) ?? CHART_SAMPLE_BUBBLE_SIZES);
-  const xRange = createValueRange(pairs.map((pair) => pair.x), false);
-  const yRange = createValueRange(pairs.map((pair) => pair.y), false);
+  const pairs = planScatterPairs(fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_SCATTER_NUMBERS)));
+  const sizeNumbers = fillGapsWithZero(readSecondNumbers(element) ?? CHART_SAMPLE_BUBBLE_SIZES);
+  const xRange = createValueRange(pairs.map((pair) => pair.x), true);
+  const yRange = createValueRange(pairs.map((pair) => pair.y), true);
   const sizeRange = createValueRange(sizeNumbers, false);
   const frame = createChartFrame(element, box, false);
   const dotSize = Math.min(frame.plotBox.w, frame.plotBox.h) * SCATTER_DOT_SIZE_RATIO;
@@ -333,8 +332,8 @@ const drawScatterChart = (drawing) => {
   drawGrid(under, frame, seed);
 
   for (const [pairIndex, pair] of pairs.entries()) {
-    const point = frame.pointAt(ratioOfAmount(xRange, pair.x), ratioOfAmount(yRange, pair.y));
-    const sizeRatio = ratioOfAmount(sizeRange, sizeNumbers[pairIndex] ?? 0);
+    const point = frame.pointAt(findAmountRatio(xRange, pair.x), findAmountRatio(yRange, pair.y));
+    const sizeRatio = findAmountRatio(sizeRange, sizeNumbers[pairIndex] ?? 0);
     const bubbleDiameter = bubbleRange * (BUBBLE_MIN_RATIO + BUBBLE_GROWTH_RATIO * sizeRatio);
     const diameter = isBubble ? bubbleDiameter : dotSize;
     const fill = isBubble ? "blue" : undefined;
@@ -357,7 +356,7 @@ const planCandles = (numbers) => {
 
 const drawCandlestickChart = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const numbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_CANDLE_NUMBERS));
+  const numbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_CANDLE_NUMBERS));
   const candles = planCandles(numbers);
   const range = createValueRange(numbers, false);
   const frame = createChartFrame(element, box, false);
@@ -368,13 +367,13 @@ const drawCandlestickChart = (drawing) => {
     const centerRatio = (candleIndex + 0.5) * slotRatio;
     const isUpCandle = candle.close >= candle.open;
     const color = isUpCandle ? "green" : "red";
-    const wickStart = frame.pointAt(centerRatio, ratioOfAmount(range, candle.low));
-    const wickEnd = frame.pointAt(centerRatio, ratioOfAmount(range, candle.high));
+    const wickStart = frame.pointAt(centerRatio, findAmountRatio(range, candle.low));
+    const wickEnd = frame.pointAt(centerRatio, findAmountRatio(range, candle.high));
     line(under, wickStart, wickEnd, { tone: color, seed: seed + candleIndex });
 
     const bodyHalfWidth = (slotRatio * CANDLE_BODY_WIDTH_RATIO) / 2;
-    const bodyCornerA = frame.pointAt(centerRatio - bodyHalfWidth, ratioOfAmount(range, candle.open));
-    const bodyCornerB = frame.pointAt(centerRatio + bodyHalfWidth, ratioOfAmount(range, candle.close));
+    const bodyCornerA = frame.pointAt(centerRatio - bodyHalfWidth, findAmountRatio(range, candle.open));
+    const bodyCornerB = frame.pointAt(centerRatio + bodyHalfWidth, findAmountRatio(range, candle.close));
     rectangle(under, boxBetween(bodyCornerA, bodyCornerB), { tone: color, fill: color, seed: seed + candleIndex + 1 });
   }
 };
@@ -394,7 +393,7 @@ const planWaterfallSteps = (numbers) => {
 
 const drawWaterfallChart = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const numbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_WATERFALL_NUMBERS));
+  const numbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_WATERFALL_NUMBERS));
   const steps = planWaterfallSteps(numbers);
   const range = createValueRange(steps.flatMap((step) => [step.from, step.to]), true);
   const frame = createChartFrame(element, box, false);
@@ -405,8 +404,8 @@ const drawWaterfallChart = (drawing) => {
   for (const [stepIndex, step] of steps.entries()) {
     const slotStart = stepIndex * slotRatio + gapRatio / 2;
     const slotEnd = slotStart + slotRatio - gapRatio;
-    const barCornerA = frame.pointAt(slotStart, ratioOfAmount(range, step.from));
-    const barCornerB = frame.pointAt(slotEnd, ratioOfAmount(range, step.to));
+    const barCornerA = frame.pointAt(slotStart, findAmountRatio(range, step.from));
+    const barCornerB = frame.pointAt(slotEnd, findAmountRatio(range, step.to));
     const color = WATERFALL_FILLS[step.kind];
     rectangle(under, boxBetween(barCornerA, barCornerB), { tone: color, fill: color, seed: seed + stepIndex });
 
@@ -414,8 +413,8 @@ const drawWaterfallChart = (drawing) => {
     if (isLastStep) return;
 
     const nextSlotStart = (stepIndex + 1) * slotRatio + gapRatio / 2;
-    const connectorStart = frame.pointAt(slotEnd, ratioOfAmount(range, step.to));
-    const connectorEnd = frame.pointAt(nextSlotStart, ratioOfAmount(range, step.to));
+    const connectorStart = frame.pointAt(slotEnd, findAmountRatio(range, step.to));
+    const connectorEnd = frame.pointAt(nextSlotStart, findAmountRatio(range, step.to));
     line(under, connectorStart, connectorEnd, { tone: "soft", seed: seed + stepIndex + 20, dashed: true });
   }
 };
@@ -432,7 +431,7 @@ const planFunnelWidthRatios = (numbers, isPyramid) => {
 const drawFunnelChart = (drawing) => {
   const { element, box, seed, under } = drawing;
   const isPyramid = element.classList.contains("sk-pyramid");
-  const numbers = presentNumbersOf(readChartNumbers(element, CHART_SAMPLE_FUNNEL_NUMBERS));
+  const numbers = listPresentNumbers(readChartNumbers(element, CHART_SAMPLE_FUNNEL_NUMBERS));
   const widthRatios = planFunnelWidthRatios(numbers, isPyramid);
   const plotBox = insetBox(box, PLOT_PADDING_RATIO);
   const centerX = plotBox.x + plotBox.w / 2;
@@ -469,7 +468,7 @@ const planHeatmapCells = (numbers, columnCount, rowCount, isCalendar) => {
 };
 
 const pickHeatFill = (range, amount) => {
-  const levelIndex = Math.min(HEAT_FILLS.length - 1, Math.floor(ratioOfAmount(range, amount) * HEAT_FILLS.length));
+  const levelIndex = Math.min(HEAT_FILLS.length - 1, Math.floor(findAmountRatio(range, amount) * HEAT_FILLS.length));
   return HEAT_FILLS[levelIndex];
 };
 
@@ -484,16 +483,17 @@ const drawHeatmapChart = (drawing) => {
   const cells = planHeatmapCells(numbers, columnCount, rowCount, isCalendar);
   const range = createValueRange(numbers, false);
   const plotBox = insetBox(box, PLOT_PADDING_RATIO);
-  const cellWidth = plotBox.w / columnCount;
-  const cellHeight = plotBox.h / rowCount;
-  const cellGap = Math.min(cellWidth, cellHeight) * HEAT_CELL_GAP_RATIO;
+  const cellSide = Math.min(plotBox.w / columnCount, plotBox.h / rowCount);
+  const gridLeft = plotBox.x + (plotBox.w - cellSide * columnCount) / 2;
+  const gridTop = plotBox.y + (plotBox.h - cellSide * rowCount) / 2;
+  const cellGap = cellSide * HEAT_CELL_GAP_RATIO;
 
   for (const [cellIndex, cell] of cells.entries()) {
     const cellBox = {
-      x: plotBox.x + cell.column * cellWidth + cellGap / 2,
-      y: plotBox.y + cell.row * cellHeight + cellGap / 2,
-      w: cellWidth - cellGap,
-      h: cellHeight - cellGap,
+      x: gridLeft + cell.column * cellSide + cellGap / 2,
+      y: gridTop + cell.row * cellSide + cellGap / 2,
+      w: cellSide - cellGap,
+      h: cellSide - cellGap,
     };
     const isEmptyCell = cell.amount === null;
     if (isEmptyCell) {
@@ -507,7 +507,7 @@ const drawHeatmapChart = (drawing) => {
 
 const findHalfSplitIndex = (amounts, total) => {
   const halfTotal = total / 2;
-  const runningSums = amounts.map((_, index) => sumOf(amounts.slice(0, index + 1)));
+  const runningSums = amounts.map((_, index) => addUp(amounts.slice(0, index + 1)));
   const crossingIndex = runningSums.findIndex((runningSum) => runningSum >= halfTotal);
   const atLeastOne = Math.max(crossingIndex + 1, 1);
   return Math.min(atLeastOne, amounts.length - 1);
@@ -520,11 +520,11 @@ const layoutTreemap = (box, amounts) => {
   const isSingleTile = amounts.length === 1;
   if (isSingleTile) return [box];
 
-  const total = sumOf(amounts);
+  const total = addUp(amounts);
   const splitIndex = findHalfSplitIndex(amounts, total);
   const firstAmounts = amounts.slice(0, splitIndex);
   const restAmounts = amounts.slice(splitIndex);
-  const firstShare = sumOf(firstAmounts) / total;
+  const firstShare = addUp(firstAmounts) / total;
   const isWide = box.w >= box.h;
   const firstBox = isWide
     ? { x: box.x, y: box.y, w: box.w * firstShare, h: box.h }
@@ -537,7 +537,7 @@ const layoutTreemap = (box, amounts) => {
 
 const drawTreemapChart = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const amounts = presentNumbersOf(readChartNumbers(element, CHART_SAMPLE_TREEMAP_NUMBERS)).filter((amount) => amount > 0);
+  const amounts = listPresentNumbers(readChartNumbers(element, CHART_SAMPLE_TREEMAP_NUMBERS)).filter((amount) => amount > 0);
   const tileBoxes = layoutTreemap(insetBox(box, PLOT_PADDING_RATIO), amounts);
   for (const [tileIndex, tileBox] of tileBoxes.entries()) {
     const fill = SLICE_FILLS[tileIndex % SLICE_FILLS.length];
@@ -583,7 +583,7 @@ const drawUptimeBars = (drawing) => {
 
 const drawSparkline = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const numbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_SPARK_NUMBERS));
+  const numbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_SPARK_NUMBERS));
   const range = createValueRange(numbers, false);
   const frame = createChartFrame(element, box, false);
   const points = planSeriesPoints(frame, numbers, range);
@@ -593,20 +593,20 @@ const drawSparkline = (drawing) => {
   circle(under, boxAround(lastPoint, dotSize), { tone: "blue", fill: "blue", seed: seed + 1 });
 };
 
-const planSankeyStacks = (amounts, startY, stackHeight, gapHeight) => {
-  const usableHeight = stackHeight - gapHeight * (amounts.length - 1);
-  const total = sumOf(amounts);
-  const scale = usableHeight / total;
-  return amounts.reduce((stacks, amount) => {
-    const isFirstStack = stacks.length === 0;
-    const topY = isFirstStack ? startY : stacks.at(-1).bottomY + gapHeight;
-    return [...stacks, { topY, bottomY: topY + amount * scale }];
-  }, []);
+const planSankeyNodes = (amounts, box) => {
+  const slotHeight = box.h / amounts.length;
+  const largestAmount = Math.max(1, ...amounts);
+  return amounts.map((amount, index) => {
+    const nodeHeight = slotHeight * SANKEY_NODE_FILL_RATIO * (amount / largestAmount);
+    const slotTop = box.y + slotHeight * index;
+    const topY = slotTop + (slotHeight - nodeHeight) / 2;
+    return { topY, bottomY: topY + nodeHeight };
+  });
 };
 
 const easeSankeyProgress = (progress) => progress * progress * (3 - 2 * progress);
 
-const planSankeyRibbon = (frame, sourceStack, targetStack) => {
+const planSankeyRibbon = (frame, sourceNode, targetNode) => {
   const stepIndexes = Array.from({ length: SANKEY_STEP_COUNT + 1 }, (_, index) => index);
   const startRatio = SANKEY_SOURCE_LEFT_RATIO + SANKEY_NODE_WIDTH_RATIO;
   const endRatio = SANKEY_TARGET_LEFT_RATIO;
@@ -614,14 +614,14 @@ const planSankeyRibbon = (frame, sourceStack, targetStack) => {
     const progress = stepIndex / SANKEY_STEP_COUNT;
     const eased = easeSankeyProgress(progress);
     const x = frame.xAt(startRatio + (endRatio - startRatio) * progress);
-    const y = sourceStack.topY + (targetStack.topY - sourceStack.topY) * eased;
+    const y = sourceNode.topY + (targetNode.topY - sourceNode.topY) * eased;
     return { x, y };
   });
   const bottomEdge = stepIndexes.map((stepIndex) => {
     const progress = stepIndex / SANKEY_STEP_COUNT;
     const eased = easeSankeyProgress(progress);
     const x = frame.xAt(startRatio + (endRatio - startRatio) * progress);
-    const y = sourceStack.bottomY + (targetStack.bottomY - sourceStack.bottomY) * eased;
+    const y = sourceNode.bottomY + (targetNode.bottomY - sourceNode.bottomY) * eased;
     return { x, y };
   });
   return [...topEdge, ...bottomEdge.reverse()];
@@ -629,30 +629,27 @@ const planSankeyRibbon = (frame, sourceStack, targetStack) => {
 
 const drawSankeyChart = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const flows = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_SANKEY_NUMBERS));
+  const flows = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_SANKEY_NUMBERS));
   const frame = createChartFrame(element, box, false);
-  const { plotBox } = frame;
-  const stackHeight = plotBox.h * SANKEY_STACK_RATIO;
-  const stackTop = plotBox.y + (plotBox.h - stackHeight) / 2;
-  const nodeGap = stackHeight * SANKEY_NODE_GAP_RATIO;
-  const sourceSegments = planSankeyStacks(flows, stackTop, stackHeight, 0);
-  const targetSegmentsInReverse = planSankeyStacks([...flows].reverse(), stackTop, stackHeight, nodeGap);
-  const targetSegments = [...targetSegmentsInReverse].reverse();
-  const sourceBox = boxBetween(
-    { x: frame.xAt(SANKEY_SOURCE_LEFT_RATIO), y: stackTop },
-    { x: frame.xAt(SANKEY_SOURCE_LEFT_RATIO + SANKEY_NODE_WIDTH_RATIO), y: stackTop + stackHeight },
-  );
-  rectangle(under, sourceBox, { tone: "ink", fill: "grey", seed });
+  const sourceNodes = planSankeyNodes(flows, box);
+  const targetNodesInReverse = planSankeyNodes([...flows].reverse(), box);
+  const targetNodes = [...targetNodesInReverse].reverse();
 
   for (const flowIndex of flows.keys()) {
-    const sourceSegment = sourceSegments[flowIndex];
-    const targetSegment = targetSegments[flowIndex];
-    const ribbon = planSankeyRibbon(frame, sourceSegment, targetSegment);
+    const sourceNode = sourceNodes[flowIndex];
+    const targetNode = targetNodes[flowIndex];
+    const ribbon = planSankeyRibbon(frame, sourceNode, targetNode);
     polygon(under, ribbon, { tone: "soft", fill: SLICE_FILLS[flowIndex % SLICE_FILLS.length], seed: seed + flowIndex });
 
+    const sourceBox = boxBetween(
+      { x: frame.xAt(SANKEY_SOURCE_LEFT_RATIO), y: sourceNode.topY },
+      { x: frame.xAt(SANKEY_SOURCE_LEFT_RATIO + SANKEY_NODE_WIDTH_RATIO), y: sourceNode.bottomY },
+    );
+    rectangle(under, sourceBox, { tone: "ink", fill: "grey", seed: seed + flowIndex + 20 });
+
     const targetBox = boxBetween(
-      { x: frame.xAt(SANKEY_TARGET_LEFT_RATIO), y: targetSegment.topY },
-      { x: frame.xAt(SANKEY_TARGET_LEFT_RATIO + SANKEY_NODE_WIDTH_RATIO), y: targetSegment.bottomY },
+      { x: frame.xAt(SANKEY_TARGET_LEFT_RATIO), y: targetNode.topY },
+      { x: frame.xAt(SANKEY_TARGET_LEFT_RATIO + SANKEY_NODE_WIDTH_RATIO), y: targetNode.bottomY },
     );
     rectangle(under, targetBox, { tone: "ink", fill: "grey", seed: seed + flowIndex + 10 });
   }
@@ -661,7 +658,7 @@ const drawSankeyChart = (drawing) => {
 const planBumpPoints = (frame, ranks, teamCount) => {
   const rankSpan = Math.max(teamCount - 1, 1);
   return ranks.map((rank, index) => {
-    const alongRatio = alongRatioOf(index, ranks.length);
+    const alongRatio = findAlongRatio(index, ranks.length);
     const valueRatio = 1 - (rank - 1) / rankSpan;
     return frame.pointAt(alongRatio, valueRatio);
   });
@@ -671,8 +668,8 @@ const drawBumpChart = (drawing) => {
   const { element, box, seed, under } = drawing;
   const secondRanks = readSecondNumbers(element);
   const hasSecondSeries = secondRanks !== null;
-  const firstRanks = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_BUMP_RANKS));
-  const seriesRanks = hasSecondSeries ? [firstRanks, zeroForGaps(secondRanks)] : [firstRanks];
+  const firstRanks = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_BUMP_RANKS));
+  const seriesRanks = hasSecondSeries ? [firstRanks, fillGapsWithZero(secondRanks)] : [firstRanks];
   const teamCount = Math.max(...seriesRanks.flat());
   const frame = createChartFrame(element, box, false);
   const dotSize = Math.min(frame.plotBox.w, frame.plotBox.h) * DOT_SIZE_RATIO;
@@ -689,7 +686,7 @@ const drawBumpChart = (drawing) => {
 
 const drawRadarChart = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const numbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_RADAR_NUMBERS));
+  const numbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_RADAR_NUMBERS));
   const range = createValueRange(numbers, true);
   const center = boxCenter(box);
   const outerRadius = plotRadius(box);
@@ -707,14 +704,14 @@ const drawRadarChart = (drawing) => {
   }
 
   const valuePoints = numbers.map((amount, axisIndex) =>
-    pointOnCircle(center, outerRadius * ratioOfAmount(range, amount), angleAt(axisIndex)),
+    pointOnCircle(center, outerRadius * findAmountRatio(range, amount), angleAt(axisIndex)),
   );
   polygon(under, valuePoints, { tone: "blue", fill: "blue", seed: seed + 20 });
 };
 
 const drawPolarAreaChart = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const numbers = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_POLAR_NUMBERS));
+  const numbers = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_POLAR_NUMBERS));
   const range = createValueRange(numbers, true);
   const center = boxCenter(box);
   const outerRadius = plotRadius(box);
@@ -723,7 +720,7 @@ const drawPolarAreaChart = (drawing) => {
   for (const [sectorIndex, amount] of numbers.entries()) {
     const startAngle = TOP_ANGLE + sectorSweep * sectorIndex;
     const endAngle = startAngle + sectorSweep;
-    const sectorRadius = outerRadius * Math.sqrt(ratioOfAmount(range, amount));
+    const sectorRadius = outerRadius * Math.sqrt(findAmountRatio(range, amount));
     const fill = SLICE_FILLS[sectorIndex % SLICE_FILLS.length];
     polygon(under, sectorPoints(center, sectorRadius, startAngle, endAngle), { tone: "ink", fill, seed: seed + sectorIndex });
   }
@@ -733,7 +730,7 @@ const drawPolarAreaChart = (drawing) => {
 
 const drawActivityGauge = (drawing) => {
   const { element, box, seed, under } = drawing;
-  const percents = zeroForGaps(readChartNumbers(element, CHART_SAMPLE_RING_PERCENTS));
+  const percents = fillGapsWithZero(readChartNumbers(element, CHART_SAMPLE_RING_PERCENTS));
   const center = boxCenter(box);
   const outerRadius = plotRadius(box);
   const ringStep = outerRadius / percents.length;
