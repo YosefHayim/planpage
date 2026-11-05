@@ -35,4 +35,16 @@ describe("Shell island flags", () => {
     expect(html).toContain('data-action="send"');
     expect(html).toContain("pp-has-sidebar");
   });
+
+  it("injects sketch fonts, style, engine and pager only when hasSketchScenes is set", () => {
+    const off = render(<p>x</p>);
+    const on = render(<p>x</p>, { hasSketchScenes: true });
+    expect(off).not.toContain("fonts.googleapis.com");
+    expect(on).toContain("family=Kalam");
+    expect(on).toContain("family=IBM+Plex+Mono");
+    expect(on).toContain("html.dark .sketch-frame");
+    expect(on).toContain("drawFramesIn");
+    expect(on).toContain("data-sketch-page");
+    expect(on).toContain("pp-rough-ready");
+  });
 });

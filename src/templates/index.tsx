@@ -7,6 +7,8 @@ import { Library } from "./Library/Library";
 import { PlanBrief, type PlanBriefProps } from "./PlanBrief/PlanBrief";
 import { QuestionPoll, type QuestionPollProps } from "./QuestionPoll/QuestionPoll";
 import { Quiz, type QuizProps } from "./Quiz/Quiz";
+import { SketchPlan, type SketchPlanProps } from "./SketchPlan/SketchPlan";
+import { SKETCH_PLAN_SAMPLE } from "./SketchPlan/sketchPlanSample";
 
 /**
  * Registry mapping a kebab-case template name → a factory that builds its VNode from raw data.
@@ -19,6 +21,7 @@ export const TEMPLATES = {
   "plan-brief": (data: unknown): VNode => <PlanBrief {...(data as PlanBriefProps)} />,
   "question-poll": (data: unknown): VNode => <QuestionPoll {...(data as QuestionPollProps)} />,
   quiz: (data: unknown): VNode => <Quiz {...(data as QuizProps)} />,
+  "sketch-plan": (data: unknown): VNode => <SketchPlan {...(data as SketchPlanProps)} />,
   flashcards: (data: unknown): VNode => <Flashcards {...(data as FlashcardsProps)} />,
   "audit-report": (data: unknown): VNode => <AuditReport {...(data as AuditReportProps)} />,
   library: (): VNode => <Library />,
@@ -28,6 +31,7 @@ export type TemplateName = keyof typeof TEMPLATES;
 
 /** Built-in sample data per template — powers the menu preview and `render --sample`. */
 export const SAMPLES: Record<TemplateName, unknown> = {
+  "sketch-plan": SKETCH_PLAN_SAMPLE,
   "before-after": {
     title: "Deslop pass",
     diffs: [

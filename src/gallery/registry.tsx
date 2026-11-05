@@ -16,6 +16,7 @@ import { QuizCard } from "../components/QuizCard";
 import { RiskList } from "../components/RiskList";
 import { Scorecard } from "../components/Scorecard";
 import { SectionCard } from "../components/SectionCard";
+import { SketchScene } from "../components/SketchScene";
 import { StatusChip, type StepStatus } from "../components/StatusChip";
 import { Steps } from "../components/Steps";
 import { Storyboard } from "../components/Storyboard";
@@ -435,6 +436,30 @@ export const GALLERY = {
       <Whiteboard id="gallery.sketch" title="Brainstorm with the agent" height={280} editable />
     ),
   },
+  SketchScene: {
+    category: "diagram",
+    blurb:
+      "One hand-sketched picture: rough.js boxes and arrows, Kalam words, dashed notes. The sketch-plan pages are built from these.",
+    usage: '<SketchScene label="Login flow" scene={{ width: 300, height: 120, nodes: [...] }} />',
+    props: [
+      { name: "scene", type: "SketchScene" },
+      { name: "label", type: "string", required: true },
+    ],
+    sample: () => (
+      <SketchScene
+        label="Gallery sample"
+        scene={{
+          width: 320,
+          height: 120,
+          nodes: [
+            { id: "ask", kind: "box", x: 20, y: 30, w: 110, h: 60, fill: "blue", words: "Ask" },
+            { id: "draw", kind: "box", x: 190, y: 30, w: 110, h: 60, fill: "green", words: "Draw" },
+          ],
+          edges: [{ id: "ask-draw", from: "ask", to: "draw" }],
+        }}
+      />
+    ),
+  },
   QuizCard: {
     category: "teach",
     blurb:
@@ -645,6 +670,12 @@ export const TEMPLATE_INDEX: ReadonlyArray<TemplateInfo> = [
     name: "audit-report",
     blurb: "Scored audit — dimension meters + the command that ran + gaps as risks.",
     category: "report",
+  },
+  {
+    name: "sketch-plan",
+    blurb:
+      "A plan as hand-sketched pages, one picture each, with Notes, View code and a Your call decision.",
+    category: "plan",
   },
   {
     name: "library",

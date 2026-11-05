@@ -43,6 +43,7 @@ export { type Risk, RiskList, type RiskListProps, type Severity } from "./compon
 export { type ScoreDimension, Scorecard, type ScorecardProps } from "./components/Scorecard";
 export { SectionCard, type SectionCardProps } from "./components/SectionCard";
 export { Shell, type ShellProps, type Theme } from "./components/Shell";
+export { SketchScene, type SketchSceneProps } from "./components/SketchScene";
 export { type StatusChipProps, StatusChip, type StepStatus } from "./components/StatusChip";
 export { type Step, Steps, type StepsProps } from "./components/Steps";
 export {
@@ -85,7 +86,7 @@ export type {
   SketchRoute,
   SketchRow,
   SketchRule,
-  SketchScene,
+  SketchScene as SketchSceneData,
   SketchSide,
   SketchSize,
   SketchToggle,
@@ -127,6 +128,7 @@ export {
   type QuestionPollProps,
 } from "./templates/QuestionPoll/QuestionPoll";
 export { Quiz, type QuizProps } from "./templates/Quiz/Quiz";
+export { SketchPlan, type SketchPlanProps } from "./templates/SketchPlan/SketchPlan";
 export { QuizCard, type QuizCardProps, type QuizOption } from "./components/QuizCard";
 export { SKETCH_RECIPES } from "./sketchRecipes/sketchRecipes";
 export { SAMPLES, TEMPLATES, type TemplateName } from "./templates";

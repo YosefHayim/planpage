@@ -7,6 +7,9 @@ import {
   GALLERY_FILTER,
   QUESTION_POLL_SCRIPT,
   QUIZ_SCRIPT,
+  SKETCH_PAGER_SCRIPT,
+  SKETCH_SCENE_SCRIPT,
+  SKETCH_SCENE_STYLE,
   THEME_TOGGLE,
   WHITEBOARD_SCRIPT,
 } from "../render/clientScript";
@@ -35,6 +38,8 @@ export interface ShellProps {
   readonly diagramable?: boolean;
   /** When true, includes the freehand whiteboard island (rough pen · queue PNG for agent). */
   readonly sketchable?: boolean;
+  /** When true, includes the sketch-plan scene engine, its style, and the page pager. */
+  readonly hasSketchScenes?: boolean;
   readonly children: ComponentChildren;
 }
 
@@ -49,7 +54,10 @@ const MERMAID =
 
 /** Rough.js — sketchy Excalidraw-like strokes for the whiteboard island. */
 const ROUGH =
-  "import('https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js').then(function(m){window.rough=m.default||m;}).catch(function(){});";
+  "import('https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.esm.js').then(function(m){window.rough=m.default||m;document.dispatchEvent(new Event('pp-rough-ready'));}).catch(function(){});";
+
+const SKETCH_FONTS_URL =
+  "https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=Kalam:wght@300;400;700&family=Patrick+Hand&display=swap";
 
 const STYLE =
   ".code{white-space:pre;overflow-x:auto;tab-size:2;max-width:100%}" +
@@ -144,10 +152,12 @@ export const Shell = ({
   carousel = false,
   diagramable = false,
   sketchable = false,
+  hasSketchScenes = false,
   children,
 }: ShellProps) => {
   const diagramsOn = diagramable || interactive;
   const sketchOn = sketchable || interactive;
+  const roughOn = sketchOn || hasSketchScenes;
   return (
     <html lang="en" data-theme={theme}>
       <head>
@@ -161,6 +171,13 @@ export const Shell = ({
         <script dangerouslySetInnerHTML={{ __html: THEME_PREPAINT }} />
         {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra style, not skill data */}
         <style dangerouslySetInnerHTML={{ __html: STYLE }} />
+        {hasSketchScenes ? (
+          <>
+            <link rel="stylesheet" href={SKETCH_FONTS_URL} />
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra style, not skill data */}
+            <style dangerouslySetInnerHTML={{ __html: SKETCH_SCENE_STYLE }} />
+          </>
+        ) : null}
       </head>
       <body
         class={`bg-white font-sans text-slate-800 antialiased dark:bg-slate-950 dark:text-slate-200 ${interactive ? "pp-has-sidebar" : ""}`}
@@ -234,12 +251,20 @@ export const Shell = ({
           // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
           <script dangerouslySetInnerHTML={{ __html: DIAGRAM_SCRIPT }} />
         ) : null}
+        {roughOn ? (
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra module, not skill data
+          <script type="module" dangerouslySetInnerHTML={{ __html: ROUGH }} />
+        ) : null}
         {sketchOn ? (
+          // biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data
+          <script dangerouslySetInnerHTML={{ __html: WHITEBOARD_SCRIPT }} />
+        ) : null}
+        {hasSketchScenes ? (
           <>
-            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra module, not skill data */}
-            <script type="module" dangerouslySetInnerHTML={{ __html: ROUGH }} />
             {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data */}
-            <script dangerouslySetInnerHTML={{ __html: WHITEBOARD_SCRIPT }} />
+            <script dangerouslySetInnerHTML={{ __html: SKETCH_SCENE_SCRIPT }} />
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data */}
+            <script dangerouslySetInnerHTML={{ __html: SKETCH_PAGER_SCRIPT }} />
           </>
         ) : null}
       </body>
