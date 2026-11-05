@@ -770,6 +770,9 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
 
   const drawPendingNoteLinks = (sceneElement, sceneWidth, pendingLinks) => {
     const sceneRect = sceneElement.getBoundingClientRect();
+    const isSceneHidden = sceneRect.width === 0;
+    if (isSceneHidden) return;
+
     for (const { pendingLink, noteElement } of pendingLinks) {
       drawPendingNoteLink(pendingLink, noteElement, sceneRect, sceneWidth);
     }
