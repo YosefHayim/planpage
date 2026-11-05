@@ -92,3 +92,10 @@ Add `diagram` (Mermaid source) to any question for visual context.
 
 Browse all components: `npx planpage library --open`.
 <!-- planpage:end -->
+
+## Sketch kit (planpage)
+
+- `pnpm build`, then `node dist/cli/index.js render sketch-kit --sample --out <file>` renders the
+  gallery of every wireframe part. `planpage library` writes it beside the gallery.
+- Screenshots of a part: render the kit, then open it in headless Chrome (playwright-core,
+  `channel: "chrome"`) and capture the section. Never use ports 9222 or 9333.

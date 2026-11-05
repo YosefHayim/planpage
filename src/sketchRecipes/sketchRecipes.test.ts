@@ -58,7 +58,9 @@ describe("SKETCH_RECIPES", () => {
         const targetIds = [...nodeIdsOf(scene), ...(scene.edges ?? []).map((edge) => edge.id)];
         const notes = scene.notes ?? [];
         return notes
-          .filter((note) => note.link !== undefined && !targetIds.includes(note.link))
+          .filter(
+            (note) => note.link !== undefined && !targetIds.includes(note.link.split("#")[0] ?? ""),
+          )
           .map((note) => `${recipe.id} note "${note.words}" -> ${note.link}`);
       }),
     );

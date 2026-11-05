@@ -7,6 +7,7 @@ import { Library } from "./Library/Library";
 import { PlanBrief, type PlanBriefProps } from "./PlanBrief/PlanBrief";
 import { QuestionPoll, type QuestionPollProps } from "./QuestionPoll/QuestionPoll";
 import { Quiz, type QuizProps } from "./Quiz/Quiz";
+import { SketchKit } from "./SketchKit/SketchKit";
 import { SketchPlan, type SketchPlanProps } from "./SketchPlan/SketchPlan";
 import { SKETCH_PLAN_SAMPLE } from "./SketchPlan/sketchPlanSample";
 
@@ -25,6 +26,7 @@ export const TEMPLATES = {
   flashcards: (data: unknown): VNode => <Flashcards {...(data as FlashcardsProps)} />,
   "audit-report": (data: unknown): VNode => <AuditReport {...(data as AuditReportProps)} />,
   library: (): VNode => <Library />,
+  "sketch-kit": (): VNode => <SketchKit />,
 } satisfies Record<string, (data: unknown) => VNode>;
 
 export type TemplateName = keyof typeof TEMPLATES;
@@ -32,6 +34,7 @@ export type TemplateName = keyof typeof TEMPLATES;
 /** Built-in sample data per template — powers the menu preview and `render --sample`. */
 export const SAMPLES: Record<TemplateName, unknown> = {
   "sketch-plan": SKETCH_PLAN_SAMPLE,
+  "sketch-kit": {},
   "before-after": {
     title: "Deslop pass",
     diffs: [

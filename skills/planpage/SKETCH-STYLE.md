@@ -61,7 +61,22 @@ Example rows (from the sketch-plan plan itself):
   "rows": ["src/", { "words": "contracts/", "indent": 1 }, { "words": "+ sketchScene.ts  (scene types)", "indent": 2 }] }
 ```
 
-## Plan page format
+## Wireframes
+
+A wireframe is plain HTML drawn in the sketch look. Layout uses Tailwind classes; each part has
+a `sk-*` class and a drawer in the wireframe island.
+
+- Parts: `planpage parts` lists them, `planpage parts <className>` prints their example HTML.
+- Variants are extra classes (`sk-button sk-main`). States are data attributes:
+  `data-status="hover|focus|disabled|error|selected"`, `data-checked`, `data-percent`,
+  `data-icon`, `data-count`.
+- Colors come from `data-tone` and `data-fill` with the same names as scenes. No Tailwind
+  background classes inside a wireframe, because a background covers the drawn layer.
+- A scene node of kind `screen` (`{ id, kind: "screen", x, y, w, h, html }`) puts a wireframe at
+  its box. A note `link` or an edge end can point at one of its parts as `"<screenId>#<data-part>"`.
+  For now, part links work only with `look.notePlacement: "beside"`.
+- Text stays real HTML. Never draw words with rough.js.
+
 
 A plan is one JSON file with a title and a list of pages. `SketchPlan` draws it.
 

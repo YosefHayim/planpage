@@ -10,6 +10,8 @@ import {
   SKETCH_PAGER_SCRIPT,
   SKETCH_SCENE_SCRIPT,
   SKETCH_SCENE_STYLE,
+  SKETCH_WIREFRAME_SCRIPT,
+  SKETCH_WIREFRAME_STYLE,
   THEME_TOGGLE,
   WHITEBOARD_SCRIPT,
 } from "../render/clientScript";
@@ -176,6 +178,8 @@ export const Shell = ({
             <link rel="stylesheet" href={SKETCH_FONTS_URL} />
             {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra style, not skill data */}
             <style dangerouslySetInnerHTML={{ __html: SKETCH_SCENE_STYLE }} />
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra style, not skill data */}
+            <style dangerouslySetInnerHTML={{ __html: SKETCH_WIREFRAME_STYLE }} />
           </>
         ) : null}
       </head>
@@ -263,6 +267,8 @@ export const Shell = ({
           <>
             {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data */}
             <script dangerouslySetInnerHTML={{ __html: SKETCH_SCENE_SCRIPT }} />
+            {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data */}
+            <script dangerouslySetInnerHTML={{ __html: SKETCH_WIREFRAME_SCRIPT }} />
             {/* biome-ignore lint/security/noDangerouslySetInnerHtml: Shell infra script, not skill data */}
             <script dangerouslySetInnerHTML={{ __html: SKETCH_PAGER_SCRIPT }} />
           </>
