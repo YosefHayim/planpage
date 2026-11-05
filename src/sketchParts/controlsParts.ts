@@ -11,6 +11,13 @@ const createAmountPadHtml = (pressedKeyLabel: string | null, amountText: string)
   return `<div class="sk-amount-pad w-64"><span class="sk-amount-display">${amountText}</span>${keyHtmlList.join("")}</div>`;
 };
 
+const createLabeledControlHtml = (
+  controlHtml: string,
+  labelText: string,
+  direction: "ltr" | "rtl",
+): string =>
+  `<div class="flex items-center gap-2" dir="${direction}">${controlHtml}<span>${labelText}</span></div>`;
+
 export const CONTROLS_PARTS: readonly SketchPart[] = [
   {
     className: "sk-button",
@@ -334,9 +341,38 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
     name: "Checkbox",
     useFor: "A yes or no choice, shown with or without a check mark.",
     examples: [
-      { label: "Unchecked", html: '<span class="sk-checkbox"></span>' },
-      { label: "Checked", html: '<span class="sk-checkbox" data-checked></span>' },
-      { label: "Disabled", html: '<span class="sk-checkbox" data-status="disabled"></span>' },
+      {
+        label: "Unchecked",
+        html: createLabeledControlHtml(
+          '<span class="sk-checkbox"></span>',
+          "Email me updates",
+          "ltr",
+        ),
+      },
+      {
+        label: "Checked",
+        html: createLabeledControlHtml(
+          '<span class="sk-checkbox" data-checked></span>',
+          "Email me updates",
+          "ltr",
+        ),
+      },
+      {
+        label: "Disabled",
+        html: createLabeledControlHtml(
+          '<span class="sk-checkbox" data-status="disabled"></span>',
+          "Email me updates",
+          "ltr",
+        ),
+      },
+      {
+        label: "Hebrew, checked",
+        html: createLabeledControlHtml(
+          '<span class="sk-checkbox" data-checked></span>',
+          "שלחו לי עדכונים",
+          "rtl",
+        ),
+      },
     ],
   },
   {
@@ -638,13 +674,49 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
     name: "Radio",
     useFor: "One choice out of a group, shown as a round dot that is filled when picked.",
     examples: [
-      { label: "Unchecked", html: '<span class="sk-radio"></span>' },
-      { label: "Checked", html: '<span class="sk-radio" data-checked></span>' },
-      { label: "Focus", html: '<span class="sk-radio" data-status="focus"></span>' },
-      { label: "Disabled", html: '<span class="sk-radio" data-status="disabled"></span>' },
+      {
+        label: "Unchecked",
+        html: createLabeledControlHtml('<span class="sk-radio"></span>', "Monthly plan", "ltr"),
+      },
+      {
+        label: "Checked",
+        html: createLabeledControlHtml(
+          '<span class="sk-radio" data-checked></span>',
+          "Monthly plan",
+          "ltr",
+        ),
+      },
+      {
+        label: "Focus",
+        html: createLabeledControlHtml(
+          '<span class="sk-radio" data-status="focus"></span>',
+          "Monthly plan",
+          "ltr",
+        ),
+      },
+      {
+        label: "Disabled",
+        html: createLabeledControlHtml(
+          '<span class="sk-radio" data-status="disabled"></span>',
+          "Monthly plan",
+          "ltr",
+        ),
+      },
       {
         label: "Disabled and checked",
-        html: '<span class="sk-radio" data-status="disabled" data-checked></span>',
+        html: createLabeledControlHtml(
+          '<span class="sk-radio" data-status="disabled" data-checked></span>',
+          "Monthly plan",
+          "ltr",
+        ),
+      },
+      {
+        label: "Hebrew, checked",
+        html: createLabeledControlHtml(
+          '<span class="sk-radio" data-checked></span>',
+          "תוכנית חודשית",
+          "rtl",
+        ),
       },
     ],
   },
@@ -682,7 +754,7 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
         label: "Disabled",
         html: '<span class="sk-switch" data-status="disabled" data-checked></span>',
       },
-      { label: "Hebrew", html: '<span class="sk-switch" dir="rtl" data-checked></span>' },
+      { label: "Hebrew, on", html: '<span class="sk-switch" dir="rtl" data-checked></span>' },
     ],
   },
   {
@@ -787,6 +859,10 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
         label: "Focus",
         html: '<span class="sk-color-swatch" data-fill="green" data-status="focus"></span>',
       },
+      {
+        label: "Row, third selected",
+        html: '<div class="flex gap-2"><span class="sk-color-swatch" data-fill="red"></span><span class="sk-color-swatch" data-fill="orange"></span><span class="sk-color-swatch" data-fill="yellow" data-status="selected"></span><span class="sk-color-swatch" data-fill="green"></span><span class="sk-color-swatch" data-fill="blue"></span></div>',
+      },
     ],
   },
   {
@@ -797,7 +873,7 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Default",
-        html: '<div class="sk-color-picker"><div class="sk-color-area"></div><div class="sk-color-hue"></div><div class="sk-color-hex"></div></div>',
+        html: '<div class="sk-color-picker"><div class="sk-color-area"></div><div class="sk-color-hue"></div><div class="sk-color-hex">#F4B8C0</div></div>',
       },
     ],
   },
@@ -899,6 +975,14 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
         label: "Uploading",
         html: '<div class="sk-file-upload-item"><span data-icon="file-text"></span><span>invoice.pdf</span><span class="sk-file-progress" data-percent="60"></span></div>',
       },
+      {
+        label: "Done",
+        html: '<div class="sk-file-upload-item" data-status="success"><span data-icon="file-text"></span><span>invoice.pdf</span><span class="sk-file-progress" data-percent="100"></span><span data-icon="check" data-tone="green"></span></div>',
+      },
+      {
+        label: "Failed",
+        html: '<div class="sk-file-upload-item" data-status="error"><span data-icon="file-text"></span><span>invoice.pdf</span><span class="sk-file-progress" data-percent="40"></span><span data-icon="circle-alert" data-tone="red"></span><span class="font-semibold text-red-700">Retry</span></div>',
+      },
     ],
   },
   {
@@ -906,7 +990,16 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
     group: "controls",
     name: "Signature pad",
     useFor: "A box where a user signs with a finger or a mouse.",
-    examples: [{ label: "Signed", html: '<div class="sk-signature-pad"></div>' }],
+    examples: [
+      {
+        label: "Signed",
+        html: '<div class="flex flex-col items-start gap-2"><div class="sk-signature-pad"></div><button type="button" class="text-sm underline">Clear</button></div>',
+      },
+      {
+        label: "Empty",
+        html: '<div class="flex flex-col items-start gap-2"><div class="sk-signature-pad" data-status="empty"><span class="sk-signature-hint">Sign here</span></div><button type="button" class="text-sm underline">Clear</button></div>',
+      },
+    ],
   },
   {
     className: "sk-slide-to-confirm",
@@ -917,6 +1010,14 @@ export const CONTROLS_PARTS: readonly SketchPart[] = [
       {
         label: "Idle",
         html: '<div class="sk-slide-to-confirm"><span class="sk-slide-knob"><span data-icon="arrow-right"></span></span><span>Slide to confirm</span></div>',
+      },
+      {
+        label: "Halfway",
+        html: '<div class="sk-slide-to-confirm"><span class="sk-slide-knob" style="inset-inline-start: calc(50% - 1.5rem)"><span data-icon="arrow-right"></span></span></div>',
+      },
+      {
+        label: "Hebrew",
+        html: '<div class="sk-slide-to-confirm" dir="rtl"><span class="sk-slide-knob"><span data-icon="arrow-right"></span></span><span>החלקה לאישור</span></div>',
       },
     ],
   },

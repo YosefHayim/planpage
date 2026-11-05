@@ -22,17 +22,19 @@ const COLOR_AREA_THUMB_X_RATIO = 0.7;
 const COLOR_AREA_THUMB_Y_RATIO = 0.3;
 const COLOR_HUE_THUMB_RATIO = 0.4;
 const COLOR_HUE_THUMB_SIDE_RATIO = 1.4;
-const SIGNATURE_POINT_COUNT = 40;
-const SIGNATURE_WAVE_RATIO = 0.3;
-const SIGNATURE_WAVE_FREQUENCY = 0.9;
-const SIGNATURE_SCRIBBLE_RATIO = 0.12;
-const SIGNATURE_SCRIBBLE_FREQUENCY = 2.7;
+const SIGNATURE_POINT_COUNT = 160;
 const SIGNATURE_LEFT_RATIO = 0.08;
 const SIGNATURE_WIDTH_RATIO = 0.84;
-const SIGNATURE_CENTER_RATIO = 0.5;
 const SIGNATURE_BASELINE_RATIO = 0.78;
+const SIGNATURE_X_SIDE_RATIO = 0.08;
+const SIGNATURE_LOOP_COUNT = 6;
+const SIGNATURE_BUMP_RATIO = 0.22;
+const SIGNATURE_JITTER_RATIO = 0.04;
+const SIGNATURE_JITTER_FREQUENCY = 23;
+const SIGNATURE_DRIFT_RATIO = 0.03;
+const HUE_SEGMENT_FILLS = ["red", "orange", "yellow", "green", "blue"];
 
-const { rectangle, roundedRectangle, circle, line, polyline, tick, readStatus, isChecked, readPercent, readTone, readFill, isRightToLeft } = window.SketchWireframe;
+const { rectangle, roundedRectangle, circle, line, polyline, cross, tick, readStatus, isChecked, readPercent, readTone, readFill, isRightToLeft } = window.SketchWireframe;
 
 const insetBoxBy = (box, inset) => ({
   x: box.x + inset,
@@ -74,7 +76,8 @@ const drawChildIcons = (layer, element, box, style) => {
   const iconElements = [...element.querySelectorAll("[data-icon]")];
   for (const [index, iconElement] of iconElements.entries()) {
     const iconBox = measureRectInBox(iconElement.getBoundingClientRect(), elementRect, box);
-    window.SketchWireframe.icon(layer, iconBox, readIconName(iconElement), { tone: style.tone, seed: style.seed + index + 1 });
+    const iconTone = iconElement.dataset.tone ?? style.tone;
+    window.SketchWireframe.icon(layer, iconBox, readIconName(iconElement), { tone: iconTone, seed: style.seed + index + 1 });
   }
 };
 
@@ -301,7 +304,6 @@ window.SketchWireframe.definePart("sk-undo-button", (drawing) => {
   const ringBox = { x: ringX, y: box.y + (box.h - ringSide) / 2, w: ringSide, h: ringSide };
 
   roundedRectangle(under, box, { tone: isDisabled ? "soft" : "ink", seed, dashed: isDisabled });
-  circle(under, ringBox, { tone: "soft", seed: seed + 1 });
   drawArc(under, ringBox, percent, { tone: "blue", seed: seed + 2 });
   if (isFocused) drawFocusRing(over, box, { seed, isRound: false });
 });
@@ -641,7 +643,11 @@ window.SketchWireframe.definePart("sk-color-picker", (drawing) => {
     const thumbSide = hue.box.h * COLOR_HUE_THUMB_SIDE_RATIO;
     const thumbCenterX = hue.box.x + hue.box.w * COLOR_HUE_THUMB_RATIO;
     const thumbBox = { x: thumbCenterX - thumbSide / 2, y: hue.box.y + hue.box.h / 2 - thumbSide / 2, w: thumbSide, h: thumbSide };
-    roundedRectangle(under, hue.box, { tone: "ink", fill: "yellow", seed: seed + index + 20 });
+    const segmentWidth = hue.box.w / HUE_SEGMENT_FILLS.length;
+    for (const [segmentIndex, segmentFill] of HUE_SEGMENT_FILLS.entries()) {
+      const segmentBox = { x: hue.box.x + segmentWidth * segmentIndex, y: hue.box.y, w: segmentWidth, h: hue.box.h };
+      rectangle(under, segmentBox, { tone: "ink", fill: segmentFill, seed: seed + index + segmentIndex + 50 });
+    }
     circle(under, thumbBox, { tone: "ink", fill: "grey", seed: seed + index + 30 });
   }
   for (const [index, hex] of hexBoxes.entries()) {
@@ -695,41 +701,60 @@ window.SketchWireframe.definePart("sk-drop-zone", (drawing) => {
   drawChildIcons(under, element, box, { tone: "ink", seed: seed + 1 });
 });
 
+const pickUploadColor = (element) => {
+  const uploadStatus = readStatus(element);
+  const isUploadDone = uploadStatus === "success";
+  const isUploadFailed = uploadStatus === "error";
+  if (isUploadDone) return "green";
+  if (isUploadFailed) return "red";
+  return "blue";
+};
+
 window.SketchWireframe.definePart("sk-file-upload-item", (drawing) => {
   const { element, box, seed, under } = drawing;
   const progressBoxes = measureMatchingBoxes(drawing, ".sk-file-progress");
+  const uploadColor = pickUploadColor(element);
 
   roundedRectangle(under, box, { tone: "ink", seed });
   for (const [index, progress] of progressBoxes.entries()) {
     const progressPercent = readPercent(progress.element) ?? 0;
     roundedRectangle(under, progress.box, { tone: "soft", seed: seed + index + 1 });
-    drawProgressFill(under, progress.box, progressPercent, isRightToLeft(element), { tone: "blue", fill: "blue", seed: seed + index + 2 });
+    drawProgressFill(under, progress.box, progressPercent, isRightToLeft(element), { tone: uploadColor, fill: uploadColor, seed: seed + index + 2 });
   }
   drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
 });
 
-const pickSignaturePoints = (box) => {
+const pickScribblePoints = (box) => {
   const pointIndexes = [...Array(SIGNATURE_POINT_COUNT + 1).keys()];
+  const baselineY = box.y + box.h * SIGNATURE_BASELINE_RATIO;
   return pointIndexes.map((pointIndex) => {
     const progressRatio = pointIndex / SIGNATURE_POINT_COUNT;
-    const broadWave = SIGNATURE_WAVE_RATIO * Math.sin(pointIndex * SIGNATURE_WAVE_FREQUENCY);
-    const quickScribble = SIGNATURE_SCRIBBLE_RATIO * Math.sin(pointIndex * SIGNATURE_SCRIBBLE_FREQUENCY);
-    const waveRatio = broadWave + quickScribble;
-    const pointX = box.x + box.w * (SIGNATURE_LEFT_RATIO + SIGNATURE_WIDTH_RATIO * progressRatio);
-    const pointY = box.y + box.h * (SIGNATURE_CENTER_RATIO + waveRatio);
+    const loopAngle = progressRatio * Math.PI * SIGNATURE_LOOP_COUNT;
+    const bumpHeight = box.h * SIGNATURE_BUMP_RATIO * Math.abs(Math.sin(loopAngle));
+    const jitterHeight = box.h * SIGNATURE_JITTER_RATIO * Math.sin(progressRatio * Math.PI * SIGNATURE_JITTER_FREQUENCY);
+    const driftWidth = box.w * SIGNATURE_DRIFT_RATIO * Math.sin(loopAngle + 1);
+    const pointX = box.x + box.w * (SIGNATURE_LEFT_RATIO + SIGNATURE_WIDTH_RATIO * progressRatio) + driftWidth;
+    const pointY = baselineY - bumpHeight - jitterHeight;
     return { x: pointX, y: pointY };
   });
 };
 
 window.SketchWireframe.definePart("sk-signature-pad", (drawing) => {
-  const { box, seed, under } = drawing;
+  const { element, box, seed, under } = drawing;
+  const isPadEmpty = readStatus(element) === "empty";
   const baselineY = box.y + box.h * SIGNATURE_BASELINE_RATIO;
   const baselineStart = { x: box.x + box.w * SIGNATURE_LEFT_RATIO, y: baselineY };
   const baselineEnd = { x: box.x + box.w * (SIGNATURE_LEFT_RATIO + SIGNATURE_WIDTH_RATIO), y: baselineY };
+  const xSide = box.h * SIGNATURE_X_SIDE_RATIO;
+  const startMarkBox = { x: baselineStart.x - xSide, y: baselineY - xSide, w: xSide, h: xSide };
 
   roundedRectangle(under, box, { tone: "ink", seed });
   line(under, baselineStart, baselineEnd, { tone: "soft", seed: seed + 1 });
-  polyline(under, pickSignaturePoints(box), { tone: "blue", seed: seed + 2 });
+  cross(under, startMarkBox, { tone: "soft", seed: seed + 2 });
+
+  if (isPadEmpty) return;
+
+  polyline(under, pickScribblePoints(box), { tone: "ink", seed: seed + 3 });
 });
 
 window.SketchWireframe.definePart("sk-slide-to-confirm", (drawing) => {
@@ -737,7 +762,14 @@ window.SketchWireframe.definePart("sk-slide-to-confirm", (drawing) => {
   const knobBoxes = measureMatchingBoxes(drawing, ".sk-slide-knob");
 
   roundedRectangle(under, box, { tone: "ink", fill: readFill(element), seed });
+  const isFromEnd = isRightToLeft(element);
+  const trackInnerBox = insetBoxBy(box, FILL_INSET);
   for (const [index, knob] of knobBoxes.entries()) {
+    const knobCenterX = knob.box.x + knob.box.w / 2;
+    const fillStartX = isFromEnd ? knobCenterX : trackInnerBox.x;
+    const fillEndX = isFromEnd ? trackInnerBox.x + trackInnerBox.w : knobCenterX;
+    const trackFillBox = { x: fillStartX, y: trackInnerBox.y, w: fillEndX - fillStartX, h: trackInnerBox.h };
+    rectangle(under, trackFillBox, { tone: "blue", fill: "blue", seed: seed + index + 3 });
     circle(under, knob.box, { tone: "blue", fill: "blue", seed: seed + index + 1 });
   }
   drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
@@ -904,8 +936,9 @@ export const CONTROLS_PART_STYLE = `.sk-button, .sk-icon-button, .sk-button-grou
 
 .sk-checkbox {
   display: inline-block;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.15em;
+  height: 1.15em;
+  font-size: 1.25rem;
   border: 1.6px solid transparent;
   vertical-align: middle;
 }
@@ -1128,8 +1161,9 @@ export const CONTROLS_PART_STYLE = `.sk-button, .sk-icon-button, .sk-button-grou
 
 .sk-radio {
   display: inline-block;
-  width: 1.25rem;
-  height: 1.25rem;
+  width: 1.15em;
+  height: 1.15em;
+  font-size: 1.25rem;
   vertical-align: middle;
   border-radius: 999px;
 }
@@ -1149,8 +1183,9 @@ export const CONTROLS_PART_STYLE = `.sk-button, .sk-icon-button, .sk-button-grou
 
 .sk-switch {
   display: inline-block;
-  width: 2.75rem;
-  height: 1.5rem;
+  width: 2.75em;
+  height: 1.5em;
+  font-size: 1.25rem;
   vertical-align: middle;
   border-radius: 999px;
 }
@@ -1249,9 +1284,12 @@ export const CONTROLS_PART_STYLE = `.sk-button, .sk-icon-button, .sk-button-grou
 }
 
 .sk-color-hex {
-  display: block;
+  display: flex;
+  align-items: center;
   height: 2.25rem;
+  padding: 0 0.75rem;
   border-radius: 0.5rem;
+  font-size: 1rem;
 }
 
 .sk-date-field,
@@ -1358,10 +1396,20 @@ export const CONTROLS_PART_STYLE = `.sk-button, .sk-icon-button, .sk-button-grou
 }
 
 .sk-signature-pad {
+  position: relative;
   display: block;
   width: 20rem;
   height: 8rem;
   border-radius: 0.75rem;
+}
+
+.sk-signature-hint {
+  position: absolute;
+  inset-inline-start: 8%;
+  bottom: calc(22% + 0.25rem);
+  font-size: 1rem;
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 .sk-slide-to-confirm {
