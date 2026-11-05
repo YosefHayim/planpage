@@ -1,16 +1,20 @@
 import type { SketchPart } from "../contracts/sketchScene";
 
-const WEEKDAY_LABELS_HTML = `<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>`;
-const HEBREW_MONTH_LABELS_HTML = `<span>ינו׳</span><span>פבר׳</span><span>מרץ</span><span>אפר׳</span><span>מאי</span><span>יונ׳</span>`;
-const SCALE_40_LABELS_HTML = `<span>40</span><span>30</span><span>20</span><span>10</span><span>0</span>`;
-const SCALE_90_LABELS_HTML = `<span>90</span><span>60</span><span>30</span><span>0</span>`;
+const WEEKDAY_LABELS_HTML =
+  "<span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>";
+const HEBREW_MONTH_LABELS_HTML =
+  "<span>ינו׳</span><span>פבר׳</span><span>מרץ</span><span>אפר׳</span><span>מאי</span><span>יונ׳</span>";
+const SCALE_40_LABELS_HTML =
+  "<span>40</span><span>30</span><span>20</span><span>10</span><span>0</span>";
+const SCALE_90_LABELS_HTML = "<span>90</span><span>60</span><span>30</span><span>0</span>";
 
 export const CHARTS_PARTS: readonly SketchPart[] = [
   {
     className: "sk-bar-chart",
     group: "charts",
     name: "Bar chart",
-    useFor: "Compare amounts across categories. data-numbers gives one bar per category. data-second-numbers adds a second bar beside each one, or stacks it on top with sk-stacked.",
+    useFor:
+      "Compare amounts across categories. data-numbers gives one bar per category. data-second-numbers adds a second bar beside each one, or stacks it on top with sk-stacked.",
     examples: [
       {
         label: "Grouped bars with two series",
@@ -48,7 +52,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-line-chart",
     group: "charts",
     name: "Line chart",
-    useFor: "Show how one or two values change over time. data-numbers draws the main line. data-second-numbers draws a second line in orange.",
+    useFor:
+      "Show how one or two values change over time. data-numbers draws the main line. data-second-numbers draws a second line in orange.",
     examples: [
       {
         label: "Single line",
@@ -86,7 +91,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-area-chart",
     group: "charts",
     name: "Area chart",
-    useFor: "A line chart with the space under it filled, to show size over time. data-numbers fills the main area, and data-second-numbers adds a second filled area.",
+    useFor:
+      "A line chart with the space under it filled, to show size over time. data-numbers fills the main area, and data-second-numbers adds a second filled area.",
     examples: [
       {
         label: "Single filled area",
@@ -114,7 +120,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-pie-chart",
     group: "charts",
     name: "Pie chart",
-    useFor: "Show how a whole splits into parts. data-numbers gives one slice per value, and the slices are sized by their share of the total.",
+    useFor:
+      "Show how a whole splits into parts. data-numbers gives one slice per value, and the slices are sized by their share of the total.",
     examples: [
       {
         label: "Sample slices",
@@ -133,7 +140,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-donut-chart",
     group: "charts",
     name: "Donut chart",
-    useFor: "A pie chart with a hole in the middle, so a total or a headline number can sit in the center. data-numbers gives one ring segment per value.",
+    useFor:
+      "A pie chart with a hole in the middle, so a total or a headline number can sit in the center. data-numbers gives one ring segment per value.",
     examples: [
       {
         label: "Sample ring with total in the center",
@@ -155,7 +163,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-scatter-chart",
     group: "charts",
     name: "Scatter chart",
-    useFor: "Show many points on two axes, to see if they cluster. data-numbers holds x and y as pairs (x1,y1,x2,y2 and so on). With sk-bubble, data-second-numbers gives each point a size.",
+    useFor:
+      "Show many points on two axes, to see if they cluster. data-numbers holds x and y as pairs (x1,y1,x2,y2 and so on). With sk-bubble, data-second-numbers gives each point a size.",
     examples: [
       {
         label: "Dots",
@@ -183,7 +192,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-radar-chart",
     group: "charts",
     name: "Radar chart",
-    useFor: "Compare one item across several measures at once. data-numbers gives one value per axis, going clockwise from the top.",
+    useFor:
+      "Compare one item across several measures at once. data-numbers gives one value per axis, going clockwise from the top.",
     examples: [
       {
         label: "Five axes",
@@ -198,7 +208,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-polar-area-chart",
     group: "charts",
     name: "Polar area chart",
-    useFor: "Compare several values as equal wedges, where each wedge's distance from the center shows its size. data-numbers gives one wedge per value.",
+    useFor:
+      "Compare several values as equal wedges, where each wedge's distance from the center shows its size. data-numbers gives one wedge per value.",
     examples: [
       {
         label: "Five wedges",
@@ -213,7 +224,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-funnel-chart",
     group: "charts",
     name: "Funnel chart",
-    useFor: "Show how a group shrinks step by step, like visits to sign-ups to paid. data-numbers gives one count per stage, largest first. With sk-pyramid, the stages widen down instead.",
+    useFor:
+      "Show how a group shrinks step by step, like visits to sign-ups to paid. data-numbers gives one count per stage, largest first. With sk-pyramid, the stages widen down instead.",
     examples: [
       {
         label: "Funnel",
@@ -242,7 +254,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-heatmap-chart",
     group: "charts",
     name: "Heatmap",
-    useFor: "Show intensity across a grid, like activity by weekday and hour. data-numbers fills the grid row by row, and a blank value leaves its cell empty.",
+    useFor:
+      "Show intensity across a grid, like activity by weekday and hour. data-numbers fills the grid row by row, and a blank value leaves its cell empty.",
     examples: [
       {
         label: "Grid of six columns",
@@ -270,7 +283,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-treemap-chart",
     group: "charts",
     name: "Treemap",
-    useFor: "Show parts of a whole as nested tiles, where a bigger tile means a bigger share. data-numbers gives one tile per value.",
+    useFor:
+      "Show parts of a whole as nested tiles, where a bigger tile means a bigger share. data-numbers gives one tile per value.",
     examples: [
       {
         label: "Sample tiles",
@@ -286,7 +300,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-waterfall-chart",
     group: "charts",
     name: "Waterfall chart",
-    useFor: "Show how a starting amount grows or shrinks step by step to an end amount. data-numbers gives the start, then each change; a negative number is a decrease.",
+    useFor:
+      "Show how a starting amount grows or shrinks step by step to an end amount. data-numbers gives the start, then each change; a negative number is a decrease.",
     examples: [
       {
         label: "Start, changes, and total",
@@ -314,7 +329,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-candlestick-chart",
     group: "charts",
     name: "Candlestick chart",
-    useFor: "Show a price in each period: open, high, low and close. data-numbers gives four values per candle in that order. A green candle closed up, a red one closed down.",
+    useFor:
+      "Show a price in each period: open, high, low and close. data-numbers gives four values per candle in that order. A green candle closed up, a red one closed down.",
     examples: [
       {
         label: "Four candles",
@@ -342,7 +358,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-sankey-chart",
     group: "charts",
     name: "Sankey chart",
-    useFor: "Show where a total flows, like traffic from sources into plans. data-numbers gives the size of each flow, and the ribbons are sized to match.",
+    useFor:
+      "Show where a total flows, like traffic from sources into plans. data-numbers gives the size of each flow, and the ribbons are sized to match.",
     examples: [
       {
         label: "Three flows",
@@ -364,7 +381,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-bump-chart",
     group: "charts",
     name: "Bump chart",
-    useFor: "Show how teams rank across periods. data-numbers gives each team's rank per period, where 1 is the top. data-second-numbers draws a second team's ranks in orange.",
+    useFor:
+      "Show how teams rank across periods. data-numbers gives each team's rank per period, where 1 is the top. data-second-numbers draws a second team's ranks in orange.",
     examples: [
       {
         label: "Ranks over four weeks",
@@ -382,7 +400,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-activity-gauge",
     group: "charts",
     name: "Activity gauge",
-    useFor: "Show several goals as nested rings that fill clockwise, like move, exercise and stand goals. data-numbers gives each ring's percent, outer ring first.",
+    useFor:
+      "Show several goals as nested rings that fill clockwise, like move, exercise and stand goals. data-numbers gives each ring's percent, outer ring first.",
     examples: [
       {
         label: "Three rings",
@@ -404,7 +423,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-liquid-gauge",
     group: "charts",
     name: "Liquid gauge",
-    useFor: "Show one percent as a circle filled with a wavy liquid. data-percent sets the level. With data-status error, the liquid turns red.",
+    useFor:
+      "Show one percent as a circle filled with a wavy liquid. data-percent sets the level. With data-status error, the liquid turns red.",
     examples: [
       {
         label: "Sample level, 60 percent",
@@ -433,7 +453,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-segment-meter",
     group: "charts",
     name: "Segment meter",
-    useFor: "Show a level as a row of blocks, like a password strength or a battery. data-count sets how many blocks, and data-percent sets how many are filled.",
+    useFor:
+      "Show a level as a row of blocks, like a password strength or a battery. data-count sets how many blocks, and data-percent sets how many are filled.",
     examples: [
       {
         label: "Five blocks at 60 percent",
@@ -453,7 +474,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-uptime-bars",
     group: "charts",
     name: "Uptime bars",
-    useFor: "Show the status of each day in a row, like a service's uptime history. data-numbers gives each day's uptime percent. Green is 99.5 or more, orange is 95 or more, red is lower, and a blank day stays empty.",
+    useFor:
+      "Show the status of each day in a row, like a service's uptime history. data-numbers gives each day's uptime percent. Green is 99.5 or more, orange is 95 or more, red is lower, and a blank day stays empty.",
     examples: [
       {
         label: "Last 14 days",
@@ -475,7 +497,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-sparkline",
     group: "charts",
     name: "Sparkline",
-    useFor: "A tiny line with no axes, to show a trend next to a number. data-numbers gives the values, and the last point is marked.",
+    useFor:
+      "A tiny line with no axes, to show a trend next to a number. data-numbers gives the values, and the last point is marked.",
     examples: [
       {
         label: "Beside a number",
@@ -491,7 +514,8 @@ export const CHARTS_PARTS: readonly SketchPart[] = [
     className: "sk-progress-meter",
     group: "charts",
     name: "Progress meter",
-    useFor: "A horizontal scale from 0 to 100 with ticks and a marker, to show how far something has got. data-percent sets the marker. With data-status error, the bar turns red.",
+    useFor:
+      "A horizontal scale from 0 to 100 with ticks and a marker, to show how far something has got. data-percent sets the marker. With data-status error, the bar turns red.",
     examples: [
       {
         label: "Sample at 60 percent",
