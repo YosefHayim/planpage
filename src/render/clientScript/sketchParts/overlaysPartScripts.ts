@@ -20,7 +20,7 @@ const SHEET_HANDLE_HALF_WIDTH_RATIO = 0.06;
 const DRAWER_EDGE_OFFSET_RATIO = 0.03;
 const MENU_ROW_INSET_RATIO = 0.08;
 const MENU_DIVIDER_INSET_RATIO = 0.05;
-const EMPTY_ICON_INSET_RATIO = 0.25;
+const EMPTY_ICON_SIDE_RATIO = 0.5;
 const PROGRESS_INSET_RATIO = 0.2;
 const RING_RADIUS_RATIO = 0.42;
 const SPINNER_SWEEP_ANGLE = Math.PI * 1.5;
@@ -34,6 +34,13 @@ const insetBoxBy = (box, inset) => ({
   y: box.y + inset,
   w: box.w - inset * 2,
   h: box.h - inset * 2,
+});
+
+const createCenteredSquare = (box, side) => ({
+  x: box.x + (box.w - side) / 2,
+  y: box.y + (box.h - side) / 2,
+  w: side,
+  h: side,
 });
 
 const createHatchStyle = (seed) => ({
@@ -332,7 +339,8 @@ const drawEmptyDrawing = (drawing) => {
   const { box, seed, under } = drawing;
   roundedRectangle(under, box, { tone: "soft", seed, dashed: true });
 
-  const iconBox = insetBoxBy(box, box.w * EMPTY_ICON_INSET_RATIO);
+  const iconSide = Math.min(box.w, box.h) * EMPTY_ICON_SIDE_RATIO;
+  const iconBox = createCenteredSquare(box, iconSide);
   icon(under, iconBox, "plus", { tone: "soft", seed: seed + 1 });
 };
 
