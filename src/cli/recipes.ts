@@ -43,20 +43,23 @@ const printRecipeListLines = (): number => {
   return EXIT_CODE_OK;
 };
 
-/** Returns the exit code; the CLI entry file sets process.exitCode from it. */
+const printOneRecipe = (recipeId: string): number => {
+  const recipe = findRecipeById(recipeId);
+  const isRecipeMissing = recipe === null;
+  if (isRecipeMissing) return reportUnknownRecipe(recipeId);
+
+  return printRecipeJson(recipe);
+};
+
 export const recipesCommand = (
   recipeId: string | undefined,
   options: RecipesCommandOptions,
 ): number => {
   const isRecipeIdGiven = recipeId !== undefined;
-  if (isRecipeIdGiven) {
-    const recipe = findRecipeById(recipeId);
-    const isRecipeMissing = recipe === null;
-    if (isRecipeMissing) return reportUnknownRecipe(recipeId);
-    return printRecipeJson(recipe);
-  }
+  if (isRecipeIdGiven) return printOneRecipe(recipeId);
 
   const isJsonOutput = options.json === true || !process.stdout.isTTY;
   if (isJsonOutput) return printRecipeListJson();
+
   return printRecipeListLines();
 };
