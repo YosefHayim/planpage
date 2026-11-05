@@ -11,16 +11,17 @@ Single source of truth for working in **planpage**. Claude Code and Codex load t
 | Path | Purpose |
 |---|---|
 | `src/components/` | shared primitives (flat), grouped by role — layout (`Shell` · `SectionCard` · `TreePanel` · `Accordion` · `Carousel`) · notes (`Callout` · `RiskList`) · sequence (`StatusChip` · `Steps` · `Timeline`) · brainstorm (`PickBlock` · `OptionCompare` · `QuestionCard`) · teach (`QuizCard` · `Flashcard`) · metrics (`PlanSummary` · `Scorecard`) · code (`DiffBlock` · `CodeBlock` · `AnnotatedCode` · `CodeExplorer` · `Terminal`) · diagram (`Flow`) · action (`FeedbackSidebar` · `SubmitBar`) |
-| `src/templates/<Name>/` | pages (folder-per-template: component + test + README) — `BeforeAfter`, `CodeStylePlan`, `PlanBrief` (flagship agent-plan page), `QuestionPoll` (preference poll), `Quiz` (graded teach/coach quiz), `Flashcards` (flip-card learn deck), `AuditReport` (scored audit), `Library` (auto-captured gallery); registry in `templates/index.tsx` |
+| `src/templates/<Name>/` | pages (folder-per-template: component + test + README) — `BeforeAfter`, `CodeStylePlan`, `PlanBrief` (flagship agent-plan page), `QuestionPoll` (preference poll), `Quiz` (graded teach/coach quiz), `Flashcards` (flip-card learn deck), `AuditReport` (scored audit), `Library` (auto-captured gallery), `SketchPlan` (hand-drawn plan pages, one picture per page), `SketchKit` (gallery of every sketch part); registry in `templates/index.tsx` |
 | `src/gallery/` | the living collection — `registry` (SSOT) · `capture` (pure diff) · sync test; powers `Library` + `planpage capture` |
-| `src/render/` | pure engine — `render()`, `raw()`, `codeMark` (the `data-hl` marker every code component emits), `clientScript/` (one island module each: theme · post-back · gallery filter · poll · quiz · explorer · carousel). `Shell` (in components) owns the `Theme` type + the animated sun/moon toggle |
+| `src/render/` | pure engine — `render()`, `raw()`, `codeMark` (the `data-hl` marker every code component emits), `clientScript/` (one island module each: theme · post-back · gallery filter · poll · quiz · explorer · carousel · sketch scene · sketch pager · sketch wireframe; `sketchWireframe` holds the shared rough.js drawing, and `clientScript/sketchParts/` has one draw script per part group). `Shell` (in components) owns the `Theme` type + the animated sun/moon toggle |
 | `src/highlight/` | the highlight pass — an **async edge transform** (`highlight` · `renderHighlighted`) that swaps `data-hl` markers for Shiki's VSCode dual-theme spans. Not part of the pure render |
 | `src/server/` | opt-in post-back — `serve` (ephemeral port, never-hang), `Decision` |
-| `src/cli/` | dual-mode CLI (commander) — `render` / `serve` / `new` / `library` / `capture` / `init`; bare TTY → `menu` (clack); shared `io` (open/writeTemp); `init/` is one writer per agent |
-| `skills/planpage/` | agent skill SSOT (`SKILL.md` + `COMPONENTS.md`) — how other agents use the kit; `init` scaffolds thinner per-agent on-ramps |
+| `src/cli/` | dual-mode CLI (commander) — `render` / `serve` / `new` / `library` / `capture` / `init` / `parts` / `recipes`; bare TTY → `menu` (clack); shared `io` (open/writeTemp); `init/` is one writer per agent |
+| `skills/planpage/` | agent skill SSOT (`SKILL.md` + `COMPONENTS.md` + `SKETCH-STYLE.md`, the sketch style guide and recipe list) — how other agents use the kit; `init` scaffolds thinner per-agent on-ramps |
 | `src/contracts/` | shared types — `Decision` |
 | `src/contracts/sketchScene.ts` | sketch scene types — `SketchScene`, `SketchPlanPage`, `SketchRecipe` |
-| `src/sketchRecipes/` | the 64 sketch recipes, one file per group, all exported as `SKETCH_RECIPES` |
+| `src/sketchParts/` | the sketch kit's parts, one file per group (`<group>Parts.ts`: class name, use, example HTML), all exported as `SKETCH_PARTS` |
+| `src/sketchRecipes/` | the 80 sketch recipes in 10 groups, one file per group, all exported as `SKETCH_RECIPES` |
 | `src/index.ts` | public API barrel |
 | `*.test.tsx` (co-located) | vitest, beside source |
 
