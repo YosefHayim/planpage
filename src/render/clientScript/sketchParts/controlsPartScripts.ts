@@ -1,16 +1,10 @@
-import { WIREFRAME_ICONS } from "../../../sketchParts/wireframeIcons";
-
-const WIREFRAME_ICON_SHAPES_JSON = JSON.stringify(WIREFRAME_ICONS);
-
 export const CONTROLS_PART_SCRIPT = `
-const WIREFRAME_ICON_SHAPES = ${WIREFRAME_ICON_SHAPES_JSON};
 const FOCUS_RING_INSET = 4;
 const FILL_INSET = 3;
 const SHADOW_OFFSET = 3;
 const GHOST_UNDERLINE_GAP = 2;
 const GHOST_UNDERLINE_TEXT_RATIO = 0.9;
 const SELF_ICON_RATIO = 0.5;
-const ICON_GRID_SIZE = 24;
 const ARC_STEPS_PER_TURN = 36;
 const ARC_START_ANGLE = -Math.PI / 2;
 const FULL_TURN_RADIANS = 2 * Math.PI;
@@ -20,8 +14,25 @@ const UNDO_RING_SIDE_RATIO = 0.6;
 const UNDO_RING_INSET_RATIO = 0.2;
 const SHUTTER_INNER_INSET_RATIO = 0.2;
 const CHECKBOX_TICK_INSET_RATIO = 0.18;
+const RADIO_DOT_INSET_RATIO = 0.28;
+const SWITCH_KNOB_INSET_RATIO = 0.16;
+const SLIDER_KNOB_RATIO = 0.8;
+const COLOR_THUMB_SIDE_RATIO = 0.3;
+const COLOR_AREA_THUMB_X_RATIO = 0.7;
+const COLOR_AREA_THUMB_Y_RATIO = 0.3;
+const COLOR_HUE_THUMB_RATIO = 0.4;
+const COLOR_HUE_THUMB_SIDE_RATIO = 1.4;
+const SIGNATURE_POINT_COUNT = 40;
+const SIGNATURE_WAVE_RATIO = 0.3;
+const SIGNATURE_WAVE_FREQUENCY = 0.9;
+const SIGNATURE_SCRIBBLE_RATIO = 0.12;
+const SIGNATURE_SCRIBBLE_FREQUENCY = 2.7;
+const SIGNATURE_LEFT_RATIO = 0.08;
+const SIGNATURE_WIDTH_RATIO = 0.84;
+const SIGNATURE_CENTER_RATIO = 0.5;
+const SIGNATURE_BASELINE_RATIO = 0.78;
 
-const { rectangle, roundedRectangle, circle, line, polyline, polygon, path, tick, createScaledLayer, readStatus, isChecked, readPercent, readTone, readFill, isRightToLeft } = window.SketchWireframe;
+const { rectangle, roundedRectangle, circle, line, polyline, tick, readStatus, isChecked, readPercent, readTone, readFill, isRightToLeft } = window.SketchWireframe;
 
 const insetBoxBy = (box, inset) => ({
   x: box.x + inset,
@@ -43,48 +54,6 @@ const measureRectInBox = (rect, elementRect, box) => {
 
 const readIconName = (element) => element.getAttribute("data-icon");
 
-const pickPointsFromText = (pointsText) =>
-  pointsText.split(" ").map((pairText) => {
-    const [x, y] = pairText.split(",").map(Number);
-    return { x, y };
-  });
-
-const drawIconShape = (layer, shape, style) => {
-  const { attributes } = shape;
-  switch (shape.tag) {
-    case "path":
-      path(layer, attributes.d, style);
-      return;
-    case "circle":
-      circle(layer, { x: attributes.cx - attributes.r, y: attributes.cy - attributes.r, w: attributes.r * 2, h: attributes.r * 2 }, style);
-      return;
-    case "ellipse":
-      rectangle(layer, { x: attributes.cx - attributes.rx, y: attributes.cy - attributes.ry, w: attributes.rx * 2, h: attributes.ry * 2 }, style);
-      return;
-    case "rect":
-      rectangle(layer, { x: attributes.x, y: attributes.y, w: attributes.width, h: attributes.height }, style);
-      return;
-    case "line":
-      line(layer, { x: attributes.x1, y: attributes.y1 }, { x: attributes.x2, y: attributes.y2 }, style);
-      return;
-    case "polyline":
-      polyline(layer, pickPointsFromText(attributes.points), style);
-      return;
-    case "polygon":
-      polygon(layer, pickPointsFromText(attributes.points), style);
-      return;
-  }
-};
-
-const drawIcon = (layer, box, iconName, style) => {
-  const iconShapes = WIREFRAME_ICON_SHAPES[iconName];
-  const isIconKnown = iconShapes !== undefined;
-  if (!isIconKnown) throw new Error("Unknown wireframe icon: " + iconName);
-
-  const iconLayer = createScaledLayer(layer, box, ICON_GRID_SIZE);
-  for (const shape of iconShapes) drawIconShape(iconLayer, shape, style);
-};
-
 const drawSelfIcon = (layer, element, box, style) => {
   const iconName = readIconName(element);
   const isIconMissing = iconName === null;
@@ -97,7 +66,7 @@ const drawSelfIcon = (layer, element, box, style) => {
     w: iconSide,
     h: iconSide,
   };
-  drawIcon(layer, iconBox, iconName, style);
+  window.SketchWireframe.icon(layer, iconBox, iconName, style);
 };
 
 const drawChildIcons = (layer, element, box, style) => {
@@ -105,7 +74,7 @@ const drawChildIcons = (layer, element, box, style) => {
   const iconElements = [...element.querySelectorAll("[data-icon]")];
   for (const [index, iconElement] of iconElements.entries()) {
     const iconBox = measureRectInBox(iconElement.getBoundingClientRect(), elementRect, box);
-    drawIcon(layer, iconBox, readIconName(iconElement), { tone: style.tone, seed: style.seed + index + 1 });
+    window.SketchWireframe.icon(layer, iconBox, readIconName(iconElement), { tone: style.tone, seed: style.seed + index + 1 });
   }
 };
 
@@ -481,6 +450,298 @@ window.SketchWireframe.definePart("sk-tag-input", (drawing) => {
   }
   drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
 });
+
+const measureMatchingBoxes = (drawing, selector) => {
+  const elementRect = drawing.element.getBoundingClientRect();
+  return [...drawing.element.querySelectorAll(selector)].map((matchingElement) => ({
+    element: matchingElement,
+    box: measureRectInBox(matchingElement.getBoundingClientRect(), elementRect, drawing.box),
+  }));
+};
+
+window.SketchWireframe.definePart("sk-select", (drawing) => {
+  const { element, box, seed, under } = drawing;
+
+  drawFieldOutline(drawing);
+  drawChildIcons(under, element, box, { tone: "soft", seed: seed + 1 });
+});
+
+window.SketchWireframe.definePart("sk-select-list", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const rows = measureMatchingBoxes(drawing, ".sk-select-row");
+
+  roundedRectangle(under, box, { tone: "ink", fill: readFill(element), seed });
+  for (const [index, row] of rows.entries()) {
+    const isChosen = readStatus(row.element) === "selected";
+    if (isChosen) {
+      const chosenBox = insetBoxBy(row.box, FILL_INSET);
+      roundedRectangle(under, chosenBox, { tone: "blue", fill: "blue", seed: seed + index + 1 });
+    }
+  }
+  drawChildIcons(under, element, box, { tone: "ink", seed: seed + 20 });
+});
+
+window.SketchWireframe.definePart("sk-combobox", (drawing) => {
+  const { element, box, seed, under } = drawing;
+
+  drawFieldOutline(drawing);
+  drawChildIcons(under, element, box, { tone: "soft", seed: seed + 1 });
+});
+
+window.SketchWireframe.definePart("sk-multi-select", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const chips = measureMatchingBoxes(drawing, ".sk-tag-input-chip");
+
+  drawFieldOutline(drawing);
+  for (const [index, chip] of chips.entries()) {
+    roundedRectangle(under, chip.box, { tone: "ink", fill: "grey", seed: seed + index + 1 });
+  }
+  drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
+});
+
+window.SketchWireframe.definePart("sk-radio", (drawing) => {
+  const { element, box, seed, under, over } = drawing;
+  const isDisabled = readStatus(element) === "disabled";
+  const isFocused = readStatus(element) === "focus";
+  const isRadioChecked = isChecked(element);
+  const tone = isDisabled ? "soft" : "ink";
+
+  circle(under, box, { tone, seed, dashed: isDisabled });
+  if (isRadioChecked) {
+    const dotBox = insetBoxBy(box, box.w * RADIO_DOT_INSET_RATIO);
+    circle(under, dotBox, { tone: isDisabled ? "soft" : "blue", fill: isDisabled ? "grey" : "blue", seed: seed + 1 });
+  }
+  if (isFocused) drawFocusRing(over, box, { seed, isRound: true });
+});
+
+window.SketchWireframe.definePart("sk-switch", (drawing) => {
+  const { element, box, seed, under, over } = drawing;
+  const isDisabled = readStatus(element) === "disabled";
+  const isFocused = readStatus(element) === "focus";
+  const isSwitchOn = isChecked(element);
+  const isFromEnd = isRightToLeft(element);
+  const tone = isDisabled ? "soft" : "ink";
+  const knobInset = box.h * SWITCH_KNOB_INSET_RATIO;
+  const knobSide = box.h - knobInset * 2;
+  const isKnobOnRight = isFromEnd ? !isSwitchOn : isSwitchOn;
+  const knobX = isKnobOnRight ? box.x + box.w - knobInset - knobSide : box.x + knobInset;
+  const knobBox = { x: knobX, y: box.y + knobInset, w: knobSide, h: knobSide };
+
+  roundedRectangle(under, box, { tone, fill: isSwitchOn ? "blue" : readFill(element), seed, dashed: isDisabled });
+  circle(under, knobBox, { tone, seed: seed + 1 });
+  if (isFocused) drawFocusRing(over, box, { seed, isRound: false });
+});
+
+window.SketchWireframe.definePart("sk-toggle", (drawing) => {
+  const { element, box, seed, under, over } = drawing;
+  const isDisabled = readStatus(element) === "disabled";
+  const isFocused = readStatus(element) === "focus";
+  const isPressed = readStatus(element) === "selected";
+  const tone = isDisabled ? "soft" : "ink";
+
+  roundedRectangle(under, box, { tone, fill: isPressed ? "blue" : readFill(element), seed, dashed: isDisabled });
+  drawChildIcons(under, element, box, { tone, seed: seed + 1 });
+  if (isFocused) drawFocusRing(over, box, { seed, isRound: false });
+});
+
+const pickThumbCenterX = (box, knobSide, fraction, isFromEnd) => {
+  const startCenterX = box.x + knobSide / 2;
+  const endCenterX = box.x + box.w - knobSide / 2;
+  const travelWidth = endCenterX - startCenterX;
+  if (isFromEnd) return endCenterX - travelWidth * fraction;
+  return startCenterX + travelWidth * fraction;
+};
+
+const createThumbBox = (box, knobSide, thumbCenterX) => ({
+  x: thumbCenterX - knobSide / 2,
+  y: box.y + (box.h - knobSide) / 2,
+  w: knobSide,
+  h: knobSide,
+});
+
+const readRangeEndPercent = (element) => Number(element.getAttribute("data-percent-end"));
+
+window.SketchWireframe.definePart("sk-slider", (drawing) => {
+  const { element, box, seed, under, over } = drawing;
+  const isDisabled = readStatus(element) === "disabled";
+  const isFocused = readStatus(element) === "focus";
+  const isFromEnd = isRightToLeft(element);
+  const tone = isDisabled ? "soft" : "blue";
+  const percent = readPercent(element) ?? 0;
+  const knobSide = box.h * SLIDER_KNOB_RATIO;
+  const trackY = box.y + box.h / 2;
+  const trackStart = { x: box.x + knobSide / 2, y: trackY };
+  const trackEnd = { x: box.x + box.w - knobSide / 2, y: trackY };
+  const thumbCenterX = pickThumbCenterX(box, knobSide, percent / PERCENT_SCALE, isFromEnd);
+  const thumbBox = createThumbBox(box, knobSide, thumbCenterX);
+  const fillOrigin = isFromEnd ? trackEnd : trackStart;
+
+  line(under, trackStart, trackEnd, { tone: "soft", seed });
+  line(under, fillOrigin, { x: thumbCenterX, y: trackY }, { tone, seed: seed + 1 });
+  circle(under, thumbBox, { tone, fill: "blue", seed: seed + 2 });
+  if (isFocused) drawFocusRing(over, thumbBox, { seed, isRound: true });
+});
+
+window.SketchWireframe.definePart("sk-range-slider", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const isFromEnd = isRightToLeft(element);
+  const knobSide = box.h * SLIDER_KNOB_RATIO;
+  const trackY = box.y + box.h / 2;
+  const startPercent = readPercent(element) ?? 0;
+  const endPercent = readRangeEndPercent(element);
+  const startCenterX = pickThumbCenterX(box, knobSide, startPercent / PERCENT_SCALE, isFromEnd);
+  const endCenterX = pickThumbCenterX(box, knobSide, endPercent / PERCENT_SCALE, isFromEnd);
+  const thumbBoxes = [startCenterX, endCenterX].map((thumbCenterX) => createThumbBox(box, knobSide, thumbCenterX));
+
+  line(under, { x: box.x + knobSide / 2, y: trackY }, { x: box.x + box.w - knobSide / 2, y: trackY }, { tone: "soft", seed });
+  line(under, { x: startCenterX, y: trackY }, { x: endCenterX, y: trackY }, { tone: "blue", seed: seed + 1 });
+  for (const [index, thumbBox] of thumbBoxes.entries()) {
+    circle(under, thumbBox, { tone: "blue", fill: "blue", seed: seed + index + 2 });
+  }
+});
+
+window.SketchWireframe.definePart("sk-rating-stars", (drawing) => {
+  const { seed, under } = drawing;
+  const filledCount = readCount(drawing.element, 0);
+  const starBoxes = measureMatchingBoxes(drawing, ".sk-rating-star");
+
+  for (const [index, star] of starBoxes.entries()) {
+    const isFilled = index < filledCount;
+    const starTone = isFilled ? "orange" : "soft";
+    window.SketchWireframe.icon(under, star.box, "star", { tone: starTone, seed: seed + index + 1 });
+  }
+});
+
+window.SketchWireframe.definePart("sk-color-swatch", (drawing) => {
+  const { element, box, seed, under, over } = drawing;
+  const isSelected = readStatus(element) === "selected";
+  const isFocused = readStatus(element) === "focus";
+
+  circle(under, box, { tone: "ink", fill: readFill(element), seed });
+  if (isSelected) circle(under, insetBoxBy(box, FILL_INSET), { tone: "blue", seed: seed + 1 });
+  if (isFocused) drawFocusRing(over, box, { seed, isRound: true });
+});
+
+window.SketchWireframe.definePart("sk-color-picker", (drawing) => {
+  const { box, seed, under } = drawing;
+  const areaBoxes = measureMatchingBoxes(drawing, ".sk-color-area");
+  const hueBoxes = measureMatchingBoxes(drawing, ".sk-color-hue");
+  const hexBoxes = measureMatchingBoxes(drawing, ".sk-color-hex");
+
+  roundedRectangle(under, box, { tone: "ink", seed });
+  for (const [index, area] of areaBoxes.entries()) {
+    const thumbSide = area.box.h * COLOR_THUMB_SIDE_RATIO;
+    const thumbCenterX = area.box.x + area.box.w * COLOR_AREA_THUMB_X_RATIO;
+    const thumbCenterY = area.box.y + area.box.h * COLOR_AREA_THUMB_Y_RATIO;
+    const thumbBox = { x: thumbCenterX - thumbSide / 2, y: thumbCenterY - thumbSide / 2, w: thumbSide, h: thumbSide };
+    roundedRectangle(under, area.box, { tone: "ink", fill: "red", seed: seed + index + 1 });
+    circle(under, thumbBox, { tone: "ink", fill: "grey", seed: seed + index + 10 });
+  }
+  for (const [index, hue] of hueBoxes.entries()) {
+    const thumbSide = hue.box.h * COLOR_HUE_THUMB_SIDE_RATIO;
+    const thumbCenterX = hue.box.x + hue.box.w * COLOR_HUE_THUMB_RATIO;
+    const thumbBox = { x: thumbCenterX - thumbSide / 2, y: hue.box.y + hue.box.h / 2 - thumbSide / 2, w: thumbSide, h: thumbSide };
+    roundedRectangle(under, hue.box, { tone: "ink", fill: "yellow", seed: seed + index + 20 });
+    circle(under, thumbBox, { tone: "ink", fill: "grey", seed: seed + index + 30 });
+  }
+  for (const [index, hex] of hexBoxes.entries()) {
+    roundedRectangle(under, hex.box, { tone: "ink", seed: seed + index + 40 });
+  }
+});
+
+const drawFieldWithIcons = (drawing) => {
+  const { element, box, seed, under } = drawing;
+
+  drawFieldOutline(drawing);
+  drawChildIcons(under, element, box, { tone: "soft", seed: seed + 1 });
+};
+
+for (const fieldClassName of ["sk-date-field", "sk-time-picker", "sk-search-bar"]) {
+  window.SketchWireframe.definePart(fieldClassName, drawFieldWithIcons);
+}
+
+window.SketchWireframe.definePart("sk-wheel-picker", (drawing) => {
+  const { box, seed, under } = drawing;
+  const rows = measureMatchingBoxes(drawing, ".sk-wheel-row");
+
+  roundedRectangle(under, box, { tone: "ink", seed });
+  for (const [index, row] of rows.entries()) {
+    const isChosen = readStatus(row.element) === "selected";
+    if (isChosen) {
+      roundedRectangle(under, insetBoxBy(row.box, FILL_INSET), { tone: "blue", fill: "blue", seed: seed + index + 1 });
+    }
+  }
+});
+
+window.SketchWireframe.definePart("sk-filter-bar", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const chips = measureMatchingBoxes(drawing, ".sk-filter-chip");
+
+  for (const [index, chip] of chips.entries()) {
+    const isChipSelected = readStatus(chip.element) === "selected";
+    const chipTone = isChipSelected ? "blue" : "ink";
+    const chipFill = isChipSelected ? "blue" : "grey";
+    roundedRectangle(under, chip.box, { tone: chipTone, fill: chipFill, seed: seed + index + 1 });
+  }
+  drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
+});
+
+window.SketchWireframe.definePart("sk-drop-zone", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const isHovered = readStatus(element) === "hover";
+  const tone = isHovered ? "blue" : "soft";
+
+  roundedRectangle(under, box, { tone, seed, dashed: true });
+  drawChildIcons(under, element, box, { tone: "ink", seed: seed + 1 });
+});
+
+window.SketchWireframe.definePart("sk-file-upload-item", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const progressBoxes = measureMatchingBoxes(drawing, ".sk-file-progress");
+
+  roundedRectangle(under, box, { tone: "ink", seed });
+  for (const [index, progress] of progressBoxes.entries()) {
+    const progressPercent = readPercent(progress.element) ?? 0;
+    roundedRectangle(under, progress.box, { tone: "soft", seed: seed + index + 1 });
+    drawProgressFill(under, progress.box, progressPercent, isRightToLeft(element), { tone: "blue", fill: "blue", seed: seed + index + 2 });
+  }
+  drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
+});
+
+const pickSignaturePoints = (box) => {
+  const pointIndexes = [...Array(SIGNATURE_POINT_COUNT + 1).keys()];
+  return pointIndexes.map((pointIndex) => {
+    const progressRatio = pointIndex / SIGNATURE_POINT_COUNT;
+    const broadWave = SIGNATURE_WAVE_RATIO * Math.sin(pointIndex * SIGNATURE_WAVE_FREQUENCY);
+    const quickScribble = SIGNATURE_SCRIBBLE_RATIO * Math.sin(pointIndex * SIGNATURE_SCRIBBLE_FREQUENCY);
+    const waveRatio = broadWave + quickScribble;
+    const pointX = box.x + box.w * (SIGNATURE_LEFT_RATIO + SIGNATURE_WIDTH_RATIO * progressRatio);
+    const pointY = box.y + box.h * (SIGNATURE_CENTER_RATIO + waveRatio);
+    return { x: pointX, y: pointY };
+  });
+};
+
+window.SketchWireframe.definePart("sk-signature-pad", (drawing) => {
+  const { box, seed, under } = drawing;
+  const baselineY = box.y + box.h * SIGNATURE_BASELINE_RATIO;
+  const baselineStart = { x: box.x + box.w * SIGNATURE_LEFT_RATIO, y: baselineY };
+  const baselineEnd = { x: box.x + box.w * (SIGNATURE_LEFT_RATIO + SIGNATURE_WIDTH_RATIO), y: baselineY };
+
+  roundedRectangle(under, box, { tone: "ink", seed });
+  line(under, baselineStart, baselineEnd, { tone: "soft", seed: seed + 1 });
+  polyline(under, pickSignaturePoints(box), { tone: "blue", seed: seed + 2 });
+});
+
+window.SketchWireframe.definePart("sk-slide-to-confirm", (drawing) => {
+  const { element, box, seed, under } = drawing;
+  const knobBoxes = measureMatchingBoxes(drawing, ".sk-slide-knob");
+
+  roundedRectangle(under, box, { tone: "ink", fill: readFill(element), seed });
+  for (const [index, knob] of knobBoxes.entries()) {
+    circle(under, knob.box, { tone: "blue", fill: "blue", seed: seed + index + 1 });
+  }
+  drawChildIcons(under, element, box, { tone: "ink", seed: seed + 10 });
+});
 `;
 
 export const CONTROLS_PART_STYLE = `.sk-button, .sk-icon-button, .sk-button-group, .sk-fab, .sk-hold-button, .sk-progress-button, .sk-social-button, .sk-app-store-button, .sk-undo-button, .sk-shutter-button {
@@ -788,5 +1049,348 @@ export const CONTROLS_PART_STYLE = `.sk-button, .sk-icon-button, .sk-button-grou
   gap: 0.25rem;
   padding: 0.125rem 0.5rem;
   border-radius: 0.5rem;
+}
+
+.sk-select, .sk-select-list, .sk-combobox, .sk-multi-select {
+  border: 1.6px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.sk-select, .sk-combobox {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 12rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.sk-select [data-icon], .sk-combobox [data-icon], .sk-multi-select [data-icon], .sk-select-row [data-icon] {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
+
+.sk-select-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 12rem;
+  padding: 0.375rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.sk-select-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 2.25rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+}
+
+.sk-multi-select {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.375rem;
+  min-width: 14rem;
+  min-height: 2.5rem;
+  padding: 0.375rem 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.sk-multi-select.sk-small {
+  min-height: 2rem;
+  font-size: 0.875rem;
+}
+
+.sk-multi-select.sk-large {
+  min-height: 3rem;
+  font-size: 1.125rem;
+}
+
+.sk-radio, .sk-switch, .sk-toggle {
+  border: 1.6px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.sk-radio {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  vertical-align: middle;
+  border-radius: 999px;
+}
+
+.sk-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  font-size: 1rem;
+}
+
+.sk-radio-group > * {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.sk-switch {
+  display: inline-block;
+  width: 2.75rem;
+  height: 1.5rem;
+  vertical-align: middle;
+  border-radius: 999px;
+}
+
+.sk-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+
+.sk-toggle [data-icon] {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
+
+.sk-toggle-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+}
+
+.sk-slider,
+.sk-range-slider,
+.sk-rating-stars,
+.sk-color-swatch,
+.sk-color-picker,
+.sk-date-field,
+.sk-time-picker,
+.sk-search-bar,
+.sk-wheel-picker,
+.sk-filter-bar,
+.sk-drop-zone,
+.sk-file-upload-item,
+.sk-signature-pad,
+.sk-slide-to-confirm {
+  border: 1.6px solid transparent;
+  background: none;
+  color: inherit;
+  font: inherit;
+}
+
+.sk-slider,
+.sk-range-slider {
+  display: block;
+  width: 16rem;
+  height: 1.5rem;
+}
+
+.sk-rating-stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 2rem;
+}
+
+.sk-rating-star {
+  display: inline-block;
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.sk-color-swatch {
+  display: inline-block;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 999px;
+}
+
+.sk-color-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 16rem;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+}
+
+.sk-color-area {
+  display: block;
+  height: 8rem;
+  border-radius: 0.5rem;
+}
+
+.sk-color-hue {
+  display: block;
+  height: 1.25rem;
+  border-radius: 999px;
+}
+
+.sk-color-hex {
+  display: block;
+  height: 2.25rem;
+  border-radius: 0.5rem;
+}
+
+.sk-date-field,
+.sk-time-picker,
+.sk-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 16rem;
+  height: 2.5rem;
+  padding: 0 0.75rem;
+  font-size: 1rem;
+}
+
+.sk-date-field [data-icon],
+.sk-time-picker [data-icon],
+.sk-search-bar [data-icon],
+.sk-filter-bar [data-icon],
+.sk-file-upload-item [data-icon] {
+  display: inline-block;
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+}
+
+.sk-wheel-picker {
+  display: flex;
+  flex-direction: column;
+  width: 10rem;
+  height: 9rem;
+  overflow: hidden;
+  text-align: center;
+  font-size: 1rem;
+  border-radius: 0.75rem;
+}
+
+.sk-wheel-row {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  height: 3rem;
+  border-radius: 0.5rem;
+}
+
+.sk-wheel-row:not([data-status="selected"]) {
+  opacity: 0.4;
+}
+
+.sk-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  width: 22rem;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.sk-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  border-radius: 999px;
+}
+
+.sk-drop-zone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 20rem;
+  min-height: 9rem;
+  padding: 1.5rem;
+  text-align: center;
+  border-radius: 0.75rem;
+}
+
+.sk-drop-zone [data-icon] {
+  display: inline-block;
+  width: 2rem;
+  height: 2rem;
+}
+
+.sk-file-upload-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 20rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+}
+
+.sk-file-progress {
+  flex: 1 1 auto;
+  min-width: 5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+}
+
+.sk-signature-pad {
+  display: block;
+  width: 20rem;
+  height: 8rem;
+  border-radius: 0.75rem;
+}
+
+.sk-slide-to-confirm {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18rem;
+  height: 3.5rem;
+  padding-inline: 3.5rem;
+  border-radius: 999px;
+  font-size: 1rem;
+}
+
+.sk-slide-knob {
+  position: absolute;
+  inset-block-start: 0.25rem;
+  inset-inline-start: 0.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3rem;
+  height: 3rem;
+  border-radius: 999px;
+}
+
+.sk-slide-knob [data-icon] {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
 }
 `;
