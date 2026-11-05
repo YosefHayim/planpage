@@ -108,7 +108,7 @@ const DASHBOARD_DONUT_HTML = `<div class="relative w-40" data-part="plansDonut">
   <div class="absolute inset-0 grid place-items-center text-center text-sm"><span>Plans<br>by tier</span></div>
 </div>`;
 
-const DASHBOARD_ORDERS_TABLE_HTML = `<div class="sk-table w-full" data-part="ordersTable">
+const DASHBOARD_ORDERS_TABLE_HTML = `<div class="sk-table w-full text-xs" data-part="ordersTable">
   <div class="sk-table-row sk-table-head"><span>Order</span><span>Customer</span><span>Status</span></div>
   <div class="sk-table-row"><span>#1041</span><span>Dana</span><span class="sk-badge" data-fill="green">Paid</span></div>
   <div class="sk-table-row" data-status="selected"><span>#1042</span><span>Omer</span><span class="sk-badge" data-fill="yellow">Pending</span></div>
@@ -155,8 +155,8 @@ const dashboardScreenHtml = `<div class="sk-app-shell w-full">
           <div class="flex items-center justify-between gap-2 text-sm"><span>Signups</span><div class="sk-sparkline w-24" data-numbers="9,8,9,6,5,5,3,2"></div></div>
         </div>
       </div>
-      <div class="grid grid-cols-3 gap-3">
-        <div class="sk-card col-span-2 space-y-2 p-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="sk-card space-y-2 p-3">
           <p class="font-bold">Latest orders</p>
           ${DASHBOARD_ORDERS_TABLE_HTML}
         </div>
