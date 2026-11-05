@@ -8,8 +8,11 @@ const DEFAULT_BANNER_FILL = "yellow";
 const NOTICE_ICON_NAME_BY_TONE = { blue: "info", green: "check", orange: "triangle-alert", red: "circle-alert" };
 const NOTICE_DEFAULT_ICON_NAME = "bell";
 const ALERT_FILL_BY_TONE = { blue: "blue", green: "green", orange: "orange", red: "red" };
-const NOTICE_ICON_SLOT_RATIO = 0.5;
-const NOTICE_ICON_INSET_RATIO = 0.25;
+const NOTICE_ICON_SLOT_RATIO = 0.4;
+const NOTICE_ICON_INSET_RATIO = 0.2;
+const PANEL_CORNER_RATIO = 0.12;
+const SQUARE_CORNER_RATIO = 0;
+const PANEL_BACKING_FILLS = { blue: "#d0ebff", grey: "#e9ecef", orange: "#ffe8cc", green: "#d3f9d8", red: "#ffe3e3", yellow: "#fff3bf" };
 const POINTER_HALF_WIDTH_RATIO = 0.04;
 const POINTER_HEIGHT_RATIO = 0.06;
 const SHEET_HANDLE_OFFSET_RATIO = 0.05;
@@ -60,6 +63,38 @@ const drawHatchCircle = (layer, box, seed) => {
   layer.svg.append(hatchCircle);
 };
 
+const createPanelBackingPath = (box, cornerRatio) => {
+  const radius = Math.min(box.w, box.h) * cornerRatio;
+  const right = box.x + box.w;
+  const bottom = box.y + box.h;
+
+  return [
+    "M", box.x + radius, box.y,
+    "H", right - radius,
+    "Q", right, box.y, right, box.y + radius,
+    "V", bottom - radius,
+    "Q", right, bottom, right - radius, bottom,
+    "H", box.x + radius,
+    "Q", box.x, bottom, box.x, bottom - radius,
+    "V", box.y + radius,
+    "Q", box.x, box.y, box.x + radius, box.y,
+  ].join(" ");
+};
+
+const drawPanelBacking = (layer, box, fillName, cornerRatio) => {
+  const panelBackingPath = createPanelBackingPath(box, cornerRatio);
+  const backingFill = PANEL_BACKING_FILLS[fillName];
+  const backingShape = layer.rough.path(panelBackingPath, {
+    fill: backingFill,
+    fillStyle: "solid",
+    stroke: "none",
+    roughness: 0,
+    bowing: 0,
+  });
+
+  layer.svg.append(backingShape);
+};
+
 const pickNoticeIconBox = (box, isRightToLeftLayout) => {
   const iconSide = box.h * NOTICE_ICON_SLOT_RATIO;
   const iconInset = box.h * NOTICE_ICON_INSET_RATIO;
@@ -79,6 +114,7 @@ const drawNoticeCard = (drawing, defaultFillName) => {
   const { element, box, seed, under } = drawing;
   const tone = readTone(element);
   const fill = readFill(element) ?? defaultFillName;
+  drawPanelBacking(under, box, fill, PANEL_CORNER_RATIO);
   roundedRectangle(under, box, { tone, fill, seed });
 
   const iconName = NOTICE_ICON_NAME_BY_TONE[tone] ?? NOTICE_DEFAULT_ICON_NAME;
@@ -112,6 +148,7 @@ const drawPanelOutline = (drawing) => {
   const { element, box, seed, under } = drawing;
   const tone = readTone(element);
   const fill = readFill(element) ?? DEFAULT_PANEL_FILL;
+  drawPanelBacking(under, box, fill, PANEL_CORNER_RATIO);
   roundedRectangle(under, box, { tone, fill, seed });
 };
 
@@ -120,6 +157,7 @@ const drawSquarePanel = (drawing) => {
   const { element, box, seed, under } = drawing;
   const tone = readTone(element);
   const fill = readFill(element) ?? DEFAULT_PANEL_FILL;
+  drawPanelBacking(under, box, fill, SQUARE_CORNER_RATIO);
   rectangle(under, box, { tone, fill, seed });
 };
 
@@ -146,6 +184,7 @@ const drawPointedPanel = (drawing, direction) => {
   const { element, box, seed, under } = drawing;
   const tone = readTone(element);
   const fill = readFill(element) ?? DEFAULT_PANEL_FILL;
+  drawPanelBacking(under, box, fill, PANEL_CORNER_RATIO);
   roundedRectangle(under, box, { tone, fill, seed });
 
   drawPointer(under, box, direction, { tone, seed: seed + 1 });
@@ -156,6 +195,7 @@ const drawBottomSheet = (drawing) => {
   const { element, box, seed, under } = drawing;
   const tone = readTone(element);
   const fill = readFill(element) ?? DEFAULT_PANEL_FILL;
+  drawPanelBacking(under, box, fill, PANEL_CORNER_RATIO);
   roundedRectangle(under, box, { tone, fill, seed });
 
   const handleY = box.y + box.h * SHEET_HANDLE_OFFSET_RATIO;
@@ -171,6 +211,7 @@ const drawDrawerPanel = (drawing) => {
   const { element, box, seed, under } = drawing;
   const tone = readTone(element);
   const fill = readFill(element) ?? DEFAULT_PANEL_FILL;
+  drawPanelBacking(under, box, fill, SQUARE_CORNER_RATIO);
   rectangle(under, box, { tone, fill, seed });
 
   const edgeOffset = box.w * DRAWER_EDGE_OFFSET_RATIO;
@@ -369,7 +410,7 @@ export const OVERLAYS_PART_STYLE = `:where(.sk-scrim) {
   min-width: 12rem;
   padding-block: 0.75rem;
   padding-inline: 1rem;
-  padding-inline-start: 3.25rem;
+  padding-inline-start: 4rem;
   border: 1.6px solid transparent;
 }
 
