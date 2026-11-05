@@ -173,6 +173,7 @@ export type SketchRecipeGroup =
   | "data"
   | "systems"
   | "screens"
+  | "account"
   | "decisions"
   | "look";
 
