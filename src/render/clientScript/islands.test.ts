@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { CAROUSEL_SCRIPT } from "./carousel";
 import { DIAGRAM_SCRIPT } from "./diagram";
 import { CLIENT_SCRIPT } from "./postback";
+import { SKETCH_PAGER_SCRIPT } from "./sketchPager";
+import { SKETCH_SCENE_SCRIPT, SKETCH_SCENE_STYLE } from "./sketchScene";
 import { WHITEBOARD_SCRIPT } from "./whiteboard";
 
 describe("client islands (string contracts)", () => {
@@ -44,5 +46,23 @@ describe("client islands (string contracts)", () => {
     expect(WHITEBOARD_SCRIPT).toContain("__ppCollectWhiteboards");
     expect(WHITEBOARD_SCRIPT).toContain("wb-queue");
     expect(WHITEBOARD_SCRIPT).toContain("toDataURL");
+  });
+
+  it("sketch scene and pager strings parse as JavaScript", () => {
+    expect(() => new Function(SKETCH_SCENE_SCRIPT)).not.toThrow();
+    expect(() => new Function(SKETCH_PAGER_SCRIPT)).not.toThrow();
+  });
+
+  it("sketch island reads scenes from JSON tags and waits for rough.js and fonts", () => {
+    expect(SKETCH_SCENE_SCRIPT).toContain("script[data-sketch-scene]");
+    expect(SKETCH_SCENE_SCRIPT).toContain("document.fonts.ready");
+    expect(SKETCH_SCENE_SCRIPT).toContain("pp-rough-ready");
+    expect(SKETCH_SCENE_SCRIPT).toContain("drawFramesIn");
+  });
+
+  it("sketch pager posts the decision through /decision and never inlines a script tag", () => {
+    expect(SKETCH_PAGER_SCRIPT).toContain('"/decision"');
+    expect(SKETCH_PAGER_SCRIPT).toContain('"sketch-choice"');
+    expect(SKETCH_SCENE_STYLE).not.toContain("@import");
   });
 });

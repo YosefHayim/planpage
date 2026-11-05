@@ -33,7 +33,7 @@ export const renderCommand = async (
       theme: options.theme,
       // Quiz carries its own SubmitBar + owns submit via the quizzable island — never add the
       // interactive post-back too, or both would handle [data-action] and double-submit.
-      interactive: Boolean(options.serve) && template !== "quiz",
+      interactive: Boolean(options.serve) && template !== "quiz" && template !== "sketch-plan",
       filterable: template === "library",
       explorable: template === "code-style-plan" || template === "library",
       pollable: template === "question-poll",
@@ -41,6 +41,7 @@ export const renderCommand = async (
       carousel: template === "library",
       // interactive plans also get diagram boards via Shell (diagramable || interactive)
       diagramable: template === "library",
+      hasSketchScenes: template === "sketch-plan" || template === "library",
     }),
   );
 

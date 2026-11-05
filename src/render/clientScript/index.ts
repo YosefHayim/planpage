@@ -11,3 +11,5 @@ export { QUIZ_SCRIPT } from "./quiz";
 export { CAROUSEL_SCRIPT } from "./carousel";
 export { DIAGRAM_SCRIPT } from "./diagram";
 export { WHITEBOARD_SCRIPT } from "./whiteboard";
+export { SKETCH_PAGER_SCRIPT } from "./sketchPager";
+export { SKETCH_SCENE_SCRIPT, SKETCH_SCENE_STYLE } from "./sketchScene";
