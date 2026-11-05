@@ -374,8 +374,7 @@ const paywallScreenHtml = createPhoneHtml(
   `<header class="sk-top-bar sk-close"><span class="sk-top-bar-title">Choose a plan</span></header>
   <p class="text-center text-sm">Unlock every plant guide.</p>
   <div class="sk-option-card w-full" data-part="monthly-option"><p class="font-bold">Monthly</p><p class="text-sm">$4 each month</p></div>
-  <div class="sk-option-card w-full" data-status="selected" data-part="yearly-option"><p class="font-bold">Yearly</p><p class="text-sm">Save 25 percent</p></div>
-  <span class="sk-badge" data-fill="yellow" data-part="best-value-badge">Best value</span>
+  <div class="sk-option-card w-full" data-status="selected" data-part="yearly-option"><p class="flex items-center justify-between font-bold">Yearly <span class="sk-badge" data-fill="yellow" data-part="best-value-badge">Best value</span></p><p class="text-sm">Save 25 percent</p></div>
   <div class="flex flex-col gap-2"><p class="sk-feature">Unlimited plant checks</p><p class="sk-feature">Offline guides</p></div>
   <button type="button" class="sk-button sk-main w-full" data-part="start-button">Start for $36 a year</button>
   <p class="text-center"><a class="sk-link sk-quiet" href="#" data-part="restore-link">Restore purchases</a></p>`,
