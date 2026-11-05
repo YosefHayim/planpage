@@ -1,47 +1,9 @@
-import type { SketchIconShape } from "../../../contracts/sketchScene";
-import { WIREFRAME_ICONS } from "../../../sketchParts/wireframeIcons";
-
-const NAVIGATION_ICON_NAMES = [
-  "bell",
-  "calendar",
-  "check",
-  "file-text",
-  "home",
-  "inbox",
-  "life-buoy",
-  "plus",
-  "printer",
-  "search",
-  "settings",
-  "trash-2",
-  "user",
-  "users",
-  "x",
-];
-
-const pickIconShapes = (
-  iconNames: readonly string[],
-): Record<string, readonly SketchIconShape[]> => {
-  const iconShapesByName: Record<string, readonly SketchIconShape[]> = {};
-  for (const iconName of iconNames) {
-    const iconShapes = WIREFRAME_ICONS[iconName];
-    const isIconInSet = iconShapes != null;
-    if (isIconInSet) iconShapesByName[iconName] = iconShapes;
-  }
-  return iconShapesByName;
-};
-
-const NAVIGATION_ICON_SHAPES_JSON = JSON.stringify(pickIconShapes(NAVIGATION_ICON_NAMES));
-
 export const NAVIGATION_PART_SCRIPT = `
-const ICON_GRID_SIZE = 24;
-const PLACEHOLDER_INSET_RATIO = 0.2;
 const CHILD_SEED_STRIDE = 17;
 const FOCUS_INSET_RATIO = 0.06;
 const DOCK_DOT_RATIO = 0.12;
 const SLASH_NEAR_RATIO = 0.3;
 const SLASH_FAR_RATIO = 0.7;
-const ICON_SHAPES = ${NAVIGATION_ICON_SHAPES_JSON};
 
 const {
   definePart,
@@ -50,12 +12,8 @@ const {
   circle,
   ellipse,
   rectangle,
-  path,
-  polyline,
-  polygon,
   chevron,
   cross,
-  createScaledLayer,
   readStatus,
   readTone,
   isRightToLeft,
@@ -100,73 +58,12 @@ const fitSquareInBox = (box) => {
   };
 };
 
-const createBoxFromCenter = (centerX, centerY, radiusX, radiusY) => ({
-  x: centerX - radiusX,
-  y: centerY - radiusY,
-  w: radiusX * 2,
-  h: radiusY * 2,
-});
-
-const parsePointPairs = (pointsText) => {
-  const pairTexts = pointsText.trim().split(" ");
-  return pairTexts.map((pairText) => {
-    const [xText, yText] = pairText.split(",");
-    return { x: Number(xText), y: Number(yText) };
-  });
-};
-
-const drawShape = (layer, shape, style) => {
-  const { tag, attributes } = shape;
-  const isPath = tag === "path";
-  if (isPath) return path(layer, attributes.d, style);
-
-  const isLine = tag === "line";
-  if (isLine) {
-    return line(layer, { x: attributes.x1, y: attributes.y1 }, { x: attributes.x2, y: attributes.y2 }, style);
-  }
-
-  const isCircle = tag === "circle";
-  if (isCircle) return circle(layer, createBoxFromCenter(attributes.cx, attributes.cy, attributes.r, attributes.r), style);
-
-  const isEllipse = tag === "ellipse";
-  if (isEllipse) {
-    return ellipse(layer, createBoxFromCenter(attributes.cx, attributes.cy, attributes.rx, attributes.ry), style);
-  }
-
-  const isRect = tag === "rect";
-  if (isRect) {
-    return rectangle(layer, { x: attributes.x, y: attributes.y, w: attributes.width, h: attributes.height }, style);
-  }
-
-  const isPolyline = tag === "polyline";
-  if (isPolyline) return polyline(layer, parsePointPairs(attributes.points), style);
-
-  return polygon(layer, parsePointPairs(attributes.points), style);
-};
-
-const drawPlaceholder = (layer, box, style) => {
-  const placeholderInset = Math.min(box.w, box.h) * PLACEHOLDER_INSET_RATIO;
-  circle(layer, createInsetBox(fitSquareInBox(box), placeholderInset), style);
-};
-
-const drawIcon = (layer, box, iconName, style) => {
-  const iconShapes = ICON_SHAPES[iconName];
-  const isIconMissing = iconShapes == null;
-  if (isIconMissing) {
-    drawPlaceholder(layer, box, style);
-    return;
-  }
-
-  const iconLayer = createScaledLayer(layer, fitSquareInBox(box), ICON_GRID_SIZE);
-  for (const shape of iconShapes) drawShape(iconLayer, shape, style);
-};
-
 const readIconName = (element) => element.dataset.icon;
 
 const drawIconChildren = (drawing) => {
   for (const [index, { child, box }] of listChildBoxes(drawing, "[data-icon]").entries()) {
     const iconStyle = { tone: readTone(child), seed: pickChildSeed(drawing, index) };
-    drawIcon(drawing.under, box, readIconName(child), iconStyle);
+    window.SketchWireframe.icon(drawing.under, box, readIconName(child), iconStyle);
   }
 };
 
@@ -229,19 +126,8 @@ definePart("sk-header-navigation", (drawing) => {
   roundedRectangle(under, box, { tone: "ink", seed });
   drawItemStates(drawing, ".sk-header-navigation-link");
 
-  for (const [index, { box: toggleBox }] of listChildBoxes(drawing, ".sk-header-navigation-menu").entries()) {
-    drawMenuLines(under, toggleBox, pickChildSeed(drawing, index));
-  }
   drawIconChildren(drawing);
 });
-
-const MENU_LINE_RATIOS = [0.25, 0.5, 0.75];
-const drawMenuLines = (layer, box, seed) => {
-  for (const [index, lineRatio] of MENU_LINE_RATIOS.entries()) {
-    const lineY = box.y + box.h * lineRatio;
-    line(layer, { x: box.x, y: lineY }, { x: box.x + box.w, y: lineY }, { tone: "ink", seed: seed + index });
-  }
-};
 
 definePart("sk-sidebar-navigation", (drawing) => {
   const { box, seed, under } = drawing;
@@ -386,6 +272,18 @@ const drawStepperDot = (layer, child, box, seed) => {
   circle(layer, dotBox, { tone: "soft", seed });
 };
 
+const pickDotEdgePoints = (fromCenter, toCenter, radius) => {
+  const distanceX = toCenter.x - fromCenter.x;
+  const distanceY = toCenter.y - fromCenter.y;
+  const distance = Math.hypot(distanceX, distanceY);
+  const stepX = (distanceX / distance) * radius;
+  const stepY = (distanceY / distance) * radius;
+  return {
+    from: { x: fromCenter.x + stepX, y: fromCenter.y + stepY },
+    to: { x: toCenter.x - stepX, y: toCenter.y - stepY },
+  };
+};
+
 const drawStepperConnectors = (drawing, dotEntries) => {
   for (const [index, { child, box }] of dotEntries.entries()) {
     const nextEntry = dotEntries[index + 1];
@@ -394,9 +292,9 @@ const drawStepperConnectors = (drawing, dotEntries) => {
 
     const connectorTone = isChecked(child) ? "green" : "soft";
     const connectorSeed = pickChildSeed(drawing, index + dotEntries.length);
-    const from = readBoxCenter(box);
-    const to = readBoxCenter(nextEntry.box);
-    line(drawing.under, from, to, { tone: connectorTone, seed: connectorSeed });
+    const dotRadius = fitSquareInBox(box).w / 2;
+    const edgePoints = pickDotEdgePoints(readBoxCenter(box), readBoxCenter(nextEntry.box), dotRadius);
+    line(drawing.under, edgePoints.from, edgePoints.to, { tone: connectorTone, seed: connectorSeed });
   }
 };
 
@@ -423,8 +321,11 @@ const drawMenuCheckMarks = (drawing) => {
     if (!isItemChecked) continue;
 
     const markSide = box.h * CHECK_MARK_SIDE_RATIO;
+    const markInset = box.h * CHECK_MARK_START_RATIO;
+    const isRtlItem = isRightToLeft(child);
+    const markStartX = isRtlItem ? box.x + box.w - markInset - markSide : box.x + markInset;
     const markBox = {
-      x: box.x + box.h * CHECK_MARK_START_RATIO,
+      x: markStartX,
       y: box.y + (box.h - markSide) / 2,
       w: markSide,
       h: markSide,
@@ -711,8 +612,9 @@ export const NAVIGATION_PART_STYLE = `:where(.sk-wireframe [data-icon]) {
 
 :where(.sk-pagination-previous, .sk-pagination-next) {
   display: inline-block;
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 1em;
+  height: 1em;
+  margin-inline: 0.25rem;
 }
 
 :where(.sk-pagination-page) {
@@ -760,6 +662,7 @@ export const NAVIGATION_PART_STYLE = `:where(.sk-wireframe [data-icon]) {
 :where(.sk-stepper.sk-vertical) {
   flex-direction: column;
   align-items: stretch;
+  gap: 1rem;
 }
 
 :where(.sk-stepper.sk-vertical .sk-stepper-step) {
@@ -811,7 +714,9 @@ export const NAVIGATION_PART_STYLE = `:where(.sk-wireframe [data-icon]) {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.25rem 0.5rem 0.25rem 1.25rem;
+  padding-block: 0.25rem;
+  padding-inline: 0.5rem;
+  padding-inline-start: 2rem;
   border-radius: 0.375rem;
 }
 

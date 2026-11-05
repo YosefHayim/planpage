@@ -47,7 +47,7 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
       },
       {
         label: "Small screen",
-        html: '<nav class="sk-header-navigation"><span class="font-bold">Acme</span><span class="sk-header-navigation-menu"></span></nav>',
+        html: '<nav class="sk-header-navigation"><span class="font-bold">Acme</span><span class="sk-header-navigation-menu" data-icon="menu"></span></nav>',
       },
       {
         label: "Right to left",
@@ -64,19 +64,19 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Main menu",
-        html: '<nav class="sk-sidebar-navigation"><p class="sk-sidebar-heading">Workspace</p><a class="sk-sidebar-row" data-status="selected"><span data-icon="home"></span>Dashboard</a><a class="sk-sidebar-row"><span data-icon="inbox"></span>Inbox<span class="ms-auto">3</span></a><a class="sk-sidebar-row"><span data-icon="users"></span>Team</a><p class="sk-sidebar-heading">Account</p><a class="sk-sidebar-row"><span data-icon="settings"></span>Settings</a></nav>',
+        html: '<nav class="sk-sidebar-navigation"><p class="sk-sidebar-heading">Workspace</p><a class="sk-sidebar-row" data-status="selected"><span data-icon="house"></span>Dashboard</a><a class="sk-sidebar-row"><span data-icon="inbox"></span>Inbox<span class="ms-auto">3</span></a><a class="sk-sidebar-row"><span data-icon="users"></span>Team</a><p class="sk-sidebar-heading">Account</p><a class="sk-sidebar-row"><span data-icon="settings"></span>Settings</a></nav>',
       },
       {
         label: "Hover",
-        html: '<nav class="sk-sidebar-navigation"><a class="sk-sidebar-row"><span data-icon="home"></span>Dashboard</a><a class="sk-sidebar-row" data-status="hover"><span data-icon="inbox"></span>Inbox</a><a class="sk-sidebar-row"><span data-icon="users"></span>Team</a></nav>',
+        html: '<nav class="sk-sidebar-navigation"><a class="sk-sidebar-row"><span data-icon="house"></span>Dashboard</a><a class="sk-sidebar-row" data-status="hover"><span data-icon="inbox"></span>Inbox</a><a class="sk-sidebar-row"><span data-icon="users"></span>Team</a></nav>',
       },
       {
         label: "Focus",
-        html: '<nav class="sk-sidebar-navigation"><a class="sk-sidebar-row" data-status="selected"><span data-icon="home"></span>Dashboard</a><a class="sk-sidebar-row" data-status="focus"><span data-icon="inbox"></span>Inbox</a></nav>',
+        html: '<nav class="sk-sidebar-navigation"><a class="sk-sidebar-row" data-status="selected"><span data-icon="house"></span>Dashboard</a><a class="sk-sidebar-row" data-status="focus"><span data-icon="inbox"></span>Inbox</a></nav>',
       },
       {
         label: "Right to left",
-        html: '<nav class="sk-sidebar-navigation" dir="rtl"><p class="sk-sidebar-heading">סביבת עבודה</p><a class="sk-sidebar-row" data-status="selected"><span data-icon="home"></span>לוח בקרה</a><a class="sk-sidebar-row"><span data-icon="inbox"></span>הודעות</a><a class="sk-sidebar-row"><span data-icon="users"></span>צוות</a></nav>',
+        html: '<nav class="sk-sidebar-navigation" dir="rtl"><p class="sk-sidebar-heading">סביבת עבודה</p><a class="sk-sidebar-row" data-status="selected"><span data-icon="house"></span>לוח בקרה</a><a class="sk-sidebar-row"><span data-icon="inbox"></span>הודעות</a><a class="sk-sidebar-row"><span data-icon="users"></span>צוות</a></nav>',
       },
     ],
   },
@@ -88,15 +88,15 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Four tabs",
-        html: '<nav class="sk-bottom-tab-bar"><a class="sk-bottom-tab-item" data-status="selected"><span data-icon="home"></span>Home</a><a class="sk-bottom-tab-item"><span data-icon="search"></span>Search</a><a class="sk-bottom-tab-item"><span data-icon="inbox"></span>Inbox</a><a class="sk-bottom-tab-item"><span data-icon="user"></span>Profile</a></nav>',
+        html: '<nav class="sk-bottom-tab-bar"><a class="sk-bottom-tab-item" data-status="selected"><span data-icon="house"></span>Home</a><a class="sk-bottom-tab-item"><span data-icon="search"></span>Search</a><a class="sk-bottom-tab-item"><span data-icon="inbox"></span>Inbox</a><a class="sk-bottom-tab-item"><span data-icon="user"></span>Profile</a></nav>',
       },
       {
         label: "Focus",
-        html: '<nav class="sk-bottom-tab-bar"><a class="sk-bottom-tab-item" data-status="selected"><span data-icon="home"></span>Home</a><a class="sk-bottom-tab-item" data-status="focus"><span data-icon="search"></span>Search</a><a class="sk-bottom-tab-item"><span data-icon="inbox"></span>Inbox</a></nav>',
+        html: '<nav class="sk-bottom-tab-bar"><a class="sk-bottom-tab-item" data-status="selected"><span data-icon="house"></span>Home</a><a class="sk-bottom-tab-item" data-status="focus"><span data-icon="search"></span>Search</a><a class="sk-bottom-tab-item"><span data-icon="inbox"></span>Inbox</a></nav>',
       },
       {
         label: "Right to left",
-        html: '<nav class="sk-bottom-tab-bar" dir="rtl"><a class="sk-bottom-tab-item" data-status="selected"><span data-icon="home"></span>בית</a><a class="sk-bottom-tab-item"><span data-icon="search"></span>חיפוש</a><a class="sk-bottom-tab-item"><span data-icon="inbox"></span>הודעות</a><a class="sk-bottom-tab-item"><span data-icon="user"></span>פרופיל</a></nav>',
+        html: '<nav class="sk-bottom-tab-bar" dir="rtl"><a class="sk-bottom-tab-item" data-status="selected"><span data-icon="house"></span>בית</a><a class="sk-bottom-tab-item"><span data-icon="search"></span>חיפוש</a><a class="sk-bottom-tab-item"><span data-icon="inbox"></span>הודעות</a><a class="sk-bottom-tab-item"><span data-icon="user"></span>פרופיל</a></nav>',
       },
     ],
   },
@@ -109,15 +109,15 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "With action",
-        html: '<nav class="sk-floating-tab-bar"><a class="sk-floating-tab-item" data-status="selected"><span data-icon="home"></span>Home</a><a class="sk-floating-tab-item"><span data-icon="calendar"></span>Plan</a><span class="sk-floating-tab-action"><span data-icon="plus"></span></span><a class="sk-floating-tab-item"><span data-icon="inbox"></span>Inbox</a><a class="sk-floating-tab-item"><span data-icon="user"></span>Profile</a></nav>',
+        html: '<nav class="sk-floating-tab-bar"><a class="sk-floating-tab-item" data-status="selected"><span data-icon="house"></span>Home</a><a class="sk-floating-tab-item"><span data-icon="calendar"></span>Plan</a><span class="sk-floating-tab-action"><span data-icon="plus"></span></span><a class="sk-floating-tab-item"><span data-icon="inbox"></span>Inbox</a><a class="sk-floating-tab-item"><span data-icon="user"></span>Profile</a></nav>',
       },
       {
         label: "Two tabs",
-        html: '<nav class="sk-floating-tab-bar"><a class="sk-floating-tab-item" data-status="selected"><span data-icon="home"></span>Home</a><a class="sk-floating-tab-item"><span data-icon="settings"></span>Settings</a></nav>',
+        html: '<nav class="sk-floating-tab-bar"><a class="sk-floating-tab-item" data-status="selected"><span data-icon="house"></span>Home</a><a class="sk-floating-tab-item"><span data-icon="settings"></span>Settings</a></nav>',
       },
       {
         label: "Right to left",
-        html: '<nav class="sk-floating-tab-bar" dir="rtl"><a class="sk-floating-tab-item" data-status="selected"><span data-icon="home"></span>בית</a><a class="sk-floating-tab-item"><span data-icon="calendar"></span>תוכנית</a><span class="sk-floating-tab-action"><span data-icon="plus"></span></span><a class="sk-floating-tab-item"><span data-icon="user"></span>פרופיל</a></nav>',
+        html: '<nav class="sk-floating-tab-bar" dir="rtl"><a class="sk-floating-tab-item" data-status="selected"><span data-icon="house"></span>בית</a><a class="sk-floating-tab-item"><span data-icon="calendar"></span>תוכנית</a><span class="sk-floating-tab-action"><span data-icon="plus"></span></span><a class="sk-floating-tab-item"><span data-icon="user"></span>פרופיל</a></nav>',
       },
     ],
   },
@@ -130,11 +130,11 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "Dock",
-        html: '<nav class="sk-glass-dock"><span class="sk-glass-dock-item" data-icon="home" data-status="selected"></span><span class="sk-glass-dock-item" data-icon="search"></span><span class="sk-glass-dock-item" data-icon="inbox"></span><span class="sk-glass-dock-item" data-icon="settings"></span></nav>',
+        html: '<nav class="sk-glass-dock"><span class="sk-glass-dock-item" data-icon="house" data-status="selected"></span><span class="sk-glass-dock-item" data-icon="search"></span><span class="sk-glass-dock-item" data-icon="inbox"></span><span class="sk-glass-dock-item" data-icon="settings"></span></nav>',
       },
       {
         label: "With add button",
-        html: '<nav class="sk-glass-dock"><span class="sk-glass-dock-item" data-icon="home" data-status="selected"></span><span class="sk-glass-dock-item" data-icon="calendar"></span><span class="sk-glass-dock-item" data-icon="plus"></span><span class="sk-glass-dock-item" data-icon="user"></span></nav>',
+        html: '<nav class="sk-glass-dock"><span class="sk-glass-dock-item" data-icon="house" data-status="selected"></span><span class="sk-glass-dock-item" data-icon="calendar"></span><span class="sk-glass-dock-item" data-icon="plus"></span><span class="sk-glass-dock-item" data-icon="user"></span></nav>',
       },
     ],
   },
@@ -250,11 +250,11 @@ export const NAVIGATION_PARTS: readonly SketchPart[] = [
       },
       {
         label: "View menu with a checked item",
-        html: '<div class="sk-menubar"><span class="sk-menubar-menu">File</span><span class="sk-menubar-menu" data-status="selected">View<div class="sk-menubar-panel"><span class="sk-menubar-item" data-checked>Show grid</span><span class="sk-menubar-item">Zoom in<span class="ms-auto">Cmd +</span></span><span class="sk-menubar-item">Full screen</span></div></span></div>',
+        html: '<div class="sk-menubar mb-28"><span class="sk-menubar-menu">File</span><span class="sk-menubar-menu" data-status="selected">View<div class="sk-menubar-panel"><span class="sk-menubar-item" data-checked>Show grid</span><span class="sk-menubar-item">Zoom in<span class="ms-auto">Cmd +</span></span><span class="sk-menubar-item">Full screen</span></div></span></div>',
       },
       {
         label: "Right to left",
-        html: '<div class="sk-menubar" dir="rtl"><span class="sk-menubar-menu">קובץ</span><span class="sk-menubar-menu" data-status="selected">עריכה<div class="sk-menubar-panel"><span class="sk-menubar-item">העתק</span><span class="sk-menubar-item" data-checked>הדבק</span></div></span><span class="sk-menubar-menu">תצוגה</span></div>',
+        html: '<div class="sk-menubar mb-28" dir="rtl"><span class="sk-menubar-menu" data-status="selected">קובץ<div class="sk-menubar-panel"><span class="sk-menubar-item">העתק</span><span class="sk-menubar-item" data-checked>הדבק</span></div></span><span class="sk-menubar-menu">עריכה</span><span class="sk-menubar-menu">תצוגה</span></div>',
       },
     ],
   },
