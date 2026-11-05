@@ -97,21 +97,21 @@ export const MARKS_PARTS: readonly SketchPart[] = [
     examples: [
       {
         label: "One pin on a button",
-        html: `<div class="relative inline-block p-6">
+        html: `<div class="relative inline-block p-8">
   <button type="button" class="sk-button">Save changes</button>
   <span class="sk-numbered-callout absolute -right-3 -top-3">1</span>
 </div>`,
       },
       {
         label: "Three pins on a screen",
-        html: `<div class="space-y-6 p-6">
+        html: `<div class="space-y-6 p-6 pl-10">
   <div class="relative">
     <p class="text-lg">Launch plan</p>
-    <span class="sk-numbered-callout absolute -left-6 top-0">1</span>
+    <span class="sk-numbered-callout absolute -left-10 top-0">1</span>
   </div>
   <div class="relative">
     <p>Ship the sign-in page by Friday.</p>
-    <span class="sk-numbered-callout absolute -left-6 top-0">2</span>
+    <span class="sk-numbered-callout absolute -left-10 top-0">2</span>
   </div>
   <div class="relative inline-block">
     <button type="button" class="sk-button sk-main">Save changes</button>
