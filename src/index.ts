@@ -130,4 +130,5 @@ export {
 export { Quiz, type QuizProps } from "./templates/Quiz/Quiz";
 export { SketchPlan, type SketchPlanProps } from "./templates/SketchPlan/SketchPlan";
 export { QuizCard, type QuizCardProps, type QuizOption } from "./components/QuizCard";
+export { SKETCH_RECIPES } from "./sketchRecipes/sketchRecipes";
 export { SAMPLES, TEMPLATES, type TemplateName } from "./templates";

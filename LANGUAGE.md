@@ -59,6 +59,28 @@ The effectful step — serve a rendered page and block for one decision (`serve-
 **fallback**:
 The no-server path — open the file directly; the page copies the decision to the clipboard to paste back. Ensures a non-TTY caller never hangs.
 
+## Sketch plans
+
+**sketch plan**:
+A plan drawn as hand-sketched pages by the `sketch-plan` template (`SketchPlan`). The default for every plan.
+_Avoid_: drawing, diagram, mockup, sketch page.
+
+**sketch scene**:
+One picture on one page: a JSON scene (`SketchScene`) that the sketch engine draws. Its shapes, words, arrows and notes.
+_Avoid_: drawing, diagram, figure, picture.
+
+**sketch recipe**:
+A ready-made sketch scene kept in the package (`SKETCH_RECIPES`). `planpage recipes` lists them.
+_Avoid_: variation, template sketch, sample.
+
+**Your call page**:
+The last page of a sketch plan. It shows options A, B and C and asks the owner to pick one.
+_Avoid_: decision page, choice page, final page.
+
+**note link**:
+A mono note tied to one part of the picture by a dashed line. Set with `link` on the note.
+_Avoid_: callout, annotation, pointer.
+
 ## Relationships
 
 - A **template** composes **component**s and nests inside the **shell**.

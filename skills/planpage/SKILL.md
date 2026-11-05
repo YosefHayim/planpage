@@ -8,7 +8,8 @@ description: >
   sidebar, then hits Send to Agent — one feedback batch returns to the
   terminal. Use whenever a skill needs a plan review gate, preference poll,
   teach/coach surface, storyboard/image grid, or shareable before/after
-  report — author with planpage instead of hand-rolling HTML.
+  report — author with planpage instead of hand-rolling HTML. Every plan
+  uses the sketch-plan template by default.
 ---
 
 # planpage — interactive HTML plans for agents
@@ -22,6 +23,7 @@ with the package.
 
 | Need | Template / approach |
 |---|---|
+| Any plan (the default) | `sketch-plan` — see [SKETCH-STYLE.md](SKETCH-STYLE.md) |
 | Multi-step plan + edit/annotate + screenshots | `plan-brief` |
 | Diff / deslop / migration report | `before-after` |
 | Code-style picks + canonical example | `code-style-plan` |
@@ -62,6 +64,10 @@ agent renders plan → serve opens browser
 ## Quick start (CLI)
 
 ```bash
+# sketch plan (the default): write the page, then serve it and wait for a pick
+npx planpage render sketch-plan --data plan.json --out plan.html
+npx planpage serve plan.html decision.json --timeout 3600
+
 # sample page in the browser (static)
 npx planpage render plan-brief --sample --open
 
@@ -171,7 +177,19 @@ console.log("wrote /tmp/"+s.name);
 
 Then open or describe the image and revise the plan/code accordingly.
 
-## Plan-gate workflow (default)
+## Sketch plan workflow (default)
+
+Read [SKETCH-STYLE.md](SKETCH-STYLE.md) before you draw. It holds the look, the scene format and the recipe list.
+
+1. Shape `plan.json` as `{ title, pages: [...] }`. Each page has `nav`, `title`, `scene` and, for the last page, a `decision` with options A, B and C. Pull a ready picture with `npx planpage recipes <id>`.
+2. `npx planpage render sketch-plan --data plan.json --out plan.html`
+3. `npx planpage serve plan.html decision.json --timeout 3600` opens the page and waits for the owner's pick.
+4. Read `decision.json`. It has the usual Decision fields plus `choice`, the letter picked:
+   - Approve: `{ "approved": true, "choice": "A", "notes": "" }`
+   - Ask for changes: `{ "approved": false, "choice": "B", "notes": "..." }`
+5. Act on `choice`, then on `notes`. If `approved` is false, render a revised `plan.html` and serve again.
+
+## Plan-brief workflow (edit and annotate)
 
 1. Shape plan JSON for `plan-brief` (title · summary · steps · options · risks · code).
 2. `npx planpage render plan-brief --data plan.json --serve --decision decision.json`

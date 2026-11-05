@@ -7,6 +7,7 @@ import { initCommand } from "./init";
 import { libraryCommand } from "./library";
 import { runMenu } from "./menu";
 import { newCommand } from "./new";
+import { type RecipesCommandOptions, recipesCommand } from "./recipes";
 import { renderCommand } from "./render";
 import { serveCommand } from "./serve";
 
@@ -69,6 +70,15 @@ program
   .option("--open", "open the rendered gallery in the browser")
   .option("--theme <theme>", "auto | light | dark", "auto")
   .action(libraryCommand);
+
+program
+  .command("recipes")
+  .description("list the sketch recipes, or print one as JSON (planpage recipes <id>)")
+  .argument("[id]", "recipe id to print as JSON")
+  .option("--json", "print the list as JSON (also used when there is no TTY)")
+  .action((recipeId: string | undefined, options: RecipesCommandOptions) => {
+    process.exitCode = recipesCommand(recipeId, options);
+  });
 
 program
   .command("capture")

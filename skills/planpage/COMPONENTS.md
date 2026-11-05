@@ -19,6 +19,8 @@ import {
   PickBlock, OptionCompare, QuestionCard, QuizCard, Flashcard,
   // code
   CodeBlock, DiffBlock, AnnotatedCode, CodeExplorer, Terminal,
+  // sketch
+  SketchPlan, SketchScene,
   // diagram / action
   Flow, FeedbackSidebar, SubmitBar,
 } from "planpage";
@@ -28,6 +30,7 @@ import {
 
 | CLI name | Component | Role |
 |---|---|---|
+| `sketch-plan` | `SketchPlan` | Default plan page: hand-sketched pages, Notes and View code toggles, Your call |
 | `plan-brief` | `PlanBrief` | Flagship agent-plan page + gate |
 | `before-after` | `BeforeAfter` | Diff / migration report |
 | `code-style-plan` | `CodeStylePlan` | Style picks + `CodeExplorer` canonical |
@@ -48,6 +51,7 @@ import {
 | **teach** | `QuizCard` · `Flashcard` |
 | **metrics** | `PlanSummary` · `Scorecard` |
 | **code** | `DiffBlock` · `CodeBlock` · `AnnotatedCode` · `CodeExplorer` · `Terminal` |
+| **sketch** | `SketchPlan` (whole plan, pager) · `SketchScene` (one picture) |
 | **diagram** | `Flow` (Mermaid — all kinds + editable board) · `Whiteboard` (freehand Excalidraw-like pen → agent PNG) |
 | **action** | `FeedbackSidebar` (interactive queue-then-send) · `SubmitBar` (quiz) |
 
@@ -99,10 +103,38 @@ Feed `CodeStylePlan` via `canonical.files`, or use directly:
 Code components emit `data-hl` markers. `renderHighlighted()` / CLI `render` swap
 them for Shiki dual-theme spans. Unhighlighted output stays readable monochrome.
 
+### SketchScene (one picture)
+
+One hand-sketched picture. It takes a `SketchScene` from `src/contracts/sketchScene.ts`. The full scene format is in [SKETCH-STYLE.md](SKETCH-STYLE.md).
+
+```tsx
+<SketchScene
+  label="Today and after"
+  scene={{
+    width: 1000,
+    height: 300,
+    nodes: [{ id: "afterRender", kind: "box", x: 540, y: 70, w: 250, h: 60, fill: "blue", words: "npx planpage render\nsketch-plan" }],
+  }}
+/>
+```
+
+`label` is a required short name for the picture. `scene` is required. Pure drawing: the page's sketch script draws it, and it has no state.
+
+### SketchPlan (default plan page)
+
+The default template for every plan. It takes a title and a list of pages. Each page has one picture, a legend, and optional `toggle`, `code` and `decision`. The last page is usually the Your call page with options A, B and C.
+
+```tsx
+<SketchPlan title="Sketch plans move into planpage" pages={pages} />
+```
+
+Types: `SketchPlanProps { title: string; pages: readonly SketchPlanPage[] }`, with `SketchPlanPage` in `src/contracts/sketchScene.ts`. Keys: Left and Right change pages, Up/Down or 1-3 or A-C pick an option on Your call, Enter sends there, Esc closes the code drawer. Post-back returns the Decision plus `choice`.
+
 ## Recipes
 
 | Goal | Recipe |
 |---|---|
+| Any plan (default) | `SketchPlan` + `serve` |
 | Plan gate | `PlanBrief` + `serve` |
 | Style grill | `CodeStylePlan` or `QuestionPoll` + `serve` |
 | Deslop report | `BeforeAfter` diffs (open-only or serve) |

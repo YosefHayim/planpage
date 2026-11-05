@@ -19,6 +19,8 @@ Single source of truth for working in **planpage**. Claude Code and Codex load t
 | `src/cli/` | dual-mode CLI (commander) — `render` / `serve` / `new` / `library` / `capture` / `init`; bare TTY → `menu` (clack); shared `io` (open/writeTemp); `init/` is one writer per agent |
 | `skills/planpage/` | agent skill SSOT (`SKILL.md` + `COMPONENTS.md`) — how other agents use the kit; `init` scaffolds thinner per-agent on-ramps |
 | `src/contracts/` | shared types — `Decision` |
+| `src/contracts/sketchScene.ts` | sketch scene types — `SketchScene`, `SketchPlanPage`, `SketchRecipe` |
+| `src/sketchRecipes/` | the 64 sketch recipes, one file per group, all exported as `SKETCH_RECIPES` |
 | `src/index.ts` | public API barrel |
 | `*.test.tsx` (co-located) | vitest, beside source |
 
