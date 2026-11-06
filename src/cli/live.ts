@@ -182,7 +182,8 @@ export const runLiveCursorCommand = async (flags: LiveCursorFlags): Promise<numb
     const lowestSuccessStatus = 200;
     const lowestRedirectStatus = 300;
     const isReplySuccessful =
-      cursorReply.statusCode >= lowestSuccessStatus && cursorReply.statusCode < lowestRedirectStatus;
+      cursorReply.statusCode >= lowestSuccessStatus &&
+      cursorReply.statusCode < lowestRedirectStatus;
     if (isReplySuccessful) return 0;
 
     process.stderr.write(`${cursorReply.message}\n`);
