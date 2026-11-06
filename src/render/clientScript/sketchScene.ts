@@ -483,6 +483,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     if (isKindUnknown) throw new Error(\`Unknown node kind "\${node.kind}" on node "\${node.id}"\`);
 
     const group = createGroup(parent, node.path);
+    group.dataset.nodeId = node.id;
     const isThickBorder = node.border === "thick";
     const style = {
       fill: node.fill ?? DEFAULT_FILL_BY_KIND[node.kind] ?? "none",
@@ -664,6 +665,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
 
   const drawEdgeGroup = (context, parent, edge, geometry) => {
     const group = createGroup(parent, edge.path);
+    group.dataset.edgeId = edge.id;
     const style = {
       fill: "none",
       dashed: edge.dashed === true,
@@ -945,6 +947,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     const screenElement = document.createElement("div");
     screenElement.className = "sketch-screen";
     screenElement.dataset.screenId = node.id;
+    screenElement.dataset.nodeId = node.id;
     screenElement.style.left = \`\${node.x + offsetX}px\`;
     screenElement.style.top = \`\${node.y}px\`;
     screenElement.style.width = \`\${node.w}px\`;
@@ -1074,6 +1077,7 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
     drawScene(frame, scene);
     applyMode(frame);
     frame.dataset.sketchDrawn = "true";
+    frame.dispatchEvent(new CustomEvent("pp-sketch-drawn", { bubbles: true }));
   };
 
   const waitForRough = () =>
@@ -1112,7 +1116,10 @@ export const SKETCH_SCENE_SCRIPT = `(() => {
   };
 
   const drawFramesIn = (root) => {
-    for (const frame of root.querySelectorAll(".sketch-frame")) queueFrame(frame);
+    for (const frame of root.querySelectorAll(".sketch-frame")) {
+      frameResizeObserver.observe(frame);
+      queueFrame(frame);
+    }
   };
 
   const frameResizeObserver = new ResizeObserver((resizeReports) => {

@@ -3,8 +3,8 @@ import { EMPTY_DECISION } from "../../contracts/decision";
 const EMPTY_DECISION_JSON = JSON.stringify(EMPTY_DECISION);
 
 export const SKETCH_PAGER_SCRIPT = `(function () {
-  const sections = Array.from(document.querySelectorAll("[data-sketch-page]"));
-  const hasNoPages = sections.length === 0;
+  const listPageSections = () => Array.from(document.querySelectorAll("[data-sketch-page]"));
+  const hasNoPages = document.querySelector("[data-sketch-page]") === null;
   if (hasNoPages) return;
 
   const sketchEngine = window.SketchEngine;
@@ -15,11 +15,11 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
 
   const pageNumberOfHash = () => {
     const pageNumber = Number(location.hash.slice(1));
-    const isPageNumber = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= sections.length;
+    const isPageNumber = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= listPageSections().length;
     return isPageNumber ? pageNumber : 1;
   };
 
-  const sectionOf = (pageNumber) => sections[pageNumber - 1];
+  const sectionOf = (pageNumber) => listPageSections()[pageNumber - 1];
 
   const activeSection = () => sectionOf(pageNumberOfHash());
 
@@ -71,7 +71,7 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
 
   const showPage = (pageNumber) => {
     const pageSection = sectionOf(pageNumber);
-    for (const section of sections) section.hidden = section !== pageSection;
+    for (const section of listPageSections()) section.hidden = section !== pageSection;
     showNavState(pageNumber);
 
     sketchEngine.drawFramesIn(pageSection);
@@ -81,7 +81,7 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
   };
 
   const goToPage = (pageNumber) => {
-    const isPageNumberValid = pageNumber >= 1 && pageNumber <= sections.length;
+    const isPageNumberValid = pageNumber >= 1 && pageNumber <= listPageSections().length;
     if (!isPageNumberValid) return;
 
     history.replaceState(null, "", \`#\${pageNumber}\`);
@@ -184,13 +184,18 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
   const sendApprove = (section) =>
     sendDecision(section, { ...emptyDecision, approved: true, choice: pickedLetterOf(section), notes: "" });
 
-  const sendAskForChanges = (section) =>
-    sendDecision(section, {
+  const sendAskForChanges = async (section) => {
+    const askEvent = new CustomEvent("pp-sketch-ask", { cancelable: true, detail: { section } });
+    const isAskTakenOverByLive = !document.dispatchEvent(askEvent);
+    if (isAskTakenOverByLive) return;
+
+    await sendDecision(section, {
       ...emptyDecision,
       approved: false,
       choice: pickedLetterOf(section),
       notes: decisionNotesOf(section).value,
     });
+  };
 
   const isEditableTarget = (target) =>
     target instanceof Element && target.matches("textarea, input:not([type=radio]), [contenteditable]");
@@ -290,25 +295,30 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
     }
   };
 
-  for (const modeButton of document.querySelectorAll("[data-sketch-mode]")) {
-    modeButton.addEventListener("click", () => handleModeClick(modeButton));
-  }
-  for (const tab of document.querySelectorAll("[data-sketch-code-tab]")) {
-    tab.addEventListener("click", () => selectCodeTab(tab));
-  }
-  for (const notesButton of document.querySelectorAll("[data-sketch-notes-toggle]")) {
-    sketchEngine.bindNotesToggle(notesButton);
-  }
-  for (const codeButton of document.querySelectorAll("[data-sketch-code-toggle]")) {
-    const drawer = codeButton.closest("[data-sketch-page]").querySelector("[data-sketch-code]");
-    sketchEngine.bindCodeToggle(codeButton, drawer);
-  }
-  for (const approveButton of document.querySelectorAll("[data-sketch-approve]")) {
-    approveButton.addEventListener("click", () => sendApprove(approveButton.closest("[data-sketch-page]")));
-  }
-  for (const askButton of document.querySelectorAll("[data-sketch-ask]")) {
-    askButton.addEventListener("click", () => sendAskForChanges(askButton.closest("[data-sketch-page]")));
-  }
+  const bindControlsIn = (root) => {
+    for (const modeButton of root.querySelectorAll("[data-sketch-mode]")) {
+      modeButton.addEventListener("click", () => handleModeClick(modeButton));
+    }
+    for (const tab of root.querySelectorAll("[data-sketch-code-tab]")) {
+      tab.addEventListener("click", () => selectCodeTab(tab));
+    }
+    for (const notesButton of root.querySelectorAll("[data-sketch-notes-toggle]")) {
+      sketchEngine.bindNotesToggle(notesButton);
+    }
+    for (const codeButton of root.querySelectorAll("[data-sketch-code-toggle]")) {
+      const drawer = codeButton.closest("[data-sketch-page]").querySelector("[data-sketch-code]");
+      sketchEngine.bindCodeToggle(codeButton, drawer);
+    }
+    for (const approveButton of root.querySelectorAll("[data-sketch-approve]")) {
+      approveButton.addEventListener("click", () => sendApprove(approveButton.closest("[data-sketch-page]")));
+      refreshApproveLabel(approveButton.closest("[data-sketch-page]"));
+    }
+    for (const askButton of root.querySelectorAll("[data-sketch-ask]")) {
+      askButton.addEventListener("click", () => sendAskForChanges(askButton.closest("[data-sketch-page]")));
+    }
+  };
+  bindControlsIn(document);
+  window.SketchPager = { bindControlsIn, goToPage };
   document.addEventListener("change", (event) => {
     const isChoiceChange = event.target.name === "sketch-choice";
     if (!isChoiceChange) return;
@@ -319,12 +329,6 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
     showPage(pageNumberOfHash());
   });
 
-  const startPager = () => {
-    for (const section of sections) {
-      if (decisionOf(section) !== null) refreshApproveLabel(section);
-    }
-    showPage(pageNumberOfHash());
-  };
-  startPager();
+  showPage(pageNumberOfHash());
 })();
 `;

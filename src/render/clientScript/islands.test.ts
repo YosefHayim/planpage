@@ -65,4 +65,16 @@ describe("client islands (string contracts)", () => {
     expect(SKETCH_PAGER_SCRIPT).toContain('"sketch-choice"');
     expect(SKETCH_SCENE_STYLE).not.toContain("@import");
   });
+
+  it("sketch scene marks nodes and edges with ids and announces each drawn frame", () => {
+    expect(SKETCH_SCENE_SCRIPT).toContain("dataset.nodeId");
+    expect(SKETCH_SCENE_SCRIPT).toContain("dataset.edgeId");
+    expect(SKETCH_SCENE_SCRIPT).toContain("pp-sketch-drawn");
+  });
+
+  it("sketch pager exposes its controls for replaced sections and dispatches pp-sketch-ask", () => {
+    expect(SKETCH_PAGER_SCRIPT).toContain("window.SketchPager");
+    expect(SKETCH_PAGER_SCRIPT).toContain("bindControlsIn");
+    expect(SKETCH_PAGER_SCRIPT).toContain("pp-sketch-ask");
+  });
 });
