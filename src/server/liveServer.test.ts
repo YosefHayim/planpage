@@ -1,6 +1,7 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { setTimeout as sleep } from "node:timers/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type RawData, WebSocket } from "ws";
 import { EMPTY_DECISION } from "../contracts/decision";
@@ -24,14 +25,16 @@ interface PlanFiles {
 }
 
 const FRAME_TIMEOUT_MS = 10000;
-const RENDERING_TEST_TIMEOUT_MS = 20000;
+const LIVE_SERVER_TEST_TIMEOUT_MS = 20000;
 const IDLE_SECONDS = 60;
+// macOS fs.watch starts its event stream asynchronously; a write sooner than this can be missed.
+const WATCHER_SETTLE_MS = 300;
 const HTTP_SWITCHING_PROTOCOLS = 101;
 const PLAN_PAGE_SCRIPT = "window.livePlanTest = true;";
 
 // Each test renders the sketch plan (shiki highlight), which can take seconds under load.
-const renderingTest = (name: string, testBody: () => Promise<void>) =>
-  it(name, testBody, RENDERING_TEST_TIMEOUT_MS);
+const liveServerTest = (name: string, testBody: () => Promise<void>) =>
+  it(name, testBody, LIVE_SERVER_TEST_TIMEOUT_MS);
 
 const createdFolders: string[] = [];
 const openedSockets: WebSocket[] = [];
@@ -82,6 +85,7 @@ const startTestServer = async (
     ...overrides,
   });
   startedHandles.push(handle);
+  await sleep(WATCHER_SETTLE_MS);
   return handle;
 };
 
@@ -200,7 +204,7 @@ const saveFirstComment = async (handle: LiveServerHandle) => {
 };
 
 describe("startLiveServer", () => {
-  renderingTest("rejects a page socket whose Origin is another website", async () => {
+  liveServerTest("rejects a page socket whose Origin is another website", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const status = await readUpgradeStatus(pageSocketUrl(handle), {
@@ -210,7 +214,7 @@ describe("startLiveServer", () => {
     expect(status).toBe(403);
   });
 
-  renderingTest("rejects an agent socket with a wrong token", async () => {
+  liveServerTest("rejects an agent socket with a wrong token", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const status = await readUpgradeStatus(
@@ -221,7 +225,7 @@ describe("startLiveServer", () => {
     expect(status).toBe(403);
   });
 
-  renderingTest("rejects an agent socket that carries a browser Origin header", async () => {
+  liveServerTest("rejects an agent socket that carries a browser Origin header", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const status = await readUpgradeStatus(handle.agentSocketUrl, pageOrigin(handle));
@@ -229,7 +233,7 @@ describe("startLiveServer", () => {
     expect(status).toBe(403);
   });
 
-  renderingTest(
+  liveServerTest(
     "sends a comment to the agent with commentId 1 and tells the tab it was saved",
     async () => {
       const handle = await startTestServer(createPlanFiles(samplePlan));
@@ -268,7 +272,7 @@ describe("startLiveServer", () => {
     },
   );
 
-  renderingTest(
+  liveServerTest(
     "ignores a comment frame that is not valid and keeps the next id at 1",
     async () => {
       const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
@@ -289,7 +293,7 @@ describe("startLiveServer", () => {
     },
   );
 
-  renderingTest("sends comments-so-far to a tab that reconnects", async () => {
+  liveServerTest("sends comments-so-far to a tab that reconnects", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
     const { socket: firstTab, inbox: firstTabInbox } = await openSocketWithInbox(
       pageSocketUrl(handle),
@@ -318,7 +322,7 @@ describe("startLiveServer", () => {
     ]);
   });
 
-  renderingTest(
+  liveServerTest(
     "moves a comment to working and broadcasts the cursor when the agent names the comment",
     async () => {
       const planFiles = createPlanFiles(samplePlan);
@@ -346,7 +350,7 @@ describe("startLiveServer", () => {
     },
   );
 
-  renderingTest("refuses a cursor request with a wrong token", async () => {
+  liveServerTest("refuses a cursor request with a wrong token", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const cursorReply = await postJson(cursorUrl(handle, "wrong-token"), {
@@ -359,7 +363,7 @@ describe("startLiveServer", () => {
     expect(cursorReply.status).toBe(403);
   });
 
-  renderingTest(
+  liveServerTest(
     "sends plan-changed with only the edited node and turns the working comment done",
     async () => {
       const planFiles = createPlanFiles(samplePlan);
@@ -389,7 +393,7 @@ describe("startLiveServer", () => {
     },
   );
 
-  renderingTest(
+  liveServerTest(
     "sends plan-error to the agent for broken JSON and keeps serving the last good page",
     async () => {
       const planFiles = createPlanFiles(samplePlan);
@@ -406,7 +410,7 @@ describe("startLiveServer", () => {
     },
   );
 
-  renderingTest("sends plan-reshaped when a page is added", async () => {
+  liveServerTest("sends plan-reshaped when a page is added", async () => {
     const planFiles = createPlanFiles(samplePlan);
     const handle = await startTestServer(planFiles);
     const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
@@ -424,7 +428,7 @@ describe("startLiveServer", () => {
     expect(reshapedFrame.kind).toBe("plan-reshaped");
   });
 
-  renderingTest(
+  liveServerTest(
     "writes the decision, sends it to the agent and resolves closed as decision-written",
     async () => {
       const planFiles = createPlanFiles(samplePlan);
@@ -443,7 +447,7 @@ describe("startLiveServer", () => {
     },
   );
 
-  renderingTest("resolves closed as idle-timeout when nobody uses the server", async () => {
+  liveServerTest("resolves closed as idle-timeout when nobody uses the server", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan), {
       idleTimeoutSeconds: 0.2,
     });
@@ -453,7 +457,7 @@ describe("startLiveServer", () => {
     expect(exit).toBe("idle-timeout");
   });
 
-  renderingTest(
+  liveServerTest(
     "serves the rendered plan with the page script right before the closing body tag",
     async () => {
       const handle = await startTestServer(createPlanFiles(samplePlan));
