@@ -67,6 +67,7 @@ interface LiveSession {
   readonly serverSettings: StartLiveServerSettings;
   readonly planFileName: string;
   currentPlan: CurrentPlan;
+  brokenPlanMessage: string | null;
   readonly comments: Map<number, LiveComment>;
   readonly pageSockets: Set<WebSocket>;
   readonly agentSockets: Set<WebSocket>;
@@ -165,7 +166,7 @@ const sendToAgents = (session: LiveSession, message: LiveMessageToAgent): void =
 
 const readPageTitle = (plan: LivePlan, pageNumber: number): string => {
   const page = plan.pages[pageNumber - 1];
-  const isPageMissing = page === undefined;
+  const isPageMissing = page == null;
   if (isPageMissing) throw new Error(`planpage: the plan has no page ${pageNumber}`);
 
   return page.title;
@@ -304,6 +305,25 @@ const openPageSocket = (session: LiveSession, pageSocket: WebSocket): void => {
   touchIdle(session);
 };
 
+const isSentComment = (comment: LiveComment): boolean => comment.status === "sent";
+
+const byCommentId = (firstComment: LiveComment, secondComment: LiveComment): number =>
+  firstComment.commentId - secondComment.commentId;
+
+// A comment saved while no agent socket was open is sent again when the agent connects.
+const sendSentCommentsToAgent = (session: LiveSession, agentSocket: WebSocket): void => {
+  const sentComments = [...session.comments.values()].filter(isSentComment).sort(byCommentId);
+  for (const comment of sentComments) sendFrame(agentSocket, createCommentForAgent(comment));
+};
+
+const sendBrokenPlanToAgent = (session: LiveSession, agentSocket: WebSocket): void => {
+  const brokenPlanMessage = session.brokenPlanMessage;
+  const isPlanBroken = brokenPlanMessage != null;
+  if (!isPlanBroken) return;
+
+  sendFrame(agentSocket, { kind: "plan-error", message: brokenPlanMessage });
+};
+
 const openAgentSocket = (session: LiveSession, agentSocket: WebSocket): void => {
   session.agentSockets.add(agentSocket);
   agentSocket.on("message", () => touchIdle(session));
@@ -311,6 +331,8 @@ const openAgentSocket = (session: LiveSession, agentSocket: WebSocket): void => 
     session.agentSockets.delete(agentSocket);
   });
   agentSocket.on("error", (error) => console.error({ liveServer: "agent socket error", error }));
+  sendSentCommentsToAgent(session, agentSocket);
+  sendBrokenPlanToAgent(session, agentSocket);
   touchIdle(session);
 };
 
@@ -327,7 +349,7 @@ const acceptPageSocket = (session: LiveSession, upgrade: SocketUpgrade): void =>
 };
 
 const acceptAgentSocket = (session: LiveSession, upgrade: SocketUpgrade, url: URL): void => {
-  const hasBrowserOrigin = upgrade.request.headers.origin !== undefined;
+  const hasBrowserOrigin = upgrade.request.headers.origin != null;
   const isAgentAllowed = isTokenValid(session.token, url) && !hasBrowserOrigin;
   if (!isAgentAllowed) {
     rejectUpgrade(upgrade.socket, FORBIDDEN_STATUS_LINE);
@@ -356,7 +378,7 @@ const routeUpgrade = (session: LiveSession, upgrade: SocketUpgrade): void => {
 
 const answerCursorPost = async (session: LiveSession, exchange: HttpExchange): Promise<void> => {
   const { request, reply, url } = exchange;
-  const hasBrowserOrigin = request.headers.origin !== undefined;
+  const hasBrowserOrigin = request.headers.origin != null;
   const isAuthorized = isTokenValid(session.token, url) && !hasBrowserOrigin;
   if (!isAuthorized) {
     sendText(reply, HTTP_FORBIDDEN, "planpage: cursor request refused");
@@ -372,14 +394,14 @@ const answerCursorPost = async (session: LiveSession, exchange: HttpExchange): P
 
   const { commentId } = cursorRequest;
   const isCommentNamed = commentId !== null;
-  const namedComment = isCommentNamed ? session.comments.get(commentId) : undefined;
-  const isUnknownComment = isCommentNamed && namedComment === undefined;
+  const namedComment = isCommentNamed ? (session.comments.get(commentId) ?? null) : null;
+  const isUnknownComment = isCommentNamed && namedComment == null;
   if (isUnknownComment) {
     sendText(reply, HTTP_NOT_FOUND, `planpage: no comment with id ${commentId}`);
     return;
   }
 
-  const isPageFromComment = namedComment !== undefined && cursorRequest.page === null;
+  const isPageFromComment = namedComment != null && cursorRequest.page === null;
   const cursorPage = isPageFromComment ? namedComment.page : cursorRequest.page;
   const cursorPart = isPageFromComment ? namedComment.part : cursorRequest.part;
   const isPageKnown =
@@ -389,7 +411,8 @@ const answerCursorPost = async (session: LiveSession, exchange: HttpExchange): P
     return;
   }
 
-  if (namedComment !== undefined) setCommentStatus(session, namedComment, "working");
+  const isCommentFound = namedComment != null;
+  if (isCommentFound) setCommentStatus(session, namedComment, "working");
   sendToPages(session, {
     kind: "cursor",
     page: cursorPage,
@@ -406,7 +429,7 @@ const answerCursorPost = async (session: LiveSession, exchange: HttpExchange): P
 const answerDecisionPost = async (session: LiveSession, exchange: HttpExchange): Promise<void> => {
   const { request, reply } = exchange;
   const origin = request.headers.origin;
-  const hasForeignOrigin = origin !== undefined && !isAllowedPageOrigin(session, origin);
+  const hasForeignOrigin = origin != null && !isAllowedPageOrigin(session, origin);
   if (hasForeignOrigin) {
     sendText(reply, HTTP_FORBIDDEN, "planpage: decision request refused");
     return;
@@ -461,6 +484,7 @@ const answerRequest = async (
 };
 
 const applyReadablePlan = (session: LiveSession, reading: ReadablePlan): void => {
+  session.brokenPlanMessage = null;
   const difference = findPlanDifference(session.currentPlan.plan, reading.plan);
   session.currentPlan = { plan: reading.plan, html: reading.html };
 
@@ -495,7 +519,9 @@ const reloadPlan = async (session: LiveSession): Promise<void> => {
       liveServer: "plan file is not renderable; keeping the last good page",
       error: reading.error,
     });
-    sendToAgents(session, { kind: "plan-error", message: describeError(reading.error) });
+    const planErrorMessage = describeError(reading.error);
+    session.brokenPlanMessage = planErrorMessage;
+    sendToAgents(session, { kind: "plan-error", message: planErrorMessage });
     return;
   }
 
@@ -534,6 +560,7 @@ export const startLiveServer = async (
     serverSettings,
     planFileName: basename(serverSettings.planPath),
     currentPlan: { plan: firstReading.plan, html: firstReading.html },
+    brokenPlanMessage: null,
     comments: new Map(),
     pageSockets: new Set(),
     agentSockets: new Set(),

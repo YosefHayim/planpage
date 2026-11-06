@@ -16,6 +16,7 @@ Three layers, split pure-from-effectful:
 - **Skill author / agent** — the producer: assembles data, calls `render(<Template … />)` (or `planpage render`), gets HTML back.
 - **Reader** — the developer who opens the HTML to understand the plan. The design center.
 - **serve-plan server** — the optional middle: when a skill wants a verdict, it serves the page and hands one `Decision` back to the agent.
+- **live plan** — the same middle with comments: `planpage live` keeps the page open, sends each pinned comment to the agent, and refreshes edited pages in place until Approve.
 
 ## The flow
 

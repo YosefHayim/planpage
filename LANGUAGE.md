@@ -56,6 +56,10 @@ _Avoid_: colourize, syntax, prism.
 **serve**:
 The effectful step — serve a rendered page and block for one decision (`serve-plan`).
 
+**live plan**:
+A sketch plan served with `live`: the page stays open while the agent edits it. Comments flow to the agent, and changed pages refresh in place. Ends with an Approve that writes the decision.
+_Avoid_: live server, hot reload, watch mode.
+
 **fallback**:
 The no-server path — open the file directly; the page copies the decision to the clipboard to paste back. Ensures a non-TTY caller never hangs.
 

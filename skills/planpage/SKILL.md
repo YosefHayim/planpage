@@ -95,7 +95,7 @@ import { render, renderHighlighted, PlanBrief, serve } from "planpage";
 const html = await renderHighlighted(
   <PlanBrief title="…" summary={/* … */} steps={/* … */} risks={/* … */} />,
 );
-// write html → $TMPDIR/plan-<ts>.html, then:
+// write html → <scratch>/plan-<ts>.html, then:
 // await serve({ htmlPath, outPath: "decision.json", timeoutSec: 600 })
 // or: npx planpage serve <html> decision.json --timeout 600
 ```
@@ -171,8 +171,8 @@ const d=require("./decision.json");
 const s=d.screenshots?.[0];
 if(!s) process.exit(0);
 const b=Buffer.from(s.dataUrl.split(",")[1],"base64");
-require("fs").writeFileSync("/tmp/"+s.name,b);
-console.log("wrote /tmp/"+s.name);
+require("fs").writeFileSync("<scratch>/"+s.name,b);
+console.log("wrote <scratch>/"+s.name);
 '
 ```
 
@@ -189,6 +189,19 @@ Read [SKETCH-STYLE.md](SKETCH-STYLE.md) before you draw. It holds the look, the 
    - Approve: `{ "approved": true, "choice": "A", "notes": "" }`
    - Ask for changes: `{ "approved": false, "choice": "B", "notes": "..." }`
 5. Act on `choice`, then on `notes`. If `approved` is false, render a revised `plan.html` and serve again.
+
+## Live loop (sketch plans, when a WebSocket is available)
+
+Use live mode instead of `serve` when your agent can watch a WebSocket. Comments the owner pins on a part reach you as they are saved, and the page refreshes as you edit the plan. Keep the `serve` steps above as the fallback.
+
+1. Write the sketch-plan JSON to `<work-folder>/plan.json`.
+2. Start `npx planpage live --data <work-folder>/plan.json --decision <work-folder>/decision.json --open` in the background. Its first stdout line is one JSON object with `pageUrl`, `agentSocketUrl`, `port` and `token`.
+3. Open `agentSocketUrl` as a WebSocket. Each text frame is one event. Re-open it when the connection closes while the live command still runs. Comments saved in between are sent again when the socket reconnects. Skip a `commentId` you already handled.
+4. On each `comment` event, run `npx planpage live cursor --port <port> --token <token> --comment <commentId> --say "<what you are changing, a few words>"`, then edit plan.json. The server re-renders the file and swaps the changed pages in the open tab. The comment then shows as done.
+5. On a `plan-error` event, plan.json no longer renders. Fix it. The open page keeps the last good version until then.
+6. On a `decision` event, or when the live command exits `0`, read decision.json and act on `choice`, then `notes`. Exit `3` means the idle timeout ran out with no decision. Exit `2` is an error and `1` means it was stopped.
+
+Keep `token` and `agentSocketUrl` out of anything shown to the owner.
 
 ## Plan-brief workflow (edit and annotate)
 

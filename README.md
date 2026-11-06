@@ -55,6 +55,21 @@ Templates: `plan-brief` · `before-after` · `code-style-plan` · `question-poll
 
 Data flows in as JSON via `--data <file>` or piped stdin. Use `--sample` for built-in sample data.
 
+### Live mode
+
+`planpage live` serves a sketch plan while you and the agent work on it. Comments you pin on a part reach the agent, the agent's cursor shows the part it changes, and edited pages refresh in the open tab.
+
+```bash
+planpage live --data plan.json --decision decision.json --open            # serve and wait
+planpage live cursor --port <port> --token <token> --comment 1 --say "fixing the login box"
+```
+
+`planpage live` prints one JSON line on stdout: `{"pageUrl","agentSocketUrl","port","token"}`. Nothing else goes to stdout. The `agentSocketUrl` and `token` are for the agent only, so keep them out of chat and logs. `--port` (default `0`, a free port) and `--timeout` (idle seconds, default `3600`) are optional.
+
+Exit codes for `planpage live`: `0` decision written (Approve) · `3` idle timeout · `2` error, including a plan file that cannot be rendered at start · `1` stopped by SIGINT or SIGTERM.
+
+`planpage live cursor` exits `0` when the server accepts the cursor, `1` with the server's message when it refuses or cannot be reached, and `2` on bad usage (it needs `--comment` or `--page`).
+
 ### Library
 
 ```tsx

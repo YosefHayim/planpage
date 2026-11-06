@@ -5,6 +5,12 @@ import { TEMPLATES } from "../templates";
 import { captureCommand } from "./capture";
 import { initCommand } from "./init";
 import { libraryCommand } from "./library";
+import {
+  type LiveCursorFlags,
+  type LiveStartFlags,
+  runLiveCommand,
+  runLiveCursorCommand,
+} from "./live";
 import { runMenu } from "./menu";
 import { newCommand } from "./new";
 import { type PartsCommandOptions, partsCommand } from "./parts";
@@ -18,6 +24,7 @@ const { version } = createRequire(import.meta.url)("../../package.json") as {
 
 const program = new Command();
 program
+  .enablePositionalOptions()
   .name("planpage")
   .description("Render a skill's plan, gate, or report as beautiful, self-contained local HTML.")
   .version(version);
@@ -42,6 +49,34 @@ program
   .argument("<out>", "path to write the decision JSON")
   .option("--timeout <sec>", "idle timeout in seconds", "600")
   .action(serveCommand);
+
+const liveCommand = program
+  .command("live")
+  .description("serve a sketch plan live: comments reach Claude, edits show in the open page")
+  .enablePositionalOptions()
+  .option("--data <file>", "sketch plan JSON file to serve and watch")
+  .option("--decision <file>", "where to write the decision JSON on Approve")
+  .option("--port <number>", "loopback port (0 picks a free one)", "0")
+  .option("--timeout <seconds>", "exit after this many idle seconds", "3600")
+  .option("--open", "open the live plan page in the browser", false)
+  .action(async (flags: LiveStartFlags) => {
+    const liveExitCode = await runLiveCommand(flags);
+    process.exit(liveExitCode);
+  });
+
+liveCommand
+  .command("cursor")
+  .description("point the open page at a comment or part while Claude changes the plan")
+  .requiredOption("--port <number>", "port printed by planpage live")
+  .requiredOption("--token <token>", "token printed by planpage live")
+  .requiredOption("--say <words>", "what Claude is changing, a few words")
+  .option("--comment <id>", "the comment this change answers")
+  .option("--page <number>", "page to point at (defaults to the comment's page)")
+  .option("--part <id>", "part to point at (defaults to the comment's part)")
+  .action(async (flags: LiveCursorFlags) => {
+    const cursorExitCode = await runLiveCursorCommand(flags);
+    process.exit(cursorExitCode);
+  });
 
 program
   .command("new")
