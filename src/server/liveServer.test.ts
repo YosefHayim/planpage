@@ -106,7 +106,8 @@ const writePlanUntilFrame = async (
   awaitedFrame: Promise<Frame>,
 ): Promise<Frame> => {
   writeFileSync(planPath, planText);
-  const planRewriteIntervalMs = 100;
+  // Longer than the server reload debounce (150 ms), so each rewrite lets the reload run.
+  const planRewriteIntervalMs = 300;
   const rewriting = setInterval(() => writeFileSync(planPath, planText), planRewriteIntervalMs);
   try {
     return await withTimeout(awaitedFrame, "a live server frame");
