@@ -393,12 +393,12 @@ export const startLiveServer = async (
 
     const decisionString = (await readRequestAsString(request)) || "{}";
     const decisionValue = parseJsonOrNull(decisionString);
+    const decision = decisionValue as Decision;
     if (!isJsonObject(decisionValue)) {
       sendText(reply, HTTP_BAD_REQUEST, "planpage: decision body must be a JSON object");
       return;
     }
 
-    const decision = decisionValue as Decision;
     writeFileSync(serverSettings.decisionPath, decisionString);
     sendToAgents({ kind: "decision", decision });
     reply.writeHead(HTTP_OK, { "Content-Type": "text/html; charset=utf-8" });
