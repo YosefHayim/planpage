@@ -121,12 +121,13 @@ const openInbox = (socket: WebSocket): FrameInbox => {
   return { nextFrame };
 };
 
-const openSocket = async (
+const openSocketWithInbox = async (
   url: string,
   headers: Record<string, string> = {},
-): Promise<WebSocket> => {
+): Promise<{ socket: WebSocket; inbox: FrameInbox }> => {
   const socket = new WebSocket(url, { headers });
   openedSockets.push(socket);
+  const inbox = openInbox(socket);
   await withTimeout(
     new Promise<void>((settleOpen, failOpen) => {
       socket.once("open", () => settleOpen());
@@ -134,7 +135,7 @@ const openSocket = async (
     }),
     `the socket ${url} to open`,
   );
-  return socket;
+  return { socket, inbox };
 };
 
 const readUpgradeStatus = (url: string, headers: Record<string, string>): Promise<number> => {
@@ -177,10 +178,11 @@ const sendCommentFrame = (page: WebSocket, frame: Frame): void => {
 };
 
 const saveFirstComment = async (handle: LiveServerHandle) => {
-  const tab = await openSocket(pageSocketUrl(handle), pageOrigin(handle));
-  const tabInbox = openInbox(tab);
-  const agent = await openSocket(handle.agentSocketUrl);
-  const agentInbox = openInbox(agent);
+  const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
+    pageSocketUrl(handle),
+    pageOrigin(handle),
+  );
+  const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
   sendCommentFrame(tab, {
     draftId: "draft-1",
     page: 1,
@@ -224,10 +226,11 @@ describe("startLiveServer", () => {
 
   it("sends a comment to the agent with commentId 1 and tells the tab it was saved", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
-    const tab = await openSocket(pageSocketUrl(handle), pageOrigin(handle));
-    const tabInbox = openInbox(tab);
-    const agent = await openSocket(handle.agentSocketUrl);
-    const agentInbox = openInbox(agent);
+    const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
+      pageSocketUrl(handle),
+      pageOrigin(handle),
+    );
+    const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
 
     sendCommentFrame(tab, {
       draftId: "draft-1",
@@ -260,8 +263,10 @@ describe("startLiveServer", () => {
   it("ignores a comment frame that is not valid and keeps the next id at 1", async () => {
     const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
     const handle = await startTestServer(createPlanFiles(samplePlan));
-    const tab = await openSocket(pageSocketUrl(handle), pageOrigin(handle));
-    const tabInbox = openInbox(tab);
+    const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
+      pageSocketUrl(handle),
+      pageOrigin(handle),
+    );
 
     sendCommentFrame(tab, { draftId: "draft-bad", page: 99, part: null, words: "out of range" });
     sendCommentFrame(tab, { draftId: "draft-empty", page: 1, part: null, words: "   " });
@@ -275,14 +280,18 @@ describe("startLiveServer", () => {
 
   it("sends comments-so-far to a tab that reconnects", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
-    const firstTab = await openSocket(pageSocketUrl(handle), pageOrigin(handle));
-    const firstTabInbox = openInbox(firstTab);
+    const { socket: firstTab, inbox: firstTabInbox } = await openSocketWithInbox(
+      pageSocketUrl(handle),
+      pageOrigin(handle),
+    );
     sendCommentFrame(firstTab, { draftId: "draft-1", page: 1, part: null, words: "keep this" });
     await firstTabInbox.nextFrame("comment-saved");
     firstTab.terminate();
 
-    const reloadedTab = await openSocket(pageSocketUrl(handle), pageOrigin(handle));
-    const reloadedInbox = openInbox(reloadedTab);
+    const { socket: reloadedTab, inbox: reloadedInbox } = await openSocketWithInbox(
+      pageSocketUrl(handle),
+      pageOrigin(handle),
+    );
     const soFarFrame = await reloadedInbox.nextFrame("comments-so-far");
 
     expect(soFarFrame.comments).toEqual([
@@ -317,7 +326,7 @@ describe("startLiveServer", () => {
     expect(cursorFrame).toEqual({
       kind: "cursor",
       page: 1,
-      part: null,
+      part: "loginBox",
       say: "Looking at the login box",
     });
     tab.terminate();
@@ -366,8 +375,7 @@ describe("startLiveServer", () => {
   it("sends plan-error to the agent for broken JSON and keeps serving the last good page", async () => {
     const planFiles = createPlanFiles(samplePlan);
     const handle = await startTestServer(planFiles);
-    const agent = await openSocket(handle.agentSocketUrl);
-    const agentInbox = openInbox(agent);
+    const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
 
     writeFileSync(planFiles.planPath, "{ this is not json");
     const errorFrame = await agentInbox.nextFrame("plan-error");
@@ -381,8 +389,10 @@ describe("startLiveServer", () => {
   it("sends plan-reshaped when a page is added", async () => {
     const planFiles = createPlanFiles(samplePlan);
     const handle = await startTestServer(planFiles);
-    const tab = await openSocket(pageSocketUrl(handle), pageOrigin(handle));
-    const tabInbox = openInbox(tab);
+    const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
+      pageSocketUrl(handle),
+      pageOrigin(handle),
+    );
 
     const addedPlan = {
       ...samplePlan,
@@ -397,8 +407,7 @@ describe("startLiveServer", () => {
   it("writes the decision, sends it to the agent and resolves closed as decision-written", async () => {
     const planFiles = createPlanFiles(samplePlan);
     const handle = await startTestServer(planFiles);
-    const agent = await openSocket(handle.agentSocketUrl);
-    const agentInbox = openInbox(agent);
+    const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
     const decision = { ...EMPTY_DECISION, approved: false, notes: "tighten the login" };
 
     const decisionReply = await postJson(`http://127.0.0.1:${handle.port}/decision`, decision);
