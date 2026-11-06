@@ -31,9 +31,9 @@ export const openPath = (path: string): void => {
       detached: true,
       shell: process.platform === "win32",
     });
-    opener.on("error", () => process.stdout.write(`planpage: open manually → ${path}\n`));
+    opener.on("error", () => process.stderr.write(`planpage: open manually → ${path}\n`));
     opener.unref();
   } catch {
-    process.stdout.write(`planpage: open manually → ${path}\n`);
+    process.stderr.write(`planpage: open manually → ${path}\n`);
   }
 };

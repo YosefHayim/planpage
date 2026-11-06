@@ -6,8 +6,8 @@ import { captureCommand } from "./capture";
 import { initCommand } from "./init";
 import { libraryCommand } from "./library";
 import {
-  type LiveCursorOptions,
-  type LiveStartOptions,
+  type LiveCursorFlags,
+  type LiveStartFlags,
   runLiveCommand,
   runLiveCursorCommand,
 } from "./live";
@@ -59,8 +59,9 @@ const liveCommand = program
   .option("--port <number>", "loopback port (0 picks a free one)", "0")
   .option("--timeout <seconds>", "exit after this many idle seconds", "3600")
   .option("--open", "open the live plan page in the browser", false)
-  .action(async (options: LiveStartOptions) => {
-    process.exit(await runLiveCommand(options));
+  .action(async (flags: LiveStartFlags) => {
+    const liveExitCode = await runLiveCommand(flags);
+    process.exit(liveExitCode);
   });
 
 liveCommand
@@ -72,8 +73,9 @@ liveCommand
   .option("--comment <id>", "the comment this change answers")
   .option("--page <number>", "page to point at (defaults to the comment's page)")
   .option("--part <id>", "part to point at (defaults to the comment's part)")
-  .action(async (options: LiveCursorOptions) => {
-    process.exit(await runLiveCursorCommand(options));
+  .action(async (flags: LiveCursorFlags) => {
+    const cursorExitCode = await runLiveCursorCommand(flags);
+    process.exit(cursorExitCode);
   });
 
 program

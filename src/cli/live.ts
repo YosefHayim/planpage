@@ -9,11 +9,9 @@ import {
 } from "../server/liveServer";
 
 const EXIT_FAILED = 1;
-const EXIT_BAD_USAGE = 2;
-const HTTP_OK = 200;
-const HTTP_MULTIPLE_CHOICES = 300;
+const EXIT_ERROR = 2;
 
-export interface LiveStartOptions {
+export interface LiveStartFlags {
   readonly data?: string;
   readonly decision?: string;
   readonly port: string;
@@ -21,7 +19,7 @@ export interface LiveStartOptions {
   readonly open: boolean;
 }
 
-export interface LiveCursorOptions {
+export interface LiveCursorFlags {
   readonly port: string;
   readonly token: string;
   readonly say: string;
@@ -45,7 +43,7 @@ const readLiveExitCode = (liveExit: LiveServerExit): number => {
     case "idle-timeout":
       return 3;
     case "error":
-      return EXIT_BAD_USAGE;
+      return EXIT_ERROR;
     case "stopped":
       return EXIT_FAILED;
   }
@@ -62,23 +60,23 @@ const startLiveHandle = async (
   }
 };
 
-export const runLiveCommand = async (options: LiveStartOptions): Promise<number> => {
-  const { data, decision } = options;
+export const runLiveCommand = async (flags: LiveStartFlags): Promise<number> => {
+  const { data, decision } = flags;
   const isPathsGiven = data != null && decision != null;
   if (!isPathsGiven) {
     process.stderr.write("planpage: live needs --data and --decision\n");
-    return EXIT_BAD_USAGE;
+    return EXIT_ERROR;
   }
 
-  const port = Number(options.port);
-  const idleTimeoutSeconds = Number(options.timeout);
+  const port = Number(flags.port);
+  const idleTimeoutSeconds = Number(flags.timeout);
   const isPortUsable = Number.isInteger(port) && port >= 0;
   const isTimeoutUsable = Number.isInteger(idleTimeoutSeconds) && idleTimeoutSeconds > 0;
   if (!isPortUsable || !isTimeoutUsable) {
     process.stderr.write(
       "planpage: --port must be a whole number, --timeout a positive whole number of seconds\n",
     );
-    return EXIT_BAD_USAGE;
+    return EXIT_ERROR;
   }
 
   const handle = await startLiveHandle({
@@ -87,10 +85,10 @@ export const runLiveCommand = async (options: LiveStartOptions): Promise<number>
     pageScript: LIVE_CLIENT_SCRIPT,
     port,
     idleTimeoutSeconds,
-    open: options.open,
+    open: flags.open,
   });
   const isStartFailed = handle == null;
-  if (isStartFailed) return EXIT_BAD_USAGE;
+  if (isStartFailed) return EXIT_ERROR;
 
   const connectionDetails = {
     pageUrl: handle.pageUrl,
@@ -147,42 +145,44 @@ interface CursorTarget {
   readonly page: number | null;
 }
 
-const readCursorTarget = (options: LiveCursorOptions): CursorTarget => {
-  const isCommentGiven = options.comment != null;
-  const isPageGiven = options.page != null;
-  const commentId = isCommentGiven ? Number(options.comment) : null;
-  const page = isPageGiven ? Number(options.page) : null;
+const readCursorTarget = (flags: LiveCursorFlags): CursorTarget => {
+  const isCommentGiven = flags.comment != null;
+  const isPageGiven = flags.page != null;
+  const commentId = isCommentGiven ? Number(flags.comment) : null;
+  const page = isPageGiven ? Number(flags.page) : null;
   return { commentId, page };
 };
 
-export const runLiveCursorCommand = async (options: LiveCursorOptions): Promise<number> => {
-  const isTargetGiven = options.comment != null || options.page != null;
+export const runLiveCursorCommand = async (flags: LiveCursorFlags): Promise<number> => {
+  const isTargetGiven = flags.comment != null || flags.page != null;
   if (!isTargetGiven) {
     process.stderr.write("planpage: live cursor needs --comment or --page\n");
-    return EXIT_BAD_USAGE;
+    return EXIT_ERROR;
   }
 
-  const port = Number(options.port);
-  const { commentId, page } = readCursorTarget(options);
+  const port = Number(flags.port);
+  const { commentId, page } = readCursorTarget(flags);
   const isPortUsable = Number.isInteger(port) && port > 0;
   const isCommentIdUsable = commentId == null || Number.isInteger(commentId);
   const isPageUsable = page == null || Number.isInteger(page);
   const isUsageValid = isPortUsable && isCommentIdUsable && isPageUsable;
   if (!isUsageValid) {
     process.stderr.write("planpage: --port, --comment and --page must be whole numbers\n");
-    return EXIT_BAD_USAGE;
+    return EXIT_ERROR;
   }
 
   const cursorRequest: LiveCursorRequest = {
     commentId,
     page,
-    part: options.part ?? null,
-    say: options.say,
+    part: flags.part ?? null,
+    say: flags.say,
   };
   try {
-    const cursorReply = await sendCursorRequest(port, options.token, cursorRequest);
+    const cursorReply = await sendCursorRequest(port, flags.token, cursorRequest);
+    const lowestSuccessStatus = 200;
+    const lowestRedirectStatus = 300;
     const isReplySuccessful =
-      cursorReply.statusCode >= HTTP_OK && cursorReply.statusCode < HTTP_MULTIPLE_CHOICES;
+      cursorReply.statusCode >= lowestSuccessStatus && cursorReply.statusCode < lowestRedirectStatus;
     if (isReplySuccessful) return 0;
 
     process.stderr.write(`${cursorReply.message}\n`);

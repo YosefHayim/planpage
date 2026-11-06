@@ -95,7 +95,7 @@ import { render, renderHighlighted, PlanBrief, serve } from "planpage";
 const html = await renderHighlighted(
   <PlanBrief title="…" summary={/* … */} steps={/* … */} risks={/* … */} />,
 );
-// write html → $TMPDIR/plan-<ts>.html, then:
+// write html → <scratch>/plan-<ts>.html, then:
 // await serve({ htmlPath, outPath: "decision.json", timeoutSec: 600 })
 // or: npx planpage serve <html> decision.json --timeout 600
 ```
@@ -171,8 +171,8 @@ const d=require("./decision.json");
 const s=d.screenshots?.[0];
 if(!s) process.exit(0);
 const b=Buffer.from(s.dataUrl.split(",")[1],"base64");
-require("fs").writeFileSync("/tmp/"+s.name,b);
-console.log("wrote /tmp/"+s.name);
+require("fs").writeFileSync("<scratch>/"+s.name,b);
+console.log("wrote <scratch>/"+s.name);
 '
 ```
 
