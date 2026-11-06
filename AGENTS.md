@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Single source of truth for working in **planpage**. Claude Code and Codex load this file natively; `GEMINI.md` points here.
+Single source of truth for working in **planpage**. Claude Code and Codex load this file natively.
 
 ## What this is
 
