@@ -23,8 +23,15 @@ describe("LIVE_CLIENT_SCRIPT (string contract)", () => {
   });
 
   it("handles every server message kind", () => {
-    for (const kind of ["comments-so-far", "comment-saved", "comment-status", "cursor", "plan-changed", "plan-reshaped"]) {
-      expect(LIVE_CLIENT_SCRIPT).toContain('case "' + kind + '"');
+    for (const kind of [
+      "comments-so-far",
+      "comment-saved",
+      "comment-status",
+      "cursor",
+      "plan-changed",
+      "plan-reshaped",
+    ]) {
+      expect(LIVE_CLIENT_SCRIPT).toContain(`case "${kind}"`);
     }
   });
 
@@ -41,7 +48,9 @@ describe("LIVE_CLIENT_SCRIPT (string contract)", () => {
   });
 
   it("redraws pins and glow after every sketch draw", () => {
-    expect(LIVE_CLIENT_SCRIPT).toContain('document.addEventListener("pp-sketch-drawn", onSketchDrawn)');
+    expect(LIVE_CLIENT_SCRIPT).toContain(
+      'document.addEventListener("pp-sketch-drawn", onSketchDrawn)',
+    );
   });
 
   it("keeps the previous version for Before and After toggles", () => {
