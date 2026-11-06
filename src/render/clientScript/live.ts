@@ -115,9 +115,6 @@ html.dark {
   position: fixed;
   left: 0;
   top: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
   pointer-events: none;
   color: var(--live-accent);
   transition: transform 0.6s ease, opacity 0.6s ease;
@@ -128,6 +125,9 @@ html.dark {
 }
 
 .live-cursor-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
   width: 12px;
   height: 12px;
   border-radius: 50%;
@@ -135,6 +135,10 @@ html.dark {
 }
 
 .live-cursor-label {
+  position: absolute;
+  left: 0;
+  bottom: 100%;
+  margin-bottom: 10px;
   padding: 2px 8px;
   white-space: nowrap;
   border-radius: 10px;
@@ -143,14 +147,25 @@ html.dark {
   font-size: 16px;
 }
 
+.live-cursor.is-label-below .live-cursor-label {
+  bottom: auto;
+  top: 100%;
+  margin-bottom: 0;
+  margin-top: 10px;
+}
+
+.live-cursor-name {
+  margin-right: 4px;
+  font-weight: 700;
+}
+
 .live-toast-list {
   position: fixed;
-  left: 50%;
+  right: 16px;
   bottom: 16px;
   display: grid;
   gap: 8px;
-  width: min(360px, calc(100vw - 24px));
-  transform: translateX(-50%);
+  width: min(360px, calc(100vw - 32px));
   pointer-events: auto;
 }
 
@@ -164,6 +179,15 @@ html.dark {
   border-radius: 10px;
   background: var(--live-paper);
   font-size: 18px;
+}
+
+.live-toast-words {
+  flex: 1;
+  min-width: 0;
+}
+
+.live-toast .sketch-button {
+  white-space: nowrap;
 }
 
 .live-badge {
@@ -235,7 +259,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   pinPopoverElement.hidden = true;
   pinPopoverElement.append(pinPopoverWordsElement, pinPopoverStatusElement);
 
-  cursorNameElement.textContent = "Claude";
+  cursorNameElement.textContent = "Claude:";
   cursorLabelElement.append(cursorNameElement, cursorSayElement);
   cursorElement.append(createLiveElement("span", "live-cursor-dot"), cursorLabelElement);
   cursorElement.hidden = true;
@@ -523,6 +547,13 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     if (isCursorTargetGone) return;
 
     cursorElement.style.transform = "translate(" + createPixelLength(cursorRect.left) + ", " + createPixelLength(cursorRect.top) + ")";
+    cursorElement.style.width = createPixelLength(cursorRect.width);
+    cursorElement.style.height = createPixelLength(cursorRect.height);
+
+    const cursorLabelHeight = cursorLabelElement.offsetHeight;
+    const labelTopWhenAbove = cursorRect.top - ANCHOR_GAP_PX - cursorLabelHeight;
+    const isRoomAboveLabel = labelTopWhenAbove >= VIEWPORT_MARGIN_PX;
+    cursorElement.classList.toggle("is-label-below", !isRoomAboveLabel);
   };
 
   const dismissToast = (page) => {
