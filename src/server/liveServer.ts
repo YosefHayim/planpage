@@ -113,9 +113,9 @@ const injectPageScript = (html: string, pageScript: string): string => {
   return html.replace("</body>", () => `${scriptTag}</body>`);
 };
 
-const parseJsonOrNull = (text: string): unknown => {
+const parseJsonOrNull = (incomingString: string): unknown => {
   try {
-    return JSON.parse(text);
+    return JSON.parse(incomingString);
   } catch {
     console.error({ liveServer: "body is not JSON" });
     return null;
