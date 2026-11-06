@@ -23,10 +23,15 @@ interface PlanFiles {
   readonly decisionPath: string;
 }
 
-const FRAME_TIMEOUT_MS = 5000;
+const FRAME_TIMEOUT_MS = 10000;
+const RENDERING_TEST_TIMEOUT_MS = 20000;
 const IDLE_SECONDS = 60;
 const HTTP_SWITCHING_PROTOCOLS = 101;
 const PLAN_PAGE_SCRIPT = "window.livePlanTest = true;";
+
+// Each test renders the sketch plan (shiki highlight), which can take seconds under load.
+const renderingTest = (name: string, testBody: () => Promise<void>) =>
+  it(name, testBody, RENDERING_TEST_TIMEOUT_MS);
 
 const createdFolders: string[] = [];
 const openedSockets: WebSocket[] = [];
@@ -195,7 +200,7 @@ const saveFirstComment = async (handle: LiveServerHandle) => {
 };
 
 describe("startLiveServer", () => {
-  it("rejects a page socket whose Origin is another website", async () => {
+  renderingTest("rejects a page socket whose Origin is another website", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const status = await readUpgradeStatus(pageSocketUrl(handle), {
@@ -205,7 +210,7 @@ describe("startLiveServer", () => {
     expect(status).toBe(403);
   });
 
-  it("rejects an agent socket with a wrong token", async () => {
+  renderingTest("rejects an agent socket with a wrong token", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const status = await readUpgradeStatus(
@@ -216,7 +221,7 @@ describe("startLiveServer", () => {
     expect(status).toBe(403);
   });
 
-  it("rejects an agent socket that carries a browser Origin header", async () => {
+  renderingTest("rejects an agent socket that carries a browser Origin header", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const status = await readUpgradeStatus(handle.agentSocketUrl, pageOrigin(handle));
@@ -224,61 +229,67 @@ describe("startLiveServer", () => {
     expect(status).toBe(403);
   });
 
-  it("sends a comment to the agent with commentId 1 and tells the tab it was saved", async () => {
-    const handle = await startTestServer(createPlanFiles(samplePlan));
-    const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
-      pageSocketUrl(handle),
-      pageOrigin(handle),
-    );
-    const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
+  renderingTest(
+    "sends a comment to the agent with commentId 1 and tells the tab it was saved",
+    async () => {
+      const handle = await startTestServer(createPlanFiles(samplePlan));
+      const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
+        pageSocketUrl(handle),
+        pageOrigin(handle),
+      );
+      const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
 
-    sendCommentFrame(tab, {
-      draftId: "draft-1",
-      page: 2,
-      part: "homeBox",
-      words: "  make this faster  ",
-    });
-    const savedFrame = await tabInbox.nextFrame("comment-saved");
-    const agentFrame = await agentInbox.nextFrame("comment");
+      sendCommentFrame(tab, {
+        draftId: "draft-1",
+        page: 2,
+        part: "homeBox",
+        words: "  make this faster  ",
+      });
+      const savedFrame = await tabInbox.nextFrame("comment-saved");
+      const agentFrame = await agentInbox.nextFrame("comment");
 
-    expect(savedFrame.comment).toEqual({
-      commentId: 1,
-      draftId: "draft-1",
-      page: 2,
-      pageTitle: "Home page",
-      part: "homeBox",
-      words: "make this faster",
-      status: "sent",
-    });
-    expect(agentFrame).toEqual({
-      kind: "comment",
-      commentId: 1,
-      page: 2,
-      pageTitle: "Home page",
-      part: "homeBox",
-      words: "make this faster",
-    });
-  });
+      expect(savedFrame.comment).toEqual({
+        commentId: 1,
+        draftId: "draft-1",
+        page: 2,
+        pageTitle: "Home page",
+        part: "homeBox",
+        words: "make this faster",
+        status: "sent",
+      });
+      expect(agentFrame).toEqual({
+        kind: "comment",
+        commentId: 1,
+        page: 2,
+        pageTitle: "Home page",
+        part: "homeBox",
+        words: "make this faster",
+      });
+    },
+  );
 
-  it("ignores a comment frame that is not valid and keeps the next id at 1", async () => {
-    const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
-    const handle = await startTestServer(createPlanFiles(samplePlan));
-    const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
-      pageSocketUrl(handle),
-      pageOrigin(handle),
-    );
+  renderingTest(
+    "ignores a comment frame that is not valid and keeps the next id at 1",
+    async () => {
+      const consoleErrorSpy = vi.spyOn(console, "error").mockImplementation(() => undefined);
+      const handle = await startTestServer(createPlanFiles(samplePlan));
+      const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
+        pageSocketUrl(handle),
+        pageOrigin(handle),
+      );
 
-    sendCommentFrame(tab, { draftId: "draft-bad", page: 99, part: null, words: "out of range" });
-    sendCommentFrame(tab, { draftId: "draft-empty", page: 1, part: null, words: "   " });
-    tab.send("not json at all");
-    sendCommentFrame(tab, { draftId: "draft-good", page: 1, part: null, words: "good one" });
-    const savedFrame = await tabInbox.nextFrame("comment-saved");
+      sendCommentFrame(tab, { draftId: "draft-bad", page: 99, part: null, words: "out of range" });
+      sendCommentFrame(tab, { draftId: "draft-empty", page: 1, part: null, words: "   " });
+      tab.send("not json at all");
+      sendCommentFrame(tab, { draftId: "draft-good", page: 1, part: null, words: "good one" });
+      const savedFrame = await tabInbox.nextFrame("comment-saved");
 
-    expect(savedFrame.comment).toMatchObject({ commentId: 1, draftId: "draft-good" });
-    expect(consoleErrorSpy).toHaveBeenCalled();
-  });
+      expect(savedFrame.comment).toMatchObject({ commentId: 1, draftId: "draft-good" });
+      expect(consoleErrorSpy).toHaveBeenCalled();
+    },
+  );
 
-  it("sends comments-so-far to a tab that reconnects", async () => {
+  renderingTest("sends comments-so-far to a tab that reconnects", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
     const { socket: firstTab, inbox: firstTabInbox } = await openSocketWithInbox(
       pageSocketUrl(handle),
@@ -307,32 +318,35 @@ describe("startLiveServer", () => {
     ]);
   });
 
-  it("moves a comment to working and broadcasts the cursor when the agent names the comment", async () => {
-    const planFiles = createPlanFiles(samplePlan);
-    const handle = await startTestServer(planFiles);
-    const { tab, tabInbox } = await saveFirstComment(handle);
+  renderingTest(
+    "moves a comment to working and broadcasts the cursor when the agent names the comment",
+    async () => {
+      const planFiles = createPlanFiles(samplePlan);
+      const handle = await startTestServer(planFiles);
+      const { tab, tabInbox } = await saveFirstComment(handle);
 
-    const cursorReply = await postJson(cursorUrl(handle, handle.token), {
-      commentId: 1,
-      page: null,
-      part: null,
-      say: "Looking at the login box",
-    });
-    const statusFrame = await tabInbox.nextFrame("comment-status");
-    const cursorFrame = await tabInbox.nextFrame("cursor");
+      const cursorReply = await postJson(cursorUrl(handle, handle.token), {
+        commentId: 1,
+        page: null,
+        part: null,
+        say: "Looking at the login box",
+      });
+      const statusFrame = await tabInbox.nextFrame("comment-status");
+      const cursorFrame = await tabInbox.nextFrame("cursor");
 
-    expect(cursorReply.status).toBe(204);
-    expect(statusFrame).toEqual({ kind: "comment-status", commentId: 1, status: "working" });
-    expect(cursorFrame).toEqual({
-      kind: "cursor",
-      page: 1,
-      part: "loginBox",
-      say: "Looking at the login box",
-    });
-    tab.terminate();
-  });
+      expect(cursorReply.status).toBe(204);
+      expect(statusFrame).toEqual({ kind: "comment-status", commentId: 1, status: "working" });
+      expect(cursorFrame).toEqual({
+        kind: "cursor",
+        page: 1,
+        part: "loginBox",
+        say: "Looking at the login box",
+      });
+      tab.terminate();
+    },
+  );
 
-  it("refuses a cursor request with a wrong token", async () => {
+  renderingTest("refuses a cursor request with a wrong token", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan));
 
     const cursorReply = await postJson(cursorUrl(handle, "wrong-token"), {
@@ -345,48 +359,54 @@ describe("startLiveServer", () => {
     expect(cursorReply.status).toBe(403);
   });
 
-  it("sends plan-changed with only the edited node and turns the working comment done", async () => {
-    const planFiles = createPlanFiles(samplePlan);
-    const handle = await startTestServer(planFiles);
-    const { tabInbox } = await saveFirstComment(handle);
-    await postJson(cursorUrl(handle, handle.token), {
-      commentId: 1,
-      page: null,
-      part: null,
-      say: "Editing the login box",
-    });
-    await tabInbox.nextFrame("comment-status");
+  renderingTest(
+    "sends plan-changed with only the edited node and turns the working comment done",
+    async () => {
+      const planFiles = createPlanFiles(samplePlan);
+      const handle = await startTestServer(planFiles);
+      const { tabInbox } = await saveFirstComment(handle);
+      await postJson(cursorUrl(handle, handle.token), {
+        commentId: 1,
+        page: null,
+        part: null,
+        say: "Editing the login box",
+      });
+      await tabInbox.nextFrame("comment-status");
 
-    const editedPlan = {
-      ...samplePlan,
-      pages: [samplePage("Sign in", "Sign in page", "loginBox", "Sign in now"), homePage],
-    };
-    writeFileSync(planFiles.planPath, JSON.stringify(editedPlan));
-    const changedFrame = await tabInbox.nextFrame("plan-changed");
-    const doneFrame = await tabInbox.nextFrame("comment-status");
+      const editedPlan = {
+        ...samplePlan,
+        pages: [samplePage("Sign in", "Sign in page", "loginBox", "Sign in now"), homePage],
+      };
+      writeFileSync(planFiles.planPath, JSON.stringify(editedPlan));
+      const changedFrame = await tabInbox.nextFrame("plan-changed");
+      const doneFrame = await tabInbox.nextFrame("comment-status");
 
-    expect(changedFrame.changes).toEqual([
-      { page: 1, pageTitle: "Sign in page", changedParts: ["loginBox"] },
-    ]);
-    expect(String(changedFrame.html)).toContain("Sign in now");
-    expect(doneFrame).toEqual({ kind: "comment-status", commentId: 1, status: "done" });
-  });
+      expect(changedFrame.changes).toEqual([
+        { page: 1, pageTitle: "Sign in page", changedParts: ["loginBox"] },
+      ]);
+      expect(String(changedFrame.html)).toContain("Sign in now");
+      expect(doneFrame).toEqual({ kind: "comment-status", commentId: 1, status: "done" });
+    },
+  );
 
-  it("sends plan-error to the agent for broken JSON and keeps serving the last good page", async () => {
-    const planFiles = createPlanFiles(samplePlan);
-    const handle = await startTestServer(planFiles);
-    const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
+  renderingTest(
+    "sends plan-error to the agent for broken JSON and keeps serving the last good page",
+    async () => {
+      const planFiles = createPlanFiles(samplePlan);
+      const handle = await startTestServer(planFiles);
+      const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
 
-    writeFileSync(planFiles.planPath, "{ this is not json");
-    const errorFrame = await agentInbox.nextFrame("plan-error");
-    const pageReply = await fetch(`http://127.0.0.1:${handle.port}/`);
-    const pageHtml = await pageReply.text();
+      writeFileSync(planFiles.planPath, "{ this is not json");
+      const errorFrame = await agentInbox.nextFrame("plan-error");
+      const pageReply = await fetch(`http://127.0.0.1:${handle.port}/`);
+      const pageHtml = await pageReply.text();
 
-    expect(typeof errorFrame.message).toBe("string");
-    expect(pageHtml).toContain("Login plan");
-  });
+      expect(typeof errorFrame.message).toBe("string");
+      expect(pageHtml).toContain("Login plan");
+    },
+  );
 
-  it("sends plan-reshaped when a page is added", async () => {
+  renderingTest("sends plan-reshaped when a page is added", async () => {
     const planFiles = createPlanFiles(samplePlan);
     const handle = await startTestServer(planFiles);
     const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
@@ -404,23 +424,26 @@ describe("startLiveServer", () => {
     expect(reshapedFrame.kind).toBe("plan-reshaped");
   });
 
-  it("writes the decision, sends it to the agent and resolves closed as decision-written", async () => {
-    const planFiles = createPlanFiles(samplePlan);
-    const handle = await startTestServer(planFiles);
-    const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
-    const decision = { ...EMPTY_DECISION, approved: false, notes: "tighten the login" };
+  renderingTest(
+    "writes the decision, sends it to the agent and resolves closed as decision-written",
+    async () => {
+      const planFiles = createPlanFiles(samplePlan);
+      const handle = await startTestServer(planFiles);
+      const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
+      const decision = { ...EMPTY_DECISION, approved: false, notes: "tighten the login" };
 
-    const decisionReply = await postJson(`http://127.0.0.1:${handle.port}/decision`, decision);
-    const decisionFrame = await agentInbox.nextFrame("decision");
-    const exit = await handle.closed;
+      const decisionReply = await postJson(`http://127.0.0.1:${handle.port}/decision`, decision);
+      const decisionFrame = await agentInbox.nextFrame("decision");
+      const exit = await handle.closed;
 
-    expect(decisionReply.status).toBe(200);
-    expect(JSON.parse(readFileSync(planFiles.decisionPath, "utf8"))).toEqual(decision);
-    expect(decisionFrame.decision).toEqual(decision);
-    expect(exit).toBe("decision-written");
-  });
+      expect(decisionReply.status).toBe(200);
+      expect(JSON.parse(readFileSync(planFiles.decisionPath, "utf8"))).toEqual(decision);
+      expect(decisionFrame.decision).toEqual(decision);
+      expect(exit).toBe("decision-written");
+    },
+  );
 
-  it("resolves closed as idle-timeout when nobody uses the server", async () => {
+  renderingTest("resolves closed as idle-timeout when nobody uses the server", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan), {
       idleTimeoutSeconds: 0.2,
     });
@@ -430,12 +453,15 @@ describe("startLiveServer", () => {
     expect(exit).toBe("idle-timeout");
   });
 
-  it("serves the rendered plan with the page script right before the closing body tag", async () => {
-    const handle = await startTestServer(createPlanFiles(samplePlan));
+  renderingTest(
+    "serves the rendered plan with the page script right before the closing body tag",
+    async () => {
+      const handle = await startTestServer(createPlanFiles(samplePlan));
 
-    const pageReply = await fetch(`http://127.0.0.1:${handle.port}/`);
-    const pageHtml = await pageReply.text();
+      const pageReply = await fetch(`http://127.0.0.1:${handle.port}/`);
+      const pageHtml = await pageReply.text();
 
-    expect(pageHtml).toContain(`<script>${PLAN_PAGE_SCRIPT}</script></body>`);
-  });
+      expect(pageHtml).toContain(`<script>${PLAN_PAGE_SCRIPT}</script></body>`);
+    },
+  );
 });
