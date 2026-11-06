@@ -209,7 +209,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     return element;
   };
 
-  const pixelsOf = (distance) => String(distance) + "px";
+  const createPixelLength = (distance) => String(distance) + "px";
 
   const layerElement = createLiveElement("div", "live-layer");
   const pinLayerElement = createLiveElement("div", "live-pin-layer");
@@ -337,8 +337,8 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     pinElement.hidden = isPinTargetGone;
     if (isPinTargetGone) return;
 
-    pinElement.style.left = pixelsOf(pinRect.left - PIN_SIZE_PX / 2);
-    pinElement.style.top = pixelsOf(pinRect.top - PIN_SIZE_PX / 2);
+    pinElement.style.left = createPixelLength(pinRect.left - PIN_SIZE_PX / 2);
+    pinElement.style.top = createPixelLength(pinRect.top - PIN_SIZE_PX / 2);
   };
 
   const placePins = () => {
@@ -371,8 +371,8 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     const wantedLeft = pinRect.right + ANCHOR_GAP_PX;
     const latestLeft = keepInViewport(wantedLeft, pinPopoverElement.offsetWidth, window.innerWidth);
     const latestTop = keepInViewport(pinRect.top, pinPopoverElement.offsetHeight, window.innerHeight);
-    pinPopoverElement.style.left = pixelsOf(latestLeft);
-    pinPopoverElement.style.top = pixelsOf(latestTop);
+    pinPopoverElement.style.left = createPixelLength(latestLeft);
+    pinPopoverElement.style.top = createPixelLength(latestTop);
   };
 
   const drawPins = () => {
@@ -444,8 +444,8 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     const wantedTop = isNoRoomBelow ? aboveTop : belowTop;
     const latestLeft = keepInViewport(targetRect.left, composerElement.offsetWidth, window.innerWidth);
     const latestTop = keepInViewport(wantedTop, composerHeight, window.innerHeight);
-    composerElement.style.left = pixelsOf(latestLeft);
-    composerElement.style.top = pixelsOf(latestTop);
+    composerElement.style.left = createPixelLength(latestLeft);
+    composerElement.style.top = createPixelLength(latestTop);
   };
 
   const openComposer = (page, part) => {
@@ -522,7 +522,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     cursorElement.hidden = isCursorTargetGone;
     if (isCursorTargetGone) return;
 
-    cursorElement.style.transform = "translate(" + pixelsOf(cursorRect.left) + ", " + pixelsOf(cursorRect.top) + ")";
+    cursorElement.style.transform = "translate(" + createPixelLength(cursorRect.left) + ", " + createPixelLength(cursorRect.top) + ")";
   };
 
   const dismissToast = (page) => {
