@@ -42,3 +42,14 @@ Keys: Left and Right move between pages, Up and Down or 1-3 / A-C pick an option
 Render with `npx planpage render sketch-plan --data plan.json --serve --decision decision.json`. Without `--serve` the page still shows; the decision is copied to the clipboard instead of posted.
 
 The sample (`sketchPlanSample.ts`) is the approved five-page integration plan.
+
+## Live mode
+
+`planpage live` serves the page over a live connection, so you can comment while the agent edits the plan.
+
+- **Comment pins**: pin a comment on a part. The pin shows sent, working, then done as the agent answers.
+- **Claude's cursor**: when the agent starts on a comment, a labelled cursor moves to the part and says what it is changing.
+- **Pages change in place**: an edited page swaps into the open tab and glows where it changed.
+- **Toast**: when you are on another page, a toast names the changed page. Click it to jump there.
+- **Before / After**: after a change, Before shows the previous version of that page until you press After.
+- **Approve** writes `decision.json` and the live command exits `0`.
