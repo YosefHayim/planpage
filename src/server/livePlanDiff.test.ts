@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { SketchPlanPage, SketchScene } from "../contracts/sketchScene";
-import { type LivePlanData, findPlanDifference } from "./livePlanDiff";
+import { type LivePlan, findPlanDifference } from "./livePlanDiff";
 
 const sceneWithBox = (boxWords: string, boxId = "box"): SketchScene => ({
   width: 100,
@@ -15,7 +15,7 @@ const pageWithBox = (title: string, boxWords: string): SketchPlanPage => ({
   scene: sceneWithBox(boxWords),
 });
 
-const planWithPages = (pages: readonly SketchPlanPage[]): LivePlanData => ({
+const planWithPages = (pages: readonly SketchPlanPage[]): LivePlan => ({
   title: "Plan",
   pages,
 });

@@ -3,25 +3,24 @@ import { highlight } from "../highlight/highlight";
 import { render } from "../render/render";
 import { TEMPLATES, type TemplateName } from "./index";
 
-export interface RenderTemplateHtmlOptions {
+export interface TemplateRenderRequest {
   readonly theme?: Theme;
-  /** Set when the page is served with a post-back; quiz and sketch-plan never add the interactive shell. */
   readonly serve?: boolean;
 }
 
-/** The HTML `planpage render <template>` writes: the template, its shell flags, then the highlight pass. */
 export const renderTemplateHtml = async (
   template: TemplateName,
-  data: unknown,
-  options: RenderTemplateHtmlOptions,
+  templateInput: unknown,
+  renderRequest: TemplateRenderRequest,
 ): Promise<string> => {
   const factory = TEMPLATES[template];
+  const isServedPage = Boolean(renderRequest.serve);
   return highlight(
-    render(factory(data), {
-      theme: options.theme,
+    render(factory(templateInput), {
+      theme: renderRequest.theme,
       // Quiz carries its own SubmitBar + owns submit via the quizzable island — never add the
       // interactive post-back too, or both would handle [data-action] and double-submit.
-      interactive: Boolean(options.serve) && template !== "quiz" && template !== "sketch-plan",
+      interactive: isServedPage && template !== "quiz" && template !== "sketch-plan",
       filterable: template === "library",
       explorable: template === "code-style-plan" || template === "library",
       pollable: template === "question-poll",

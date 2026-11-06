@@ -1,7 +1,7 @@
 import type { LivePageChange } from "../contracts/live";
 import type { SketchPlanPage, SketchScene } from "../contracts/sketchScene";
 
-export interface LivePlanData {
+export interface LivePlan {
   readonly title: string;
   readonly pages: readonly SketchPlanPage[];
 }
@@ -60,8 +60,8 @@ const isPresentChange = (change: LivePageChange | null): change is LivePageChang
   change !== null;
 
 export const findPlanDifference = (
-  previousPlan: LivePlanData,
-  nextPlan: LivePlanData,
+  previousPlan: LivePlan,
+  nextPlan: LivePlan,
 ): LivePlanDifference => {
   const isPageCountSame = previousPlan.pages.length === nextPlan.pages.length;
   if (!isPageCountSame) return { kind: "reshaped" };

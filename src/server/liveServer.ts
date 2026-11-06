@@ -17,16 +17,14 @@ import type {
 } from "../contracts/live";
 import { renderTemplateHtml } from "../templates/renderTemplateHtml";
 import { isCommentFrame, isCursorBody, isJsonObject, isPageNumberInPlan } from "./liveFrames";
-import { type LivePlanData, findPlanDifference } from "./livePlanDiff";
+import { type LivePlan, findPlanDifference } from "./livePlanDiff";
 
 export type LiveServerExit = "decision-written" | "idle-timeout" | "error" | "stopped";
 
 export interface StartLiveServerSettings {
   readonly planPath: string;
   readonly decisionPath: string;
-  /** Browser script placed before </body> of every page the server sends. */
   readonly pageScript: string;
-  /** 0 lets the OS pick the port; a busy preferred port falls back to an OS pick. */
   readonly port: number;
   readonly idleTimeoutSeconds: number;
   readonly open: boolean;
@@ -43,7 +41,7 @@ export interface LiveServerHandle {
 
 interface ReadablePlan {
   readonly kind: "ready";
-  readonly plan: LivePlanData;
+  readonly plan: LivePlan;
   readonly html: string;
 }
 
@@ -54,25 +52,55 @@ interface UnreadablePlan {
 
 type PlanReading = ReadablePlan | UnreadablePlan;
 
+interface CurrentPlan {
+  readonly plan: LivePlan;
+  readonly html: string;
+}
+
+interface LiveTimers {
+  idle?: NodeJS.Timeout;
+  reload?: NodeJS.Timeout;
+}
+
+interface LiveSession {
+  readonly token: string;
+  readonly serverSettings: StartLiveServerSettings;
+  readonly planFileName: string;
+  currentPlan: CurrentPlan;
+  readonly comments: Map<number, LiveComment>;
+  readonly pageSockets: Set<WebSocket>;
+  readonly agentSockets: Set<WebSocket>;
+  readonly timers: LiveTimers;
+  readonly reloads: { started: number };
+  readonly shutdownState: { isClosed: boolean };
+  readonly pageServer: WebSocketServer;
+  readonly agentServer: WebSocketServer;
+  readonly httpServer: Server;
+  planWatcher: FSWatcher | null;
+  readonly settleClosed: (exit: LiveServerExit) => void;
+}
+
+interface SocketUpgrade {
+  readonly request: IncomingMessage;
+  readonly socket: Duplex;
+  readonly head: Buffer;
+}
+
+interface HttpExchange {
+  readonly request: IncomingMessage;
+  readonly reply: ServerResponse;
+  readonly url: URL;
+}
+
 const LOOPBACK_HOST = "127.0.0.1";
 const PAGE_PATH = "/";
-const PAGE_SOCKET_PATH = "/page";
 const AGENT_SOCKET_PATH = "/agent";
-const CURSOR_PATH = "/cursor";
-const DECISION_PATH = "/decision";
-const PLAN_RELOAD_DEBOUNCE_MS = 150;
-const MILLISECONDS_PER_SECOND = 1000;
-const MAX_PAGE_FRAME_BYTES = 1024 * 1024;
 const HTTP_OK = 200;
-const HTTP_NO_CONTENT = 204;
 const HTTP_BAD_REQUEST = 400;
 const HTTP_FORBIDDEN = 403;
 const HTTP_NOT_FOUND = 404;
-const HTTP_SERVER_ERROR = 500;
 const FORBIDDEN_STATUS_LINE = "403 Forbidden";
-const NOT_FOUND_STATUS_LINE = "404 Not Found";
-const DECISION_RECEIVED_HTML =
-  "<body style='font:16px system-ui;padding:3rem'>Feedback received — return to your terminal.</body>";
+const HTML_CONTENT_TYPE = "text/html; charset=utf-8";
 
 const describeError = (error: unknown): string =>
   error instanceof Error ? error.message : String(error);
@@ -111,7 +139,7 @@ const sendText = (reply: ServerResponse, status: number, message: string): void 
 };
 
 const sendHtml = (reply: ServerResponse, html: string): void => {
-  reply.writeHead(HTTP_OK, { "Content-Type": "text/html; charset=utf-8" });
+  reply.writeHead(HTTP_OK, { "Content-Type": HTML_CONTENT_TYPE });
   reply.end(html);
 };
 
@@ -127,7 +155,15 @@ const sendFrame = (socket: WebSocket, message: LiveMessageToPage | LiveMessageTo
   socket.send(JSON.stringify(message));
 };
 
-const readPageTitle = (plan: LivePlanData, pageNumber: number): string => {
+const sendToPages = (session: LiveSession, message: LiveMessageToPage): void => {
+  for (const pageSocket of session.pageSockets) sendFrame(pageSocket, message);
+};
+
+const sendToAgents = (session: LiveSession, message: LiveMessageToAgent): void => {
+  for (const agentSocket of session.agentSockets) sendFrame(agentSocket, message);
+};
+
+const readPageTitle = (plan: LivePlan, pageNumber: number): string => {
   const page = plan.pages[pageNumber - 1];
   const isPageMissing = page === undefined;
   if (isPageMissing) throw new Error(`planpage: the plan has no page ${pageNumber}`);
@@ -147,7 +183,7 @@ const createCommentForAgent = (comment: LiveComment): LiveCommentForAgent => ({
 const readPlanPage = async (planPath: string, pageScript: string): Promise<PlanReading> => {
   try {
     const planString = readFileSync(planPath, "utf8");
-    const plan = JSON.parse(planString) as LivePlanData;
+    const plan = JSON.parse(planString) as LivePlan;
     const pageHtml = await renderTemplateHtml("sketch-plan", plan, { serve: true });
 
     return { kind: "ready", plan, html: injectPageScript(pageHtml, pageScript) };
@@ -178,342 +214,369 @@ const listenWithFallback = async (server: Server, preferredPort: number): Promis
   }
 };
 
+const readBoundPort = (session: LiveSession): number =>
+  (session.httpServer.address() as AddressInfo).port;
+
+const isAllowedPageOrigin = (session: LiveSession, origin: string | undefined): boolean => {
+  const port = readBoundPort(session);
+  return origin === `http://127.0.0.1:${port}` || origin === `http://localhost:${port}`;
+};
+
+const isTokenValid = (token: string, url: URL): boolean => url.searchParams.get("token") === token;
+
+const shutdown = (session: LiveSession, exit: LiveServerExit): void => {
+  const isAlreadyClosed = session.shutdownState.isClosed;
+  if (isAlreadyClosed) return;
+
+  session.shutdownState.isClosed = true;
+  clearTimeout(session.timers.idle);
+  clearTimeout(session.timers.reload);
+  session.planWatcher?.close();
+  for (const socket of [...session.pageSockets, ...session.agentSockets]) socket.close();
+
+  session.httpServer.closeAllConnections();
+  session.httpServer.close();
+  session.settleClosed(exit);
+};
+
+const touchIdle = (session: LiveSession): void => {
+  clearTimeout(session.timers.idle);
+  const millisecondsPerSecond = 1000;
+  const idleMilliseconds = session.serverSettings.idleTimeoutSeconds * millisecondsPerSecond;
+
+  session.timers.idle = setTimeout(() => {
+    console.error({ liveServer: "idle timeout" });
+    shutdown(session, "idle-timeout");
+  }, idleMilliseconds);
+};
+
+const setCommentStatus = (
+  session: LiveSession,
+  comment: LiveComment,
+  status: LiveCommentStatus,
+): void => {
+  session.comments.set(comment.commentId, { ...comment, status });
+  sendToPages(session, { kind: "comment-status", commentId: comment.commentId, status });
+};
+
+const markWorkingCommentsDone = (session: LiveSession): void => {
+  for (const comment of session.comments.values()) {
+    const isWorking = comment.status === "working";
+    if (isWorking) setCommentStatus(session, comment, "done");
+  }
+};
+
+const saveComment = (session: LiveSession, commentFrame: LiveCommentFromPage): void => {
+  const comment: LiveComment = {
+    commentId: session.comments.size + 1,
+    draftId: commentFrame.draftId,
+    page: commentFrame.page,
+    pageTitle: readPageTitle(session.currentPlan.plan, commentFrame.page),
+    part: commentFrame.part,
+    words: commentFrame.words.trim(),
+    status: "sent",
+  };
+  session.comments.set(comment.commentId, comment);
+  sendToPages(session, { kind: "comment-saved", comment });
+  sendToAgents(session, createCommentForAgent(comment));
+};
+
+const readPageFrame = (session: LiveSession, frameString: string): void => {
+  touchIdle(session);
+  const frame = parseJsonOrNull(frameString);
+  const isValidComment = isCommentFrame(frame, session.currentPlan.plan.pages.length);
+  if (!isValidComment) {
+    console.error({ liveServer: "ignored a page frame that is not a valid comment" });
+    return;
+  }
+
+  saveComment(session, frame);
+};
+
+const openPageSocket = (session: LiveSession, pageSocket: WebSocket): void => {
+  session.pageSockets.add(pageSocket);
+  sendFrame(pageSocket, { kind: "comments-so-far", comments: [...session.comments.values()] });
+  pageSocket.on("message", (frame: RawData) => readPageFrame(session, frame.toString()));
+  pageSocket.on("close", () => {
+    session.pageSockets.delete(pageSocket);
+  });
+  pageSocket.on("error", (error) => console.error({ liveServer: "page socket error", error }));
+  touchIdle(session);
+};
+
+const openAgentSocket = (session: LiveSession, agentSocket: WebSocket): void => {
+  session.agentSockets.add(agentSocket);
+  agentSocket.on("message", () => touchIdle(session));
+  agentSocket.on("close", () => {
+    session.agentSockets.delete(agentSocket);
+  });
+  agentSocket.on("error", (error) => console.error({ liveServer: "agent socket error", error }));
+  touchIdle(session);
+};
+
+const acceptPageSocket = (session: LiveSession, upgrade: SocketUpgrade): void => {
+  const isOriginAllowed = isAllowedPageOrigin(session, upgrade.request.headers.origin);
+  if (!isOriginAllowed) {
+    rejectUpgrade(upgrade.socket, FORBIDDEN_STATUS_LINE);
+    return;
+  }
+
+  session.pageServer.handleUpgrade(upgrade.request, upgrade.socket, upgrade.head, (pageSocket) =>
+    openPageSocket(session, pageSocket),
+  );
+};
+
+const acceptAgentSocket = (session: LiveSession, upgrade: SocketUpgrade, url: URL): void => {
+  const hasBrowserOrigin = upgrade.request.headers.origin !== undefined;
+  const isAgentAllowed = isTokenValid(session.token, url) && !hasBrowserOrigin;
+  if (!isAgentAllowed) {
+    rejectUpgrade(upgrade.socket, FORBIDDEN_STATUS_LINE);
+    return;
+  }
+
+  session.agentServer.handleUpgrade(upgrade.request, upgrade.socket, upgrade.head, (agentSocket) =>
+    openAgentSocket(session, agentSocket),
+  );
+};
+
+const routeUpgrade = (session: LiveSession, upgrade: SocketUpgrade): void => {
+  const url = readUrl(upgrade.request);
+  const isPageSocketPath = url.pathname === "/page";
+  const isAgentSocketPath = url.pathname === AGENT_SOCKET_PATH;
+  if (isPageSocketPath) {
+    acceptPageSocket(session, upgrade);
+    return;
+  }
+  if (isAgentSocketPath) {
+    acceptAgentSocket(session, upgrade, url);
+    return;
+  }
+  rejectUpgrade(upgrade.socket, "404 Not Found");
+};
+
+const answerCursorPost = async (session: LiveSession, exchange: HttpExchange): Promise<void> => {
+  const { request, reply, url } = exchange;
+  const hasBrowserOrigin = request.headers.origin !== undefined;
+  const isAuthorized = isTokenValid(session.token, url) && !hasBrowserOrigin;
+  if (!isAuthorized) {
+    sendText(reply, HTTP_FORBIDDEN, "planpage: cursor request refused");
+    return;
+  }
+
+  const requestString = await readRequestAsString(request);
+  const cursorRequest = parseJsonOrNull(requestString);
+  if (!isCursorBody(cursorRequest)) {
+    sendText(reply, HTTP_BAD_REQUEST, "planpage: cursor body must be a LiveCursorRequest");
+    return;
+  }
+
+  const { commentId } = cursorRequest;
+  const isCommentNamed = commentId !== null;
+  const namedComment = isCommentNamed ? session.comments.get(commentId) : undefined;
+  const isUnknownComment = isCommentNamed && namedComment === undefined;
+  if (isUnknownComment) {
+    sendText(reply, HTTP_NOT_FOUND, `planpage: no comment with id ${commentId}`);
+    return;
+  }
+
+  const isPageFromComment = namedComment !== undefined && cursorRequest.page === null;
+  const cursorPage = isPageFromComment ? namedComment.page : cursorRequest.page;
+  const cursorPart = isPageFromComment ? namedComment.part : cursorRequest.part;
+  const isPageKnown =
+    cursorPage !== null && isPageNumberInPlan(cursorPage, session.currentPlan.plan.pages.length);
+  if (!isPageKnown) {
+    sendText(reply, HTTP_BAD_REQUEST, "planpage: cursor needs a page in the plan or a comment id");
+    return;
+  }
+
+  if (namedComment !== undefined) setCommentStatus(session, namedComment, "working");
+  sendToPages(session, {
+    kind: "cursor",
+    page: cursorPage,
+    part: cursorPart,
+    say: cursorRequest.say,
+  });
+  touchIdle(session);
+
+  const noContentStatusCode = 204;
+  reply.writeHead(noContentStatusCode);
+  reply.end();
+};
+
+const answerDecisionPost = async (session: LiveSession, exchange: HttpExchange): Promise<void> => {
+  const { request, reply } = exchange;
+  const origin = request.headers.origin;
+  const hasForeignOrigin = origin !== undefined && !isAllowedPageOrigin(session, origin);
+  if (hasForeignOrigin) {
+    sendText(reply, HTTP_FORBIDDEN, "planpage: decision request refused");
+    return;
+  }
+
+  const decisionString = (await readRequestAsString(request)) || "{}";
+  const decisionValue = parseJsonOrNull(decisionString);
+  const decision = decisionValue as Decision;
+  if (!isJsonObject(decisionValue)) {
+    sendText(reply, HTTP_BAD_REQUEST, "planpage: decision body must be a JSON object");
+    return;
+  }
+
+  writeFileSync(session.serverSettings.decisionPath, decisionString);
+  sendToAgents(session, { kind: "decision", decision });
+  reply.writeHead(HTTP_OK, { "Content-Type": HTML_CONTENT_TYPE });
+  reply.end(
+    "<body style='font:16px system-ui;padding:3rem'>Feedback received — return to your terminal.</body>",
+    () => shutdown(session, "decision-written"),
+  );
+};
+
+const answerRequest = async (
+  session: LiveSession,
+  request: IncomingMessage,
+  reply: ServerResponse,
+): Promise<void> => {
+  const url = readUrl(request);
+  const isPageRequest = request.method === "GET" && url.pathname === PAGE_PATH;
+  const isCursorRequest = request.method === "POST" && url.pathname === "/cursor";
+  const isDecisionRequest = request.method === "POST" && url.pathname === "/decision";
+  const exchange: HttpExchange = { request, reply, url };
+  try {
+    if (isPageRequest) {
+      sendHtml(reply, session.currentPlan.html);
+      return;
+    }
+    if (isCursorRequest) {
+      await answerCursorPost(session, exchange);
+      return;
+    }
+    if (isDecisionRequest) {
+      await answerDecisionPost(session, exchange);
+      return;
+    }
+    sendText(reply, HTTP_NOT_FOUND, "planpage: not found");
+  } catch (error) {
+    console.error({ liveServer: "request failed", error });
+    const serverErrorStatusCode = 500;
+    sendText(reply, serverErrorStatusCode, "planpage: server error");
+  }
+};
+
+const applyReadablePlan = (session: LiveSession, reading: ReadablePlan): void => {
+  const difference = findPlanDifference(session.currentPlan.plan, reading.plan);
+  session.currentPlan = { plan: reading.plan, html: reading.html };
+
+  const isPlanUnchanged = difference.kind === "changed" && difference.changes.length === 0;
+  if (isPlanUnchanged) return;
+
+  const isReshaped = difference.kind === "reshaped";
+  if (isReshaped) {
+    sendToPages(session, { kind: "plan-reshaped" });
+  } else {
+    sendToPages(session, {
+      kind: "plan-changed",
+      html: reading.html,
+      changes: difference.changes,
+    });
+  }
+  markWorkingCommentsDone(session);
+};
+
+const reloadPlan = async (session: LiveSession): Promise<void> => {
+  session.reloads.started += 1;
+  const reloadNumber = session.reloads.started;
+  const { planPath, pageScript } = session.serverSettings;
+  const reading = await readPlanPage(planPath, pageScript);
+  const isSuperseded = reloadNumber !== session.reloads.started;
+  if (isSuperseded) return;
+
+  touchIdle(session);
+  const isPlanBroken = reading.kind === "broken";
+  if (isPlanBroken) {
+    console.error({
+      liveServer: "plan file is not renderable; keeping the last good page",
+      error: reading.error,
+    });
+    sendToAgents(session, { kind: "plan-error", message: describeError(reading.error) });
+    return;
+  }
+
+  applyReadablePlan(session, reading);
+};
+
+const watchPlanFolder = (session: LiveSession): FSWatcher =>
+  watch(dirname(session.serverSettings.planPath), (_eventType, changedFileName) => {
+    const isPlanFileEvent = changedFileName === session.planFileName;
+    if (!isPlanFileEvent) return;
+
+    clearTimeout(session.timers.reload);
+    const planReloadDebounceMs = 150;
+    session.timers.reload = setTimeout(async () => {
+      await reloadPlan(session);
+    }, planReloadDebounceMs);
+  });
+
 export const startLiveServer = async (
   serverSettings: StartLiveServerSettings,
 ): Promise<LiveServerHandle> => {
   const firstReading = await readPlanPage(serverSettings.planPath, serverSettings.pageScript);
-  if (firstReading.kind === "broken") {
+  const isFirstReadingBroken = firstReading.kind === "broken";
+  if (isFirstReadingBroken) {
     throw new Error("planpage: the plan file could not be rendered", { cause: firstReading.error });
   }
 
-  const token = randomUUID();
-  const planFileName = basename(serverSettings.planPath);
-  const latest = { plan: firstReading.plan, html: firstReading.html };
-  const comments = new Map<number, LiveComment>();
-  const pageSockets = new Set<WebSocket>();
-  const agentSockets = new Set<WebSocket>();
-  const timers: { idle?: NodeJS.Timeout; reload?: NodeJS.Timeout } = {};
-  const reloads = { started: 0 };
-  const lifecycle = { isClosed: false };
   let settleClosed: (exit: LiveServerExit) => void = () => undefined;
   const closed = new Promise<LiveServerExit>((settle) => {
     settleClosed = settle;
   });
 
-  const pageServer = new WebSocketServer({ noServer: true, maxPayload: MAX_PAGE_FRAME_BYTES });
-  const agentServer = new WebSocketServer({ noServer: true });
-  const httpServer = createServer(async (request, reply) => {
-    await answerRequest(request, reply);
+  const maxPageFrameBytes = 1024 * 1024;
+  const session: LiveSession = {
+    token: randomUUID(),
+    serverSettings,
+    planFileName: basename(serverSettings.planPath),
+    currentPlan: { plan: firstReading.plan, html: firstReading.html },
+    comments: new Map(),
+    pageSockets: new Set(),
+    agentSockets: new Set(),
+    timers: {},
+    reloads: { started: 0 },
+    shutdownState: { isClosed: false },
+    pageServer: new WebSocketServer({ noServer: true, maxPayload: maxPageFrameBytes }),
+    agentServer: new WebSocketServer({ noServer: true }),
+    httpServer: createServer(async (request, reply) => {
+      await answerRequest(session, request, reply);
+    }),
+    planWatcher: null,
+    settleClosed,
+  };
+
+  const { token } = session;
+  session.httpServer.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
+    routeUpgrade(session, { request, socket, head });
   });
 
-  const readBoundPort = (): number => (httpServer.address() as AddressInfo).port;
-
-  const isAllowedPageOrigin = (origin: string | undefined): boolean => {
-    const port = readBoundPort();
-    return origin === `http://127.0.0.1:${port}` || origin === `http://localhost:${port}`;
-  };
-
-  const isTokenValid = (url: URL): boolean => url.searchParams.get("token") === token;
-
-  const sendToPages = (message: LiveMessageToPage): void => {
-    for (const pageSocket of pageSockets) sendFrame(pageSocket, message);
-  };
-
-  const sendToAgents = (message: LiveMessageToAgent): void => {
-    for (const agentSocket of agentSockets) sendFrame(agentSocket, message);
-  };
-
-  const touchIdle = (): void => {
-    clearTimeout(timers.idle);
-    timers.idle = setTimeout(() => {
-      console.error({ liveServer: "idle timeout" });
-      shutdown("idle-timeout");
-    }, serverSettings.idleTimeoutSeconds * MILLISECONDS_PER_SECOND);
-  };
-
-  const shutdown = (exit: LiveServerExit): void => {
-    const isAlreadyClosed = lifecycle.isClosed;
-    if (isAlreadyClosed) return;
-
-    lifecycle.isClosed = true;
-    clearTimeout(timers.idle);
-    clearTimeout(timers.reload);
-    planWatcher.close();
-    for (const socket of [...pageSockets, ...agentSockets]) socket.close();
-    httpServer.closeAllConnections();
-    httpServer.close();
-    settleClosed(exit);
-  };
-
-  const setCommentStatus = (comment: LiveComment, status: LiveCommentStatus): void => {
-    comments.set(comment.commentId, { ...comment, status });
-    sendToPages({ kind: "comment-status", commentId: comment.commentId, status });
-  };
-
-  const markWorkingCommentsDone = (): void => {
-    for (const comment of comments.values()) {
-      const isWorking = comment.status === "working";
-      if (isWorking) setCommentStatus(comment, "done");
-    }
-  };
-
-  const saveComment = (commentFrame: LiveCommentFromPage): void => {
-    const comment: LiveComment = {
-      commentId: comments.size + 1,
-      draftId: commentFrame.draftId,
-      page: commentFrame.page,
-      pageTitle: readPageTitle(latest.plan, commentFrame.page),
-      part: commentFrame.part,
-      words: commentFrame.words.trim(),
-      status: "sent",
-    };
-    comments.set(comment.commentId, comment);
-    sendToPages({ kind: "comment-saved", comment });
-    sendToAgents(createCommentForAgent(comment));
-  };
-
-  const readPageFrame = (frameString: string): void => {
-    touchIdle();
-    const frame = parseJsonOrNull(frameString);
-    const isValidComment = isCommentFrame(frame, latest.plan.pages.length);
-    if (!isValidComment) {
-      console.error({ liveServer: "ignored a page frame that is not a valid comment" });
-      return;
-    }
-
-    saveComment(frame);
-  };
-
-  const openPageSocket = (pageSocket: WebSocket): void => {
-    pageSockets.add(pageSocket);
-    sendFrame(pageSocket, { kind: "comments-so-far", comments: [...comments.values()] });
-    pageSocket.on("message", (frame: RawData) => readPageFrame(frame.toString()));
-    pageSocket.on("close", () => {
-      pageSockets.delete(pageSocket);
-    });
-    pageSocket.on("error", (error) => console.error({ liveServer: "page socket error", error }));
-    touchIdle();
-  };
-
-  const openAgentSocket = (agentSocket: WebSocket): void => {
-    agentSockets.add(agentSocket);
-    agentSocket.on("message", () => touchIdle());
-    agentSocket.on("close", () => {
-      agentSockets.delete(agentSocket);
-    });
-    agentSocket.on("error", (error) => console.error({ liveServer: "agent socket error", error }));
-    touchIdle();
-  };
-
-  const acceptPageSocket = (request: IncomingMessage, socket: Duplex, head: Buffer): void => {
-    const isOriginAllowed = isAllowedPageOrigin(request.headers.origin);
-    if (!isOriginAllowed) {
-      rejectUpgrade(socket, FORBIDDEN_STATUS_LINE);
-      return;
-    }
-
-    pageServer.handleUpgrade(request, socket, head, openPageSocket);
-  };
-
-  const acceptAgentSocket = (
-    request: IncomingMessage,
-    url: URL,
-    socket: Duplex,
-    head: Buffer,
-  ): void => {
-    const hasBrowserOrigin = request.headers.origin !== undefined;
-    const isAgentAllowed = isTokenValid(url) && !hasBrowserOrigin;
-    if (!isAgentAllowed) {
-      rejectUpgrade(socket, FORBIDDEN_STATUS_LINE);
-      return;
-    }
-
-    agentServer.handleUpgrade(request, socket, head, openAgentSocket);
-  };
-
-  const answerCursorPost = async (
-    request: IncomingMessage,
-    reply: ServerResponse,
-    url: URL,
-  ): Promise<void> => {
-    const hasBrowserOrigin = request.headers.origin !== undefined;
-    const isAuthorized = isTokenValid(url) && !hasBrowserOrigin;
-    if (!isAuthorized) {
-      sendText(reply, HTTP_FORBIDDEN, "planpage: cursor request refused");
-      return;
-    }
-
-    const requestString = await readRequestAsString(request);
-    const cursorRequest = parseJsonOrNull(requestString);
-    if (!isCursorBody(cursorRequest)) {
-      sendText(reply, HTTP_BAD_REQUEST, "planpage: cursor body must be a LiveCursorRequest");
-      return;
-    }
-
-    const { commentId } = cursorRequest;
-    const isCommentNamed = commentId !== null;
-    const namedComment = isCommentNamed ? comments.get(commentId) : undefined;
-    const isUnknownComment = isCommentNamed && namedComment === undefined;
-    if (isUnknownComment) {
-      sendText(reply, HTTP_NOT_FOUND, `planpage: no comment with id ${commentId}`);
-      return;
-    }
-
-    const isPageFromComment = namedComment !== undefined && cursorRequest.page === null;
-    const cursorPage = isPageFromComment ? namedComment.page : cursorRequest.page;
-    const cursorPart = isPageFromComment ? namedComment.part : cursorRequest.part;
-    const isPageKnown =
-      cursorPage !== null && isPageNumberInPlan(cursorPage, latest.plan.pages.length);
-    if (!isPageKnown) {
-      sendText(
-        reply,
-        HTTP_BAD_REQUEST,
-        "planpage: cursor needs a page in the plan or a comment id",
-      );
-      return;
-    }
-
-    if (namedComment !== undefined) setCommentStatus(namedComment, "working");
-    sendToPages({ kind: "cursor", page: cursorPage, part: cursorPart, say: cursorRequest.say });
-    touchIdle();
-    reply.writeHead(HTTP_NO_CONTENT);
-    reply.end();
-  };
-
-  const answerDecisionPost = async (
-    request: IncomingMessage,
-    reply: ServerResponse,
-  ): Promise<void> => {
-    const origin = request.headers.origin;
-    const hasForeignOrigin = origin !== undefined && !isAllowedPageOrigin(origin);
-    if (hasForeignOrigin) {
-      sendText(reply, HTTP_FORBIDDEN, "planpage: decision request refused");
-      return;
-    }
-
-    const decisionString = (await readRequestAsString(request)) || "{}";
-    const decisionValue = parseJsonOrNull(decisionString);
-    const decision = decisionValue as Decision;
-    if (!isJsonObject(decisionValue)) {
-      sendText(reply, HTTP_BAD_REQUEST, "planpage: decision body must be a JSON object");
-      return;
-    }
-
-    writeFileSync(serverSettings.decisionPath, decisionString);
-    sendToAgents({ kind: "decision", decision });
-    reply.writeHead(HTTP_OK, { "Content-Type": "text/html; charset=utf-8" });
-    reply.end(DECISION_RECEIVED_HTML, () => shutdown("decision-written"));
-  };
-
-  const answerRequest = async (request: IncomingMessage, reply: ServerResponse): Promise<void> => {
-    const url = readUrl(request);
-    const isPageRequest = request.method === "GET" && url.pathname === PAGE_PATH;
-    const isCursorRequest = request.method === "POST" && url.pathname === CURSOR_PATH;
-    const isDecisionRequest = request.method === "POST" && url.pathname === DECISION_PATH;
-    try {
-      if (isPageRequest) {
-        sendHtml(reply, latest.html);
-        return;
-      }
-      if (isCursorRequest) {
-        await answerCursorPost(request, reply, url);
-        return;
-      }
-      if (isDecisionRequest) {
-        await answerDecisionPost(request, reply);
-        return;
-      }
-      sendText(reply, HTTP_NOT_FOUND, "planpage: not found");
-    } catch (error) {
-      console.error({ liveServer: "request failed", error });
-      sendText(reply, HTTP_SERVER_ERROR, "planpage: server error");
-    }
-  };
-
-  const applyReadablePlan = (reading: ReadablePlan): void => {
-    const difference = findPlanDifference(latest.plan, reading.plan);
-    latest.plan = reading.plan;
-    latest.html = reading.html;
-
-    const isPlanUnchanged = difference.kind === "changed" && difference.changes.length === 0;
-    if (isPlanUnchanged) return;
-
-    const isReshaped = difference.kind === "reshaped";
-    if (isReshaped) {
-      sendToPages({ kind: "plan-reshaped" });
-    } else {
-      sendToPages({ kind: "plan-changed", html: reading.html, changes: difference.changes });
-    }
-    markWorkingCommentsDone();
-  };
-
-  const reloadPlan = async (): Promise<void> => {
-    reloads.started += 1;
-    const reloadNumber = reloads.started;
-    const reading = await readPlanPage(serverSettings.planPath, serverSettings.pageScript);
-    const isSuperseded = reloadNumber !== reloads.started;
-    if (isSuperseded) return;
-
-    touchIdle();
-    if (reading.kind === "broken") {
-      console.error({
-        liveServer: "plan file is not renderable; keeping the last good page",
-        error: reading.error,
-      });
-      sendToAgents({ kind: "plan-error", message: describeError(reading.error) });
-      return;
-    }
-
-    applyReadablePlan(reading);
-  };
-
-  const watchPlanFolder = (): FSWatcher =>
-    watch(dirname(serverSettings.planPath), (_eventType, changedFileName) => {
-      const isPlanFileEvent = changedFileName === planFileName;
-      if (!isPlanFileEvent) return;
-
-      clearTimeout(timers.reload);
-      timers.reload = setTimeout(async () => {
-        await reloadPlan();
-      }, PLAN_RELOAD_DEBOUNCE_MS);
-    });
-
-  httpServer.on("upgrade", (request: IncomingMessage, socket: Duplex, head: Buffer) => {
-    const url = readUrl(request);
-    const isPageSocketPath = url.pathname === PAGE_SOCKET_PATH;
-    const isAgentSocketPath = url.pathname === AGENT_SOCKET_PATH;
-    if (isPageSocketPath) {
-      acceptPageSocket(request, socket, head);
-      return;
-    }
-    if (isAgentSocketPath) {
-      acceptAgentSocket(request, url, socket, head);
-      return;
-    }
-    rejectUpgrade(socket, NOT_FOUND_STATUS_LINE);
-  });
-
-  const address = await listenWithFallback(httpServer, serverSettings.port);
-  const planWatcher = watchPlanFolder();
+  const address = await listenWithFallback(session.httpServer, serverSettings.port);
+  const planWatcher = watchPlanFolder(session);
+  session.planWatcher = planWatcher;
   planWatcher.on("error", (error) => {
     console.error({ liveServer: "plan watcher failed", error });
-    shutdown("error");
+    shutdown(session, "error");
   });
-  httpServer.on("error", (error) => {
+  session.httpServer.on("error", (error) => {
     console.error({ liveServer: "http server failed", error });
-    shutdown("error");
+    shutdown(session, "error");
   });
-  touchIdle();
+  touchIdle(session);
 
   const pageUrl = `http://${LOOPBACK_HOST}:${address.port}${PAGE_PATH}`;
-  if (serverSettings.open) openPath(pageUrl);
+  const isOpenRequested = serverSettings.open;
+  if (isOpenRequested) openPath(pageUrl);
 
   return {
     pageUrl,
     agentSocketUrl: `ws://${LOOPBACK_HOST}:${address.port}${AGENT_SOCKET_PATH}?token=${token}`,
     port: address.port,
-    token,
+    token: session.token,
     closed,
-    stop: () => shutdown("stopped"),
+    stop: () => shutdown(session, "stopped"),
   };
 };

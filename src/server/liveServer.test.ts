@@ -1,7 +1,6 @@
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { setTimeout as sleep } from "node:timers/promises";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { type RawData, WebSocket } from "ws";
 import { EMPTY_DECISION } from "../contracts/decision";
@@ -24,17 +23,13 @@ interface PlanFiles {
   readonly decisionPath: string;
 }
 
-const FRAME_TIMEOUT_MS = 10000;
-const LIVE_SERVER_TEST_TIMEOUT_MS = 20000;
-const IDLE_SECONDS = 60;
-// macOS fs.watch starts its event stream asynchronously; a write sooner than this can be missed.
-const WATCHER_SETTLE_MS = 300;
-const HTTP_SWITCHING_PROTOCOLS = 101;
 const PLAN_PAGE_SCRIPT = "window.livePlanTest = true;";
 
 // Each test renders the sketch plan (shiki highlight), which can take seconds under load.
-const liveServerTest = (name: string, testBody: () => Promise<void>) =>
-  it(name, testBody, LIVE_SERVER_TEST_TIMEOUT_MS);
+const liveServerTest = (name: string, testBody: () => Promise<void>) => {
+  const liveServerTestTimeoutMs = 20000;
+  return it(name, testBody, liveServerTestTimeoutMs);
+};
 
 const createdFolders: string[] = [];
 const openedSockets: WebSocket[] = [];
@@ -71,6 +66,8 @@ const createPlanFiles = (plan: unknown): PlanFiles => {
   return { folder, planPath, decisionPath: join(folder, "decision.json") };
 };
 
+const testIdleTimeoutSeconds = 60;
+
 const startTestServer = async (
   planFiles: PlanFiles,
   overrides: Partial<StartLiveServerSettings> = {},
@@ -80,24 +77,41 @@ const startTestServer = async (
     decisionPath: planFiles.decisionPath,
     pageScript: PLAN_PAGE_SCRIPT,
     port: 0,
-    idleTimeoutSeconds: IDLE_SECONDS,
+    idleTimeoutSeconds: testIdleTimeoutSeconds,
     open: false,
     ...overrides,
   });
   startedHandles.push(handle);
-  await sleep(WATCHER_SETTLE_MS);
   return handle;
 };
 
 const withTimeout = async <Value>(pending: Promise<Value>, label: string): Promise<Value> => {
   let timer: NodeJS.Timeout | undefined;
+  const frameTimeoutMs = 10000;
   const timeout = new Promise<never>((_settle, fail) => {
-    timer = setTimeout(() => fail(new Error(`timed out waiting for ${label}`)), FRAME_TIMEOUT_MS);
+    timer = setTimeout(() => fail(new Error(`timed out waiting for ${label}`)), frameTimeoutMs);
   });
   try {
     return await Promise.race([pending, timeout]);
   } finally {
     clearTimeout(timer);
+  }
+};
+
+// The watcher can miss a write made right after the server starts, so the plan is rewritten
+// until the awaited frame arrives.
+const writePlanUntilFrame = async (
+  planPath: string,
+  planText: string,
+  awaitedFrame: Promise<Frame>,
+): Promise<Frame> => {
+  writeFileSync(planPath, planText);
+  const planRewriteIntervalMs = 100;
+  const rewriting = setInterval(() => writeFileSync(planPath, planText), planRewriteIntervalMs);
+  try {
+    return await withTimeout(awaitedFrame, "a live server frame");
+  } finally {
+    clearInterval(rewriting);
   }
 };
 
@@ -152,7 +166,8 @@ const readUpgradeStatus = (url: string, headers: Record<string, string>): Promis
   openedSockets.push(socket);
   return withTimeout(
     new Promise<number>((settleStatus, failStatus) => {
-      socket.once("open", () => settleStatus(HTTP_SWITCHING_PROTOCOLS));
+      const switchingProtocolsStatus = 101;
+      socket.once("open", () => settleStatus(switchingProtocolsStatus));
       socket.once("unexpected-response", (_request, upgradeReply) =>
         settleStatus(upgradeReply.statusCode ?? 0),
       );
@@ -381,8 +396,12 @@ describe("startLiveServer", () => {
         ...samplePlan,
         pages: [samplePage("Sign in", "Sign in page", "loginBox", "Sign in now"), homePage],
       };
-      writeFileSync(planFiles.planPath, JSON.stringify(editedPlan));
-      const changedFrame = await tabInbox.nextFrame("plan-changed");
+      const changedFramePromise = tabInbox.nextFrame("plan-changed");
+      const changedFrame = await writePlanUntilFrame(
+        planFiles.planPath,
+        JSON.stringify(editedPlan),
+        changedFramePromise,
+      );
       const doneFrame = await tabInbox.nextFrame("comment-status");
 
       expect(changedFrame.changes).toEqual([
@@ -400,8 +419,12 @@ describe("startLiveServer", () => {
       const handle = await startTestServer(planFiles);
       const { socket: agent, inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
 
-      writeFileSync(planFiles.planPath, "{ this is not json");
-      const errorFrame = await agentInbox.nextFrame("plan-error");
+      const errorFramePromise = agentInbox.nextFrame("plan-error");
+      const errorFrame = await writePlanUntilFrame(
+        planFiles.planPath,
+        "{ this is not json",
+        errorFramePromise,
+      );
       const pageReply = await fetch(`http://127.0.0.1:${handle.port}/`);
       const pageHtml = await pageReply.text();
 
@@ -422,8 +445,12 @@ describe("startLiveServer", () => {
       ...samplePlan,
       pages: [...samplePlan.pages, samplePage("Done", "Done page", "doneBox", "Done")],
     };
-    writeFileSync(planFiles.planPath, JSON.stringify(addedPlan));
-    const reshapedFrame = await tabInbox.nextFrame("plan-reshaped");
+    const reshapedFramePromise = tabInbox.nextFrame("plan-reshaped");
+    const reshapedFrame = await writePlanUntilFrame(
+      planFiles.planPath,
+      JSON.stringify(addedPlan),
+      reshapedFramePromise,
+    );
 
     expect(reshapedFrame.kind).toBe("plan-reshaped");
   });
