@@ -475,6 +475,29 @@ describe("startLiveServer", () => {
     },
   );
 
+  liveServerTest(
+    "sends a comment saved while no agent was connected to the agent that connects next",
+    async () => {
+      const handle = await startTestServer(createPlanFiles(samplePlan));
+      const { socket: tab, inbox: tabInbox } = await openSocketWithInbox(
+        pageSocketUrl(handle),
+        pageOrigin(handle),
+      );
+      sendCommentFrame(tab, {
+        draftId: "draft-1",
+        page: 1,
+        part: "loginBox",
+        words: "Make the button bigger",
+      });
+      await tabInbox.nextFrame("comment-saved");
+
+      const { inbox: agentInbox } = await openSocketWithInbox(handle.agentSocketUrl);
+      const commentForAgent = await agentInbox.nextFrame("comment");
+
+      expect(commentForAgent).toMatchObject({ commentId: 1, words: "Make the button bigger" });
+    },
+  );
+
   liveServerTest("resolves closed as idle-timeout when nobody uses the server", async () => {
     const handle = await startTestServer(createPlanFiles(samplePlan), {
       idleTimeoutSeconds: 0.2,
