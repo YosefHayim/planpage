@@ -2,10 +2,9 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { Theme } from "../components/Shell";
-import { highlight } from "../highlight/highlight";
-import { render } from "../render/render";
 import { serve } from "../server/serve";
 import { SAMPLES, TEMPLATES, type TemplateName } from "../templates";
+import { renderTemplateHtml } from "../templates/renderTemplateHtml";
 import { openPath, writeTemp } from "./io";
 
 export interface RenderCommandOptions {
@@ -28,23 +27,10 @@ export const renderCommand = async (
     throw new Error(`unknown template "${template}". known: ${Object.keys(TEMPLATES).join(", ")}`);
   }
   const data = options.sample ? SAMPLES[template as TemplateName] : await readData(options.data);
-  const html = await highlight(
-    render(factory(data), {
-      theme: options.theme,
-      // Quiz carries its own SubmitBar + owns submit via the quizzable island — never add the
-      // interactive post-back too, or both would handle [data-action] and double-submit.
-      interactive: Boolean(options.serve) && template !== "quiz" && template !== "sketch-plan",
-      filterable: template === "library",
-      explorable: template === "code-style-plan" || template === "library",
-      pollable: template === "question-poll",
-      quizzable: template === "quiz" || template === "library",
-      carousel: template === "library",
-      // interactive plans also get diagram boards via Shell (diagramable || interactive)
-      diagramable: template === "library",
-      hasSketchScenes:
-        template === "sketch-plan" || template === "library" || template === "sketch-kit",
-    }),
-  );
+  const html = await renderTemplateHtml(template as TemplateName, data, {
+    theme: options.theme,
+    serve: options.serve,
+  });
 
   if (options.serve) {
     const outPath = options.decision ?? join(tmpdir(), "planpage-decision.json");
