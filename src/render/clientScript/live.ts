@@ -1,4 +1,4 @@
-const LIVE_STYLE_CSS = `:root {
+const liveStyleCss = `:root {
   --live-ink: #2b2b30;
   --live-paper: #ffffff;
   --live-accent: #17569a;
@@ -178,21 +178,15 @@ html.dark {
 }
 `;
 
-const LIVE_STYLE_JSON = JSON.stringify(LIVE_STYLE_CSS);
+const liveStyleJson = JSON.stringify(liveStyleCss);
 
 export const LIVE_CLIENT_SCRIPT = `(function () {
-  if (typeof WebSocket !== "function") return;
+  const isWebSocketMissing = typeof WebSocket !== "function";
+  if (isWebSocketMissing) return;
 
-  const LIVE_PAGE_PATH = "/page";
-  const LIVE_STYLE_CSS = ${LIVE_STYLE_JSON};
-  const RECONNECT_FIRST_WAIT_MS = 500;
-  const RECONNECT_MAX_WAIT_MS = 8000;
-  const GLOW_MS = 4000;
-  const CURSOR_IDLE_MS = 8000;
   const VIEWPORT_MARGIN_PX = 8;
   const ANCHOR_GAP_PX = 10;
   const PIN_SIZE_PX = 24;
-  const STATUS_LABELS = { sending: "Sending...", sent: "Sent", working: "Claude is on it", done: "Done" };
 
   let pageSocket = null;
   let hasConnectedOnce = false;
@@ -249,7 +243,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   reconnectBadgeElement.textContent = "Reconnecting...";
   reconnectBadgeElement.hidden = true;
 
-  styleElement.textContent = LIVE_STYLE_CSS;
+  styleElement.textContent = ${liveStyleJson};
   layerElement.append(
     pinLayerElement,
     composerElement,
@@ -259,21 +253,21 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     reconnectBadgeElement,
   );
 
-  const pageSections = () => Array.from(document.querySelectorAll("[data-sketch-page]"));
+  const listPageSections = () => Array.from(document.querySelectorAll("[data-sketch-page]"));
 
-  const sectionOfPage = (page) => pageSections()[page - 1];
+  const findPageSection = (page) => listPageSections()[page - 1];
 
-  const pageOfSection = (section) => pageSections().indexOf(section) + 1;
+  const findPageNumber = (section) => listPageSections().indexOf(section) + 1;
 
   const isPageShowing = (page) => {
-    const section = sectionOfPage(page);
+    const section = findPageSection(page);
     const isSectionMissing = section == null;
     if (isSectionMissing) return false;
 
     return !section.hidden;
   };
 
-  const titleOfPage = (page) => sectionOfPage(page).querySelector("[data-sketch-title]").textContent;
+  const readPageTitle = (page) => findPageSection(page).querySelector("[data-sketch-title]").textContent;
 
   const findPartElement = (section, part) => {
     const isWholePage = part == null;
@@ -296,7 +290,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     const isPageHidden = !isPageShowing(page);
     if (isPageHidden) return null;
 
-    const partElement = findPartElement(sectionOfPage(page), part);
+    const partElement = findPartElement(findPageSection(page), part);
     const isPartMissing = partElement == null;
     if (isPartMissing) return null;
 
@@ -312,17 +306,18 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     return Math.max(VIEWPORT_MARGIN_PX, Math.min(wantedStart, latestStart));
   };
 
-  const partKeyOfTarget = (target) => {
+  const readPartKey = (target) => {
     const wireframePart = target.closest("[data-part]");
-    const screenElement = wireframePart == null ? null : wireframePart.closest("[data-screen-id]");
+    const hasWireframePart = wireframePart != null;
+    const screenElement = hasWireframePart ? wireframePart.closest("[data-screen-id]") : null;
     const isWireframePart = screenElement != null;
     if (isWireframePart) return screenElement.dataset.screenId + "#" + wireframePart.dataset.part;
 
-    const sceneItem = target.closest("[data-node-id], [data-edge-id]");
-    const isSceneItemMissing = sceneItem == null;
-    if (isSceneItemMissing) return null;
+    const sceneElement = target.closest("[data-node-id], [data-edge-id]");
+    const isSceneElementMissing = sceneElement == null;
+    if (isSceneElementMissing) return null;
 
-    return sceneItem.dataset.nodeId ?? sceneItem.dataset.edgeId;
+    return sceneElement.dataset.nodeId ?? sceneElement.dataset.edgeId;
   };
 
   const createPinElement = (pin) => {
@@ -331,7 +326,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     pinElement.type = "button";
     pinElement.dataset.draftId = pin.draftId;
     pinElement.textContent = isCommentSaved ? String(pin.commentId) : "...";
-    pinElement.addEventListener("click", () => togglePinPopover(pin.draftId));
+    pinElement.addEventListener("click", () => flipPinPopover(pin.draftId));
     return pinElement;
   };
 
@@ -351,13 +346,16 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   };
 
   const drawPinPopover = () => {
-    const pin = openPinDraftId == null ? null : pinsByDraftId.get(openPinDraftId);
+    const hasOpenPin = openPinDraftId != null;
+    const pin = hasOpenPin ? pinsByDraftId.get(openPinDraftId) : null;
     const isPopoverClosed = pin == null;
     pinPopoverElement.hidden = isPopoverClosed;
     if (isPopoverClosed) return;
 
     pinPopoverWordsElement.textContent = pin.words;
-    pinPopoverStatusElement.textContent = STATUS_LABELS[pin.status];
+
+    const statusLabels = { sending: "Sending...", sent: "Sent", working: "Claude is on it", done: "Done" };
+    pinPopoverStatusElement.textContent = statusLabels[pin.status];
   };
 
   const placePinPopover = () => {
@@ -384,7 +382,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     placeLiveLayer();
   };
 
-  const togglePinPopover = (draftId) => {
+  const flipPinPopover = (draftId) => {
     const isSameOpen = openPinDraftId === draftId;
     openPinDraftId = isSameOpen ? null : draftId;
     drawPinPopover();
@@ -450,7 +448,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     composerElement.style.top = pixelsOf(latestTop);
   };
 
-  const openComposerFor = (page, part) => {
+  const openComposer = (page, part) => {
     openComposerTarget = { page, part };
     composerElement.hidden = false;
     placeComposer();
@@ -503,7 +501,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     section.append(pageBox);
 
     const sendPageWords = () => {
-      const sectionPage = pageOfSection(section);
+      const sectionPage = findPageNumber(section);
       const pageWords = pageField.value.trim();
       const isSent = sendComment(sectionPage, null, pageWords);
       if (isSent) pageField.value = "";
@@ -535,8 +533,9 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   const setPendingGlow = (page, parts) => {
     pendingGlowsByPage.set(page, parts);
     window.clearTimeout(glowTimerId);
-    glowTimerId = window.setTimeout(clearGlows, GLOW_MS);
-    applyPendingGlow(sectionOfPage(page));
+    const glowDurationMs = 4000;
+    glowTimerId = window.setTimeout(clearGlows, glowDurationMs);
+    applyPendingGlow(findPageSection(page));
   };
 
   const clearGlows = () => {
@@ -547,7 +546,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   };
 
   const applyPendingGlow = (section) => {
-    const page = pageOfSection(section);
+    const page = findPageNumber(section);
     const glowParts = pendingGlowsByPage.get(page);
     const isNothingToGlow = glowParts == null;
     if (isNothingToGlow) return;
@@ -594,7 +593,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   };
 
   const addEditingToast = (page, part) => {
-    const editingWords = "Claude is editing page " + page + ": " + titleOfPage(page);
+    const editingWords = "Claude is editing page " + page + ": " + readPageTitle(page);
     toastsByPage.set(page, { page, words: editingWords, parts: [part] });
     drawToasts();
   };
@@ -610,7 +609,8 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     cursorSayElement.textContent = cursorMessage.say;
     cursorElement.classList.remove("is-fading");
     window.clearTimeout(cursorIdleTimerId);
-    cursorIdleTimerId = window.setTimeout(fadeCursor, CURSOR_IDLE_MS);
+    const cursorIdleMs = 8000;
+    cursorIdleTimerId = window.setTimeout(fadeCursor, cursorIdleMs);
 
     const isPageHidden = !isPageShowing(cursorMessage.page);
     if (isPageHidden) {
@@ -622,8 +622,8 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     placeCursor();
   };
 
-  const toggleVersion = (page) => {
-    const shownSection = sectionOfPage(page);
+  const switchPageVersion = (page) => {
+    const shownSection = findPageSection(page);
     const keptSection = keptSectionByPage.get(page);
     keptSection.hidden = shownSection.hidden;
     shownSection.replaceWith(keptSection);
@@ -634,7 +634,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   };
 
   const refreshVersionToggle = (page) => {
-    const shownSection = sectionOfPage(page);
+    const shownSection = findPageSection(page);
     for (const oldToggle of shownSection.querySelectorAll("[data-live-version-toggle]")) oldToggle.remove();
 
     const keptSection = keptSectionByPage.get(page);
@@ -646,15 +646,15 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     toggleButton.type = "button";
     toggleButton.dataset.liveVersionToggle = "";
     toggleButton.textContent = isShowingBefore ? "After" : "Before";
-    toggleButton.addEventListener("click", () => toggleVersion(page));
+    toggleButton.addEventListener("click", () => switchPageVersion(page));
     shownSection.querySelector(".sketch-tools").append(toggleButton);
   };
 
   const replacePage = (change, nextSection) => {
-    const isBeforeShowing = sectionOfPage(change.page).dataset.liveVersion === "before";
-    if (isBeforeShowing) toggleVersion(change.page);
+    const isBeforeShowing = findPageSection(change.page).dataset.liveVersion === "before";
+    if (isBeforeShowing) switchPageVersion(change.page);
 
-    const currentSection = sectionOfPage(change.page);
+    const currentSection = findPageSection(change.page);
     const importedSection = document.importNode(nextSection, true);
     importedSection.hidden = currentSection.hidden;
     importedSection.dataset.liveVersion = "current";
@@ -676,7 +676,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   const showPlanChanges = (planMessage) => {
     const parsedPlan = new DOMParser().parseFromString(planMessage.html, "text/html");
     const nextSections = Array.from(parsedPlan.querySelectorAll("[data-sketch-page]"));
-    const isPageCountChanged = nextSections.length !== pageSections().length;
+    const isPageCountChanged = nextSections.length !== listPageSections().length;
     if (isPageCountChanged) {
       console.error({ message: "plan-changed page count differs", pageCount: nextSections.length });
       location.reload();
@@ -739,14 +739,14 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   };
 
   const onDocumentClick = (clickEvent) => {
-    const partKey = partKeyOfTarget(clickEvent.target);
+    const partKey = readPartKey(clickEvent.target);
     const isPartClicked = partKey != null;
     if (!isPartClicked) return;
 
     clickEvent.preventDefault();
     const clickedSection = clickEvent.target.closest("[data-sketch-page]");
-    const clickedPage = pageOfSection(clickedSection);
-    openComposerFor(clickedPage, partKey);
+    const clickedPage = findPageNumber(clickedSection);
+    openComposer(clickedPage, partKey);
   };
 
   const onSketchAsk = (askEvent) => {
@@ -754,7 +754,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     const askedSection = askEvent.detail.section;
     const notesField = askedSection.querySelector("[data-sketch-decision-notes]");
     const notesWords = notesField.value.trim();
-    const askedPage = pageOfSection(askedSection);
+    const askedPage = findPageNumber(askedSection);
     const isSent = sendComment(askedPage, null, notesWords);
     if (isSent) {
       notesField.value = "";
@@ -772,7 +772,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
     hasStartedPage = true;
     document.head.append(styleElement);
     document.body.append(layerElement);
-    for (const section of pageSections()) addPageBox(section);
+    for (const section of listPageSections()) addPageBox(section);
     document.addEventListener("click", onDocumentClick);
     document.addEventListener("pp-sketch-ask", onSketchAsk);
     document.addEventListener("pp-sketch-drawn", onSketchDrawn);
@@ -781,7 +781,9 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   };
 
   const scheduleReconnect = () => {
-    const waitMs = Math.min(RECONNECT_MAX_WAIT_MS, RECONNECT_FIRST_WAIT_MS * 2 ** reconnectAttempts);
+    const reconnectFirstWaitMs = 500;
+    const reconnectMaxWaitMs = 8000;
+    const waitMs = Math.min(reconnectMaxWaitMs, reconnectFirstWaitMs * 2 ** reconnectAttempts);
     reconnectAttempts += 1;
     window.setTimeout(openPageSocket, waitMs);
   };
@@ -802,7 +804,7 @@ export const LIVE_CLIENT_SCRIPT = `(function () {
   };
 
   const openPageSocket = () => {
-    pageSocket = new WebSocket("ws://" + location.host + LIVE_PAGE_PATH);
+    pageSocket = new WebSocket("ws://" + location.host + "/page");
     pageSocket.addEventListener("open", onSocketOpen);
     pageSocket.addEventListener("message", readSocketFrame);
     pageSocket.addEventListener("close", onSocketClose);

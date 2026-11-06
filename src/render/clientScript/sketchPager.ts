@@ -3,7 +3,7 @@ import { EMPTY_DECISION } from "../../contracts/decision";
 const EMPTY_DECISION_JSON = JSON.stringify(EMPTY_DECISION);
 
 export const SKETCH_PAGER_SCRIPT = `(function () {
-  const pageSections = () => Array.from(document.querySelectorAll("[data-sketch-page]"));
+  const listPageSections = () => Array.from(document.querySelectorAll("[data-sketch-page]"));
   const hasNoPages = document.querySelector("[data-sketch-page]") === null;
   if (hasNoPages) return;
 
@@ -15,11 +15,11 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
 
   const pageNumberOfHash = () => {
     const pageNumber = Number(location.hash.slice(1));
-    const isPageNumber = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= pageSections().length;
+    const isPageNumber = Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= listPageSections().length;
     return isPageNumber ? pageNumber : 1;
   };
 
-  const sectionOf = (pageNumber) => pageSections()[pageNumber - 1];
+  const sectionOf = (pageNumber) => listPageSections()[pageNumber - 1];
 
   const activeSection = () => sectionOf(pageNumberOfHash());
 
@@ -71,7 +71,7 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
 
   const showPage = (pageNumber) => {
     const pageSection = sectionOf(pageNumber);
-    for (const section of pageSections()) section.hidden = section !== pageSection;
+    for (const section of listPageSections()) section.hidden = section !== pageSection;
     showNavState(pageNumber);
 
     sketchEngine.drawFramesIn(pageSection);
@@ -81,7 +81,7 @@ export const SKETCH_PAGER_SCRIPT = `(function () {
   };
 
   const goToPage = (pageNumber) => {
-    const isPageNumberValid = pageNumber >= 1 && pageNumber <= pageSections().length;
+    const isPageNumberValid = pageNumber >= 1 && pageNumber <= listPageSections().length;
     if (!isPageNumberValid) return;
 
     history.replaceState(null, "", \`#\${pageNumber}\`);

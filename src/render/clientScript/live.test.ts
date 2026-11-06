@@ -7,14 +7,13 @@ describe("LIVE_CLIENT_SCRIPT (string contract)", () => {
   });
 
   it("connects to the /page socket on the page's own host", () => {
-    expect(LIVE_CLIENT_SCRIPT).toContain('"ws://" + location.host + LIVE_PAGE_PATH');
-    expect(LIVE_CLIENT_SCRIPT).toContain('const LIVE_PAGE_PATH = "/page"');
+    expect(LIVE_CLIENT_SCRIPT).toContain('"ws://" + location.host + "/page"');
   });
 
   it("waits for a successful open before starting the page UI, and reconnects with growing waits", () => {
     expect(LIVE_CLIENT_SCRIPT).toContain("const startLivePage");
     expect(LIVE_CLIENT_SCRIPT).toContain("2 ** reconnectAttempts");
-    expect(LIVE_CLIENT_SCRIPT).toContain("RECONNECT_MAX_WAIT_MS");
+    expect(LIVE_CLIENT_SCRIPT).toContain("reconnectMaxWaitMs");
   });
 
   it("sends a comment frame with a tab-made draft id, page and part", () => {
