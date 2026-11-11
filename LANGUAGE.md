@@ -78,7 +78,7 @@ A ready-made sketch scene kept in the package (`SKETCH_RECIPES`). `planpage reci
 _Avoid_: variation, template sketch, sample.
 
 **Your call page**:
-The last page of a sketch plan. It shows options A, B and C and asks the owner to pick one.
+The last page of a sketch plan. It shows the real options, 1 to 4, and asks the owner to pick one.
 _Avoid_: decision page, choice page, final page.
 
 **note link**:

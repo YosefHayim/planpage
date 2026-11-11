@@ -182,7 +182,7 @@ Then open or describe the image and revise the plan/code accordingly.
 
 Read [SKETCH-STYLE.md](SKETCH-STYLE.md) before you draw. It holds the look, the scene format and the recipe list.
 
-1. Shape `plan.json` as `{ title, pages: [...] }`. Each page has `nav`, `title`, `scene` and, for the last page, a `decision` with options A, B and C. Pull a ready picture with `npx planpage recipes <id>`.
+1. Shape `plan.json` as `{ title, pages: [...] }`. Each page has `nav`, `title` and `scene`; the last page also has a `decision` with the real options, 1 to 4. Pick each page's picture by the question it answers (see Pick the pictures in SKETCH-STYLE.md), then pull it with `npx planpage recipes <id>`.
 2. `npx planpage render sketch-plan --data plan.json --out plan.html`
 3. `npx planpage serve plan.html decision.json --timeout 3600` opens the page and waits for the owner's pick.
 4. Read `decision.json`. It has the usual Decision fields plus `choice`, the letter picked:
