@@ -119,7 +119,7 @@ Static render is the default. The post-back server is opt-in and blocks until th
 
 ## Sketch plans
 
-Plans can be drawn as hand-sketched pages: one picture per page, short notes tied to their part, and a last "Your call" page with options A, B and C. `sketch-plan` is the default template for plans.
+Plans can be drawn as hand-sketched pages: one picture per page, picked for the question that page answers, short notes tied to their part, and a last "Your call" page with the real options to pick from. `sketch-plan` is the default template for plans.
 
 ```bash
 planpage render sketch-plan --data plan.json --out plan.html   # write the page

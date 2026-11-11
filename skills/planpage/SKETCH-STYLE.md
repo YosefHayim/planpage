@@ -19,7 +19,8 @@ This reads easily because each page answers one question. The words are short. T
 - Notes are IBM Plex Mono and tied to a part with `link`.
 - A removed thing is struck through, in red (`struck: true`).
 - Every page has a legend line that says what the colors mean on that page.
-- Every plan ends with a [Your call page](#the-your-call-page).
+- Pick each page's picture by the question it answers. See [Pick the pictures](#pick-the-pictures).
+- Every plan ends with a [Your call page](#the-your-call-page) that shows the real options, 1 to 4.
 - The Notes and View code toggles stay on every page. Notes hide the dashed notes. View code opens the code drawer.
 
 ## Colors
@@ -158,12 +159,12 @@ Each page has these fields. The types live in `src/contracts/sketchScene.ts` as 
 | `scene` | yes | The one picture on the page. See [The scene format](#the-scene-format). |
 | `toggle` | no | A switch that dims the parts of the picture that do not match the choice. |
 | `code` | no | Code for View code: `pseudo`, `diff` and `docs`. Each is a plain string. |
-| `decision` | no | Makes the page a Your call page. Holds a question and options A, B and C. |
+| `decision` | no | Makes the page a Your call page. Holds a question and 1 to 4 options, lettered A to D. |
 
 ### Reading the page
 
 - Left and Right arrows change pages.
-- Up and Down, or 1, 2, 3, or A, B, C, pick an option on a Your call page. The picked option gets a focus ring.
+- Up and Down, or an option's number or letter, pick an option on a Your call page. The picked option gets a focus ring.
 - Enter sends on a Your call page. On other pages, Enter goes to the next page.
 - Esc closes the code drawer. Otherwise Esc goes back.
 - In the notes box, Cmd or Ctrl plus Enter sends.
@@ -278,15 +279,34 @@ The page holds the toggle, not the scene. The page passes the chosen id to `setM
 
 ## The Your call page
 
-The last page of every sketch plan. It holds 3 options, A, B and C.
+The last page of every sketch plan. It holds the real options, 1 to 4, lettered A to D.
 
-- Each option is a small sketch of one choice, with a title.
+- Show only options you would build. Never pad the page to three. When one answer is clear, show one option, "Build as shown", so Approve is the whole choice.
+- Each option is a small sketch of one choice, with a title. Draw it with the `decisions` recipe that fits the choice (`compare-table`, `effort-value`, `risks-questions`...), or any recipe whose picture shows the difference, not only boxes.
 - A risk note, in red, says what goes wrong with that option. A recommended option says so in its title.
 - Put the words "(recommended)" in the title of the option you suggest. Do not use a star or an emoji.
 - The page has two buttons: Ask for changes, and Approve. Approve sends the picked letter.
 - A question is one line above the options.
 
 The owner's answer comes back as JSON. See [Reading the decision](#reading-the-decision).
+
+## Pick the pictures
+
+A plan is not one fixed flow. Each page answers one question the owner has, and the recipe groups exist so each question gets the picture made for it.
+
+1. Before you draw, write each page's question in one line.
+2. Take the recipe whose `useFor` answers that question (`npx planpage recipes` lists them all). Keep its parts: lanes stay lanes, a tree stays a tree, a table stays a table. Change the words; never redraw it as plain boxes.
+3. Use a recipe again only for the same kind of question. Two pages that ask different questions get different recipes.
+4. No page is fixed. Open with the picture of the main question, not a set Overview or Today and after page. Use `overview-grid` only when the plan has 3 or more parts to show together.
+
+| The page asks | Groups to pick from |
+| --- | --- |
+| In what order do things happen? | `flows`, `time` |
+| Which files change? | `files` |
+| What data is kept, and in what shape? | `data` |
+| Which parts talk to which? | `systems` |
+| What will the owner see? | `screens`, `account`, `product`, only when asked for a wireframe, mockup or screen sketch |
+| What does the owner decide? | `decisions` |
 
 ## Recipes
 

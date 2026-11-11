@@ -122,13 +122,13 @@ One hand-sketched picture. It takes a `SketchScene` from `src/contracts/sketchSc
 
 ### SketchPlan (default plan page)
 
-The default template for every plan. It takes a title and a list of pages. Each page has one picture, a legend, and optional `toggle`, `code` and `decision`. The last page is usually the Your call page with options A, B and C.
+The default template for every plan. It takes a title and a list of pages. Each page has one picture, a legend, and optional `toggle`, `code` and `decision`. The last page is usually the Your call page with 1 to 4 options.
 
 ```tsx
 <SketchPlan title="Sketch plans move into planpage" pages={pages} />
 ```
 
-Types: `SketchPlanProps { title: string; pages: readonly SketchPlanPage[] }`, with `SketchPlanPage` in `src/contracts/sketchScene.ts`. Keys: Left and Right change pages, Up/Down or 1-3 or A-C pick an option on Your call, Enter sends there, Esc closes the code drawer. Post-back returns the Decision plus `choice`.
+Types: `SketchPlanProps { title: string; pages: readonly SketchPlanPage[] }`, with `SketchPlanPage` in `src/contracts/sketchScene.ts`. Keys: Left and Right change pages, Up/Down or an option's number or letter pick an option on Your call, Enter sends there, Esc closes the code drawer. Post-back returns the Decision plus `choice`.
 
 ## Recipes
 

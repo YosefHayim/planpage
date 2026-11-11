@@ -1,6 +1,6 @@
 # SketchPlan
 
-A plan as **hand-sketched pages**: one picture per page, drawn with rough.js in Kalam and IBM Plex Mono, with notes tied to their part by dashed lines. Each page has **Notes** and **View code** toggles. The last page can be a **Your call** decision with options A, B and C, which posts the choice back through `serve`.
+A plan as **hand-sketched pages**: one picture per page, drawn with rough.js in Kalam and IBM Plex Mono, with notes tied to their part by dashed lines. Each page has **Notes** and **View code** toggles. The last page can be a **Your call** decision with 1 to 4 options, which posts the choice back through `serve`.
 
 Keys: Left and Right move between pages, Up and Down or 1-3 / A-C pick an option, Enter sends, Esc goes back. Notes typing keeps every key; Cmd or Ctrl plus Enter asks for changes.
 
